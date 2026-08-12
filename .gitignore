@@ -1,0 +1,14 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/generated/prisma
+
+# SQLite database files
+*.db
+
+# AI assistant caches
+.agents/
+.claude/
+.windsurf/
+skills-lock.json
