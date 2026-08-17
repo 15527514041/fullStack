@@ -6,7 +6,7 @@ function parseId(value) {
 }
 
 async function getTodos(req, res) {
-  const todos = await todoService.listTodos()
+  const todos = await todoService.listTodos(req.user.id)
   res.json(todos)
 }
 
@@ -16,15 +16,15 @@ async function getTodo(req, res) {
     return res.status(400).json( { message: 'ID is required'})
   }
 
-  const todo = await todoService.getTodoById(id)
-  if (todo === null) {
+  const todo = await todoService.getTodoById(id, req.user.id)
+  if (!todo) {
     return res.status(404).json( { message: "Todo not found"})
   }
   res.json(todo)
 }
 
 async function createTodo(req, res) {
-  const todo = await todoService.createTodo(req.body)
+  const todo = await todoService.createTodo(req.body || {}, req.user.id)
   res.status(201).json(todo)
 }
 
@@ -34,23 +34,17 @@ async function updateTodo(req, res) {
     return res.status(400).json( { message: 'ID is required'})
   }
 
+  const body = req.body || {}
   const data = {}
-  if (req.body.title !== undefined) data.title = req.body.title
-  if (req.body.completed !== undefined) data.completed = req.body.completed
+  if (body.title !== undefined) data.title = body.title
+  if (body.completed !== undefined) data.completed = body.completed
 
   if (Object.keys(data).length === 0) {
     return res.status(400).json( { message: "No valid fields to update"})
   }
 
-  try {
-    const todo = await todoService.updateTodo(id, data)
-    res.json(todo)
-  } catch (error) {
-    if (error.code === 'P2025') {
-      return res.status(404).json( { message: "Todo not found"})
-    }
-    throw error
-  }
+  const todo = await todoService.updateTodo(id, req.user.id, data)
+  res.json(todo)
 }
 
 async function deleteTodo(req, res) {
@@ -59,15 +53,8 @@ async function deleteTodo(req, res) {
     return res.status(400).json( { message: 'ID is required'})
   }
 
-  try {
-    await todoService.deleteTodo(id)
-    res.status(204).end()
-  } catch (error) {
-    if (error.code === 'P2025') {
-      return res.status(404).json( { message: "Todo not found"})
-    }
-    throw error
-  }
+  await todoService.deleteTodo(id, req.user.id)
+  res.status(204).end()
 }
 
 module.exports = {
