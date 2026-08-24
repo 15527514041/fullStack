@@ -12,14 +12,10 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/auth': {
+      '/api': {
         target: 'http://localhost:3008',
         changeOrigin: true
       },
-      '/todos': {
-        target: 'http://localhost:3008',
-        changeOrigin: true
-      }
     }
   }
 })
