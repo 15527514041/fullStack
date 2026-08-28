@@ -15,3 +15,17 @@ export interface Todo {
   createdAt: string
   userId: number
 }
+
+export interface TodoQuery {
+  page?: number
+  pageSize?: number
+  keyword?: string
+  completed?: boolean
+}
+
+export interface TodoListResult {
+  list: Todo[]
+  total: number
+  page: number
+  pageSize: number
+}

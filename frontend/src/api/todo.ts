@@ -1,8 +1,8 @@
 import { request } from './request'
-import type { Todo } from '@/types'
+import type { Todo, TodoListResult, TodoQuery } from '@/types'
 
-export function getTodos(): Promise<Todo[]> {
-  return request<Todo[]>({ url: '/todos', method: 'get' })
+export function getTodos(params?: TodoQuery): Promise<TodoListResult> {
+  return request<TodoListResult>({ url: '/todos', method: 'get', params })
 }
 
 export function createTodo(title: string): Promise<Todo> {

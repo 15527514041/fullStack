@@ -95,11 +95,13 @@ async function handleSubmit(): Promise<void> {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 16px;
   background: #f5f7fa;
 }
 
 .auth-card {
   width: 400px;
+  max-width: calc(100vw - 32px);
 }
 
 .auth-header {
