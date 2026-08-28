@@ -2,11 +2,28 @@ const { PrismaClient } = require('@prisma/client')
 
 const prisma = new PrismaClient()
 
-async function listTodos(userId) {
-  return prisma.todo.findMany({
-    where: { userId },
-    orderBy: { id: 'asc' }
-  })
+async function listTodos(userId, query) {
+  const { page = 1, pageSize = 10, keyword, completed } = query
+
+  const where = { ueserId }
+  if (keyword) {
+    where.title = { contains: keyword, mode: 'insensitive' }
+  }
+  if (completed !== undefined) {
+    where.completed = completed
+  }
+
+  const [list, total] = await Promise.all([
+    prisma.todo.findMany({
+      where,
+      orderBy: { id: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize
+    }),
+    prisma.todo.count({ where})
+  ])
+
+  return { list, total, page, pageSize}
 }
 
 async function getTodoById(id, userId) {

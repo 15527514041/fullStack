@@ -6,8 +6,16 @@ function parseId(value) {
 }
 
 async function getTodos(req, res) {
-  const todos = await todoService.listTodos(req.user.id)
-  res.json(todos)
+  const page = Math.max(parseInt(req.query.page || '1', 10) || 1, 1)
+  const pageSize = Math.min(Math.max(parseInt(req.query.pageSize || '10', 10) || 10, 1), 50)
+  const keyword = typeof req.query.keyword === 'string' ? req.query.keyword.trim() : undefined
+
+  let completed
+  if (req.query.completed === 'true') completed = true
+  else if (req.query.completed === 'false') completed = false
+
+  const result = await todoService.listTodos(req.user.id, { page, pageSize, keyword, completed })
+  res.json(result)
 }
 
 async function getTodo(req, res) {
