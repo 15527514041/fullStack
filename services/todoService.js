@@ -5,7 +5,7 @@ const prisma = new PrismaClient()
 async function listTodos(userId, query) {
   const { page = 1, pageSize = 10, keyword, completed } = query
 
-  const where = { ueserId }
+  const where = { userId }
   if (keyword) {
     where.title = { contains: keyword, mode: 'insensitive' }
   }
