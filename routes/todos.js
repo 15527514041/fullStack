@@ -15,5 +15,6 @@ router.get('/:id', todoController.getTodo)
 router.post('/', validateTodo({ requireTitle: true }), todoController.createTodo)
 router.patch('/:id', validateTodo(), todoController.updateTodo)
 router.delete('/:id', todoController.deleteTodo)
+router.post('/:id/restore', todoController.restoreTodo)
 
 module.exports = router

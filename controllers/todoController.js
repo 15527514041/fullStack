@@ -65,10 +65,20 @@ async function deleteTodo(req, res) {
   res.status(204).end()
 }
 
+async function restoreTodo(req, res) {
+  const id = parseId(req.params.id)
+  if (id === null) {
+    return res.status(400).json({ message: 'ID is required' })
+  }
+  const todo = await todoService.restoreTodo(id, req.user.id)
+  res.json(todo)
+}
+
 module.exports = {
   getTodos,
   getTodo,
   createTodo,
   updateTodo,
-  deleteTodo
+  deleteTodo,
+  restoreTodo
 }

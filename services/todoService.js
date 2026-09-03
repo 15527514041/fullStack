@@ -5,7 +5,7 @@ const prisma = new PrismaClient()
 async function listTodos(userId, query) {
   const { page = 1, pageSize = 10, keyword, completed } = query
 
-  const where = { userId }
+  const where = { userId, deletedAt: null }
   if (keyword) {
     where.title = { contains: keyword, mode: 'insensitive' }
   }
@@ -28,7 +28,7 @@ async function listTodos(userId, query) {
 
 async function getTodoById(id, userId) {
   return prisma.todo.findFirst({ 
-    where: { id, userId }
+    where: { id, userId, deletedAt: null }
   })
 }
 
@@ -44,7 +44,7 @@ async function createTodo(data, userId) {
 
 async function updateTodo(id, userId, data) {
   const todo = await prisma.todo.findFirst({
-    where: { id, userId }
+    where: { id, userId, deletedAt: null}
   })
   if (!todo) {
     const error = new Error("Todo not found")
@@ -59,15 +59,31 @@ async function updateTodo(id, userId, data) {
 
 async function deleteTodo(id, userId) {
   const todo = await prisma.todo.findFirst({
-    where: { id, userId }
+    where: { id, userId, deletedAt: null }
   })
   if (!todo) {
     const error = new Error("Todo not found")
     error.status = 404
     throw error
   }
-  return prisma.todo.delete({
-    where: { id: id}
+  return prisma.todo.update({
+    where: { id: id},
+    data: { deletedAt: new Date() }
+  })
+}
+
+async function restoreTodo(id, userId) {
+  const todo = await prisma.todo.findFirst({
+    where: { id, userId, deletedAt: { not: null } }
+  })
+  if (!todo) {
+    const error = new Error("Todo not found")
+    error.status = 404
+    throw error
+  }
+  return prisma.todo.update({
+    where: { id: id },
+    data: { deletedAt: null }
   })
 }
 
@@ -76,5 +92,6 @@ module.exports = {
   getTodoById,
   createTodo,
   updateTodo,
-  deleteTodo
+  deleteTodo,
+  restoreTodo
 }
