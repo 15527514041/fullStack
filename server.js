@@ -2,6 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const todosRouter = require('./routes/todos')
 const authRouter = require('./routes/auth')
+const statsRouter = require('./routes/stats')
 const { notFound, errorHandler } = require('./middlewares/errorHandler')
 
 const app = express()
@@ -18,6 +19,7 @@ app.get('/health', (req, res) => {
 
 app.use('/api/auth', authRouter)
 app.use('/api/todos', todosRouter)
+app.use('/api/stats', statsRouter)
 
 app.use(notFound)
 app.use(errorHandler)
