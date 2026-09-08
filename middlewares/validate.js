@@ -10,7 +10,8 @@ const validate = (schema, source = 'body') => {
       }))
       return res.status(400).json({ message: 'Validation failed', errors})
     }
-    req[source] = result.data
+    req.validated = req.validated || {}
+    req.validated[source] = result.data
     next()
   }
 }
