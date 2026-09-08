@@ -4,7 +4,7 @@ const todosRouter = require('./routes/todos')
 const authRouter = require('./routes/auth')
 const statsRouter = require('./routes/stats')
 const { notFound, errorHandler } = require('./middlewares/errorHandler')
-const requestLogger = require('./moddlewares/requestLogger')
+const requestLogger = require('./middlewares/requestLogger')
 
 const app = express()
 const port = process.env.PORT || 3008
