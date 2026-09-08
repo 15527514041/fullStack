@@ -4,6 +4,7 @@ const todosRouter = require('./routes/todos')
 const authRouter = require('./routes/auth')
 const statsRouter = require('./routes/stats')
 const { notFound, errorHandler } = require('./middlewares/errorHandler')
+const requestLogger = require('./moddlewares/requestLogger')
 
 const app = express()
 const port = process.env.PORT || 3008
@@ -12,6 +13,7 @@ app.use(cors({
   origin: ['http://localhost:5173', 'http://127.0.0.1:5173']
 }))
 app.use(express.json())
+app.use(requestLogger)
 
 app.get('/health', (req, res) => {
   res.json( { status: 'ok' })

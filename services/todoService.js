@@ -1,3 +1,4 @@
+const AppError = require('../errors/AppError')
 const { PrismaClient } = require('@prisma/client')
 
 const prisma = new PrismaClient()
@@ -47,9 +48,7 @@ async function updateTodo(id, userId, data) {
     where: { id, userId, deletedAt: null}
   })
   if (!todo) {
-    const error = new Error("Todo not found")
-    error.status = 404
-    throw error
+    throw new AppError("Todo not found", 404)
   }
   return prisma.todo.update({
     where: { id: id },
@@ -62,9 +61,7 @@ async function deleteTodo(id, userId) {
     where: { id, userId, deletedAt: null }
   })
   if (!todo) {
-    const error = new Error("Todo not found")
-    error.status = 404
-    throw error
+    throw new AppError("Todo not found", 404)
   }
   return prisma.todo.update({
     where: { id: id},
@@ -77,9 +74,7 @@ async function restoreTodo(id, userId) {
     where: { id, userId, deletedAt: { not: null } }
   })
   if (!todo) {
-    const error = new Error("Todo not found")
-    error.status = 404
-    throw error
+    throw new AppError("Todo not found", 404)
   }
   return prisma.todo.update({
     where: { id: id },

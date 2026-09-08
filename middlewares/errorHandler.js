@@ -5,9 +5,14 @@ const notFound = (req, res) => {
 }
 
 const errorHandler = (err, req, res, next) => {
-  console.error('[' + new Date().toISOString() + ']', err)
-  const status = err.status || err.statusCode || 500
-  const message = status >= 500 ? 'Internal Server Error' : err.message
+  const status = err instanceof AppError ? err.status : err.status || 500
+  if (status >= 500) {
+    console.log('[' + new Date().toISOString() + '][ unhandled]', err)
+  } else {
+    console.log('[' + new Date().toISOString() + '] [' + status + ']', err.message)
+  }
+
+  const message = status >=500 ? 'Internal Server Error' : err.message
   res.status(status).json({ message })
 }
 
