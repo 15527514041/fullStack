@@ -35,7 +35,11 @@ const login = async (username, password) => {
   }
 
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' })
-  return { token, user: { id: user.id, username: user.username}}
+  return { token, user: { 
+    id: user.id,
+    username: user.username,
+    avatarUrl: user.avatarUrl
+  }}
 }
 
 const verifyToken = (token) => {
