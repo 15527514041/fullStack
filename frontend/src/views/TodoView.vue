@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { createTodo, deleteTodo, getTodos, updateTodo } from '@/api/todo'
+import { uploadAvatar } from '@/api/user'
 import { useAuthStore } from '@/stores/auth'
 import type { Todo } from '@/types'
 
@@ -22,6 +23,42 @@ const query = reactive({
 })
 
 const usernameInitial = computed(() => (authStore.user?.username || 'U').charAt(0).toUpperCase())
+const avatarUrl = computed(() => authStore.user?.avatarUrl || '')
+
+// 头像上传
+const fileInputRef = ref<HTMLInputElement | null>(null)
+
+function chooseAvatar(): void {
+  fileInputRef.value?.click()
+}
+
+async function handleAvatarChange(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  // 前端先校验一次(后端还会再校验)
+  if (!file.type.startsWith('image/')) {
+    ElMessage.warning('请选择图片文件')
+    input.value = ''
+    return
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    ElMessage.warning('图片不能超过 2MB')
+    input.value = ''
+    return
+  }
+
+  try {
+    const result = await uploadAvatar(file)
+    authStore.setAvatar(result.avatarUrl)
+    ElMessage.success('头像已更新')
+  } catch {
+    // 错误提示已在 axios 拦截器统一处理
+  } finally {
+    input.value = '' // 允许重复选择同一个文件
+  }
+}
 
 const editingId = ref<number | null>(null)
 const editingTitle = ref('')
@@ -181,7 +218,16 @@ onUnmounted(() => {
     <el-header class="todo-header">
       <span class="todo-title">我的 TODO</span>
       <div class="user-area">
-        <el-avatar :size="28" class="user-avatar">{{ usernameInitial }}</el-avatar>
+        <el-avatar
+          :size="28"
+          :src="avatarUrl"
+          class="user-avatar"
+          title="点击更换头像"
+          @click="chooseAvatar"
+        >
+          {{ usernameInitial }}
+        </el-avatar>
+        <input ref="fileInputRef" type="file" accept="image/*" class="hidden-input" @change="handleAvatarChange" />
         <span class="username">{{ authStore.user?.username || '用户' }}</span>
         <el-button text @click="handleLogout">退出登录</el-button>
       </div>
@@ -304,6 +350,11 @@ onUnmounted(() => {
   background: #409eff;
   font-size: 14px;
   flex-shrink: 0;
+  cursor: pointer;
+}
+
+.hidden-input {
+  display: none;
 }
 
 .username {

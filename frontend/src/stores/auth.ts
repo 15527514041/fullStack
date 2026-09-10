@@ -22,6 +22,13 @@ export const useAuthStore = defineStore('auth', () => {
     await registerApi(payload)
   }
 
+  // 上传头像后更新本地用户信息并持久化
+  function setAvatar(avatarUrl: string): void {
+    if (!user.value) return
+    user.value = { ...user.value, avatarUrl }
+    setUser(user.value)
+  }
+
   function logout(): void {
     token.value = null
     user.value = null
@@ -29,5 +36,5 @@ export const useAuthStore = defineStore('auth', () => {
     removeUser()
   }
 
-  return { token, user, isLoggedIn, login, register, logout }
+  return { token, user, isLoggedIn, login, register, setAvatar, logout }
 })

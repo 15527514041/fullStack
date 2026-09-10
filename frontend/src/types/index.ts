@@ -1,11 +1,16 @@
 export interface User {
   id: number
   username: string
+  avatarUrl?: string | null
 }
 
 export interface LoginResult {
   token: string
   user: User
+}
+
+export interface UploadAvatarResult {
+  avatarUrl: string
 }
 
 export interface Todo {
