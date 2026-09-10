@@ -11,4 +11,5 @@ node_modules
 .agents/
 .claude/
 .windsurf/
+uploads/
 skills-lock.json
