@@ -42,8 +42,15 @@ const todoSchemas = {
   })
 }
 
+const adminSchemas = {
+  updateRole: z.object({
+    role: z.enum(['USER', 'ADMIN'])
+  })
+}
+
 module.exports = {
   authSchemas,
   todoSchemas,
+  adminSchemas,
   idParams
 }

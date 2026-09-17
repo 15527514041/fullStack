@@ -38,7 +38,8 @@ const login = async (username, password) => {
   return { token, user: { 
     id: user.id,
     username: user.username,
-    avatarUrl: user.avatarUrl
+    avatarUrl: user.avatarUrl,
+    role: user.role
   }}
 }
 
