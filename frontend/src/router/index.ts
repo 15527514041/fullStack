@@ -21,6 +21,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'TODO 列表', requiresAuth: true }
   },
   {
+    path: '/admin',
+    name: 'admin',
+    component: () => import('@/views/AdminView.vue'),
+    meta: { title: '用户管理', requiresAuth: true, requiresAdmin: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/'
   }
@@ -31,12 +37,16 @@ const router = createRouter({
   routes
 })
 
-// 全局前置守卫:未登录访问受保护页面 -> 登录页;已登录访问登录/注册页 -> 首页
+// 全局前置守卫:未登录 -> 登录页;非管理员访问管理页 -> 回首页
 router.beforeEach((to) => {
   const authStore = useAuthStore()
 
   if (to.meta.requiresAuth && !authStore.isLoggedIn) {
     return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  if (to.meta.requiresAdmin && !authStore.isAdmin) {
+    return { name: 'todos' }
   }
 
   if ((to.name === 'login' || to.name === 'register') && authStore.isLoggedIn) {

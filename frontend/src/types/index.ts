@@ -1,7 +1,10 @@
+export type Role = 'USER' | 'ADMIN'
+
 export interface User {
   id: number
   username: string
   avatarUrl?: string | null
+  role?: Role
 }
 
 export interface LoginResult {
@@ -11,6 +14,17 @@ export interface LoginResult {
 
 export interface UploadAvatarResult {
   avatarUrl: string
+}
+
+export interface AdminUser {
+  id: number
+  username: string
+  role: Role
+  avatarUrl: string | null
+  createdAt: string
+  _count: {
+    todos: number
+  }
 }
 
 export interface Todo {

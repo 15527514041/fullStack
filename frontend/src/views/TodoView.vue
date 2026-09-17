@@ -229,6 +229,7 @@ onUnmounted(() => {
         </el-avatar>
         <input ref="fileInputRef" type="file" accept="image/*" class="hidden-input" @change="handleAvatarChange" />
         <span class="username">{{ authStore.user?.username || '用户' }}</span>
+        <el-button v-if="authStore.isAdmin" text @click="router.push('/admin')">用户管理</el-button>
         <el-button text @click="handleLogout">退出登录</el-button>
       </div>
     </el-header>

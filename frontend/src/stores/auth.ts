@@ -9,6 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(getUser<User>())
 
   const isLoggedIn = computed(() => Boolean(token.value))
+  const isAdmin = computed(() => user.value?.role === 'ADMIN')
 
   async function login(payload: AuthPayload): Promise<void> {
     const result = await loginApi(payload)
@@ -36,5 +37,5 @@ export const useAuthStore = defineStore('auth', () => {
     removeUser()
   }
 
-  return { token, user, isLoggedIn, login, register, setAvatar, logout }
+  return { token, user, isLoggedIn, isAdmin, login, register, setAvatar, logout }
 })
