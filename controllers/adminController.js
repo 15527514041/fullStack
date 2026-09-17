@@ -7,7 +7,7 @@ async function getUsers(req, res) {
 
 async function updateUserRole(req, res) {
   const { role } = req.validated.body
-  const user = await adminService.updateUserRole(req.params.params.id, role)
+  const user = await adminService.updateUserRole(req.validated.params.id, role)
   res.json(user)
 }
 

@@ -1,5 +1,6 @@
 const authService = require('../services/authService')
 const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
 const AppError = require('../errors/AppError')
 
 const auth = async (req, res, next) => {

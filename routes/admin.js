@@ -8,7 +8,7 @@ const validate = require('../middlewares/validate')
 const { idParams, adminSchemas } = require('../validators')
 
 router.use(auth) // 所有路由都需要登录才能访问
-router.use(requireRole('admin')) // 只有管理员才能访问
+router.use(requireRole('ADMIN')) // 只有管理员才能访问
 
 router.get('/users', adminController.getUsers)
 router.patch('/users/:id/role', validate(idParams, 'params'), validate(adminSchemas.updateRole), adminController.updateUserRole)
