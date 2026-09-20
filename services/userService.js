@@ -1,6 +1,16 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../utils/prisma')
 
-const prisma = new PrismaClient();
+async function findById(userId) {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      username: true,
+      avatarUrl: true,
+      role: true
+    }
+  })
+}
 
 async function updateAvatar(userId, avatarUrl) {
   return prisma.user.update({
@@ -10,5 +20,6 @@ async function updateAvatar(userId, avatarUrl) {
 }
 
 module.exports = {
+  findById,
   updateAvatar
 }

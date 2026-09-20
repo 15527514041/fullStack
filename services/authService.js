@@ -1,11 +1,14 @@
 const AppError = require('../errors/AppError')
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { PrismaClient } = require('@prisma/client');
 
-const prisma = new PrismaClient();
+const prisma = require('../utils/prisma')
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-this';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET 未配置，拒绝启动')
+}
 
 const register = async (username, password) => {
   const existing = await prisma.user.findUnique({ where: { username } });

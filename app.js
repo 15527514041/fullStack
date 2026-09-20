@@ -1,4 +1,11 @@
 const path = require('path')
+// 显式加载 .env:已存在的环境变量不会被覆盖
+// (所以测试时 DATABASE_URL=test npm test 依然优先用测试库)
+try {
+  process.loadEnvFile(path.join(__dirname, '.env'))
+} catch {
+  // 没有 .env 时忽略(CI 环境用系统环境变量)
+}
 const express = require('express')
 const cors = require('cors')
 const todosRouter = require('./routes/todos')
@@ -11,8 +18,13 @@ const requestLogger = require('./middlewares/requestLogger')
 
 const app = express()
 
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173')
+.split(',')
+.map((item) => item.trim())
+.filter(Boolean)
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173']
+  origin: allowedOrigins
 }))
 app.use(express.json())
 app.use(requestLogger)

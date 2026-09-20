@@ -1,7 +1,5 @@
 const AppError = require('../errors/AppError')
-const { PrismaClient } = require('@prisma/client')
-
-const prisma = new PrismaClient()
+const prisma = require('../utils/prisma')
 
 async function listTodos(userId, query) {
   const { page = 1, pageSize = 10, keyword, completed } = query
