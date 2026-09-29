@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   db:
@@ -28,7 +27,7 @@ services:
       PORT: 3008
       NODE_ENV: production
     ports:
-      - "3009:3008"
+      - "127.0.0.1:3009:3008" # 只绑回环地址
     volumes:
       - uploads-data:/app/uploads
 
