@@ -30,15 +30,18 @@ jobs:
       JWT_SECRET: ci-test-secret-0123456789abcdef0123456789abcdef
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
 
       - name: 安装依赖
         run: npm ci
+
+      - name: 生成 Prisma Client
+        run: npx prisma generate
 
       - name: 建表(应用迁移)
         run: npx prisma migrate deploy
