@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { getTodos, restoreTodo } from '@/api/todo'
+import { formatDateTime } from '@/utils/datetime'
 import type { Todo } from '@/types'
+
+const { t } = useI18n()
 
 const todos = ref<Todo[]>([])
 const total = ref(0)
@@ -29,7 +33,7 @@ async function loadTrash(): Promise<void> {
 async function handleRestore(todo: Todo): Promise<void> {
   try {
     await restoreTodo(todo.id)
-    ElMessage.success('已恢复')
+    ElMessage.success(t('trash.restored'))
     await loadTrash()
   } catch {
     // 错误提示已在 axios 拦截器统一处理
@@ -41,38 +45,38 @@ onMounted(loadTrash)
 
 <template>
   <div class="list-page">
-    <div class="page-title">回收站</div>
-    <div class="tip">回收站里的 TODO 仍然保存在数据库中,点击「恢复」即可回到列表。</div>
+    <div class="page-title">{{ $t('trash.title') }}</div>
+    <div class="tip">{{ $t('trash.tip') }}</div>
 
     <el-skeleton v-if="loading && todos.length === 0" :rows="6" animated class="list-skeleton" />
 
     <el-table v-else :data="todos">
-      <el-table-column label="内容" min-width="240">
+      <el-table-column :label="$t('trash.colTitle')" min-width="240">
         <template #default="{ row }">
           <span class="title">{{ row.title }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column label="标签" min-width="140">
+      <el-table-column :label="$t('trash.colTags')" min-width="140">
         <template #default="{ row }">
           <el-tag v-for="tag in row.tags" :key="tag.id" class="tag-item" type="info">{{ tag.name }}</el-tag>
         </template>
       </el-table-column>
 
-      <el-table-column label="删除时间" width="180">
+      <el-table-column :label="$t('trash.colDeletedAt')" width="180">
         <template #default="{ row }">
-          {{ row.deletedAt ? new Date(row.deletedAt).toLocaleString() : '-' }}
+          {{ formatDateTime(row.deletedAt) }}
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" width="100" align="center">
+      <el-table-column :label="$t('common.actions')" width="100" align="center">
         <template #default="{ row }">
-          <el-button link type="primary" @click="handleRestore(row)">恢复</el-button>
+          <el-button link type="primary" @click="handleRestore(row)">{{ $t('common.restore') }}</el-button>
         </template>
       </el-table-column>
 
       <template #empty>
-        <el-empty description="回收站是空的" />
+        <el-empty :description="$t('trash.empty')" />
       </template>
     </el-table>
 

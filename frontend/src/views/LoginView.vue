@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 const loading = ref(false)
 const formRef = ref<FormInstance>()
@@ -16,16 +18,17 @@ const form = reactive({
   password: ''
 })
 
-const rules: FormRules = {
+// 校验文案跟随语言,切换语言后重新生成
+const rules = computed<FormRules>(() => ({
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 2, max: 20, message: '用户名长度为 2-20 个字符', trigger: 'blur' }
+    { required: true, message: t('validation.usernameRequired'), trigger: 'blur' },
+    { min: 2, max: 20, message: t('validation.usernameLength'), trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 32, message: '密码长度为 6-32 个字符', trigger: 'blur' }
+    { required: true, message: t('validation.passwordRequired'), trigger: 'blur' },
+    { min: 6, max: 32, message: t('validation.passwordLength'), trigger: 'blur' }
   ]
-}
+}))
 
 // 注册成功跳回时,预填用户名
 onMounted(() => {
@@ -42,7 +45,7 @@ async function handleSubmit(): Promise<void> {
   loading.value = true
   try {
     await authStore.login({ ...form })
-    ElMessage.success('登录成功')
+    ElMessage.success(t('login.success'))
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     await router.replace(redirect)
   } catch {
@@ -56,7 +59,7 @@ async function handleSubmit(): Promise<void> {
 <template>
   <div class="auth-page">
     <div class="auth-box">
-      <div class="auth-title">欢迎回来</div>
+      <div class="auth-title">{{ $t('login.title') }}</div>
 
       <el-form
         ref="formRef"
@@ -66,26 +69,28 @@ async function handleSubmit(): Promise<void> {
         size="large"
         @keyup.enter="handleSubmit"
       >
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" placeholder="请输入用户名" clearable autocomplete="username" />
+        <el-form-item :label="$t('login.username')" prop="username">
+          <el-input v-model="form.username" :placeholder="$t('login.usernamePlaceholder')" clearable autocomplete="username" />
         </el-form-item>
 
-        <el-form-item label="密码" prop="password">
+        <el-form-item :label="$t('login.password')" prop="password">
           <el-input
             v-model="form.password"
             type="password"
-            placeholder="请输入密码"
+            :placeholder="$t('login.passwordPlaceholder')"
             show-password
             autocomplete="current-password"
           />
         </el-form-item>
 
-        <el-button type="primary" class="auth-btn" :loading="loading" @click="handleSubmit">登录</el-button>
+        <el-button type="primary" class="auth-btn" :loading="loading" @click="handleSubmit">
+          {{ $t('login.submit') }}
+        </el-button>
       </el-form>
 
       <div class="auth-link">
-        <span>没有账号?</span>
-        <el-link type="primary" @click="router.push('/register')">去注册</el-link>
+        <span>{{ $t('login.noAccount') }}</span>
+        <el-link type="primary" @click="router.push('/register')">{{ $t('login.goRegister') }}</el-link>
       </div>
     </div>
   </div>

@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 const loading = ref(false)
 const formRef = ref<FormInstance>()
@@ -16,22 +18,23 @@ const form = reactive({
   confirmPassword: ''
 })
 
-const rules: FormRules = {
+// 校验文案跟随语言,切换语言后重新生成
+const rules = computed<FormRules>(() => ({
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 2, max: 20, message: '用户名长度为 2-20 个字符', trigger: 'blur' }
+    { required: true, message: t('validation.usernameRequired'), trigger: 'blur' },
+    { min: 2, max: 20, message: t('validation.usernameLength'), trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 32, message: '密码长度为 6-32 个字符', trigger: 'blur' }
+    { required: true, message: t('validation.passwordRequired'), trigger: 'blur' },
+    { min: 6, max: 32, message: t('validation.passwordLength'), trigger: 'blur' }
   ],
   confirmPassword: [
     {
       validator: (_rule, value, callback) => {
         if (!value) {
-          callback(new Error('请再次输入密码'))
+          callback(new Error(t('validation.confirmRequired')))
         } else if (value !== form.password) {
-          callback(new Error('两次输入的密码不一致'))
+          callback(new Error(t('validation.confirmMismatch')))
         } else {
           callback()
         }
@@ -39,7 +42,7 @@ const rules: FormRules = {
       trigger: 'blur'
     }
   ]
-}
+}))
 
 async function handleSubmit(): Promise<void> {
   if (!formRef.value) return
@@ -49,7 +52,7 @@ async function handleSubmit(): Promise<void> {
   loading.value = true
   try {
     await authStore.register({ username: form.username, password: form.password })
-    ElMessage.success('注册成功,请登录')
+    ElMessage.success(t('register.success'))
     await router.replace({ name: 'login', query: { username: form.username } })
   } catch {
     // 错误提示已在 axios 拦截器统一处理
@@ -62,7 +65,7 @@ async function handleSubmit(): Promise<void> {
 <template>
   <div class="auth-page">
     <div class="auth-box">
-      <div class="auth-title">创建账号</div>
+      <div class="auth-title">{{ $t('register.title') }}</div>
 
       <el-form
         ref="formRef"
@@ -72,36 +75,38 @@ async function handleSubmit(): Promise<void> {
         size="large"
         @keyup.enter="handleSubmit"
       >
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" placeholder="2-20 个字符" clearable autocomplete="username" />
+        <el-form-item :label="$t('register.username')" prop="username">
+          <el-input v-model="form.username" :placeholder="$t('register.usernamePlaceholder')" clearable autocomplete="username" />
         </el-form-item>
 
-        <el-form-item label="密码" prop="password">
+        <el-form-item :label="$t('register.password')" prop="password">
           <el-input
             v-model="form.password"
             type="password"
-            placeholder="6-32 个字符"
+            :placeholder="$t('register.passwordPlaceholder')"
             show-password
             autocomplete="new-password"
           />
         </el-form-item>
 
-        <el-form-item label="确认密码" prop="confirmPassword">
+        <el-form-item :label="$t('register.confirmPassword')" prop="confirmPassword">
           <el-input
             v-model="form.confirmPassword"
             type="password"
-            placeholder="请再次输入密码"
+            :placeholder="$t('register.confirmPlaceholder')"
             show-password
             autocomplete="new-password"
           />
         </el-form-item>
 
-        <el-button type="primary" class="auth-btn" :loading="loading" @click="handleSubmit">注册</el-button>
+        <el-button type="primary" class="auth-btn" :loading="loading" @click="handleSubmit">
+          {{ $t('register.submit') }}
+        </el-button>
       </el-form>
 
       <div class="auth-link">
-        <span>已有账号?</span>
-        <el-link type="primary" @click="router.push('/login')">去登录</el-link>
+        <span>{{ $t('register.hasAccount') }}</span>
+        <el-link type="primary" @click="router.push('/login')">{{ $t('register.goLogin') }}</el-link>
       </div>
     </div>
   </div>

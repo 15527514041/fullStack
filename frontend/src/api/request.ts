@@ -1,5 +1,6 @@
 import axios, { AxiosError, type AxiosInstance, type AxiosRequestConfig } from 'axios'
 import { ElMessage } from 'element-plus'
+import i18n from '@/lang'
 import { getToken, removeToken } from '@/utils/auth'
 
 const service: AxiosInstance = axios.create({
@@ -23,13 +24,13 @@ service.interceptors.response.use(
   (response) => response.data,
   (error: AxiosError<{ message?: string }>) => {
     const status = error.response?.status
-    const message = error.response?.data?.message || error.message || '请求失败,请稍后重试'
+    const message = error.response?.data?.message || error.message || i18n.global.t('request.failed')
 
     if (status === 401) {
       removeToken()
       if (!redirecting) {
         redirecting = true
-        ElMessage.error('登录状态已过期,请重新登录')
+        ElMessage.error(i18n.global.t('request.expired'))
         const current = window.location.pathname + window.location.search
         if (!current.startsWith('/login')) {
           window.location.href = `/login?redirect=${encodeURIComponent(current)}`

@@ -1,0 +1,152 @@
+export default {
+  common: {
+    search: 'Search',
+    reset: 'Reset',
+    add: 'Add',
+    edit: 'Edit',
+    delete: 'Delete',
+    cancel: 'Cancel',
+    confirm: 'Confirm',
+    tip: 'Notice',
+    restore: 'Restore',
+    optional: 'Optional',
+    createdAt: 'Created at',
+    actions: 'Actions',
+    enabled: 'On',
+    disabled: 'Off',
+    roleAdmin: 'Admin',
+    roleUser: 'User'
+  },
+  navbar: {
+    defaultUser: 'User',
+    language: 'Language',
+    changeAvatar: 'Change avatar',
+    logout: 'Sign out',
+    logoutConfirm: 'Are you sure you want to sign out?',
+    collapse: 'Collapse',
+    avatarTypeError: 'Please choose an image file',
+    avatarSizeError: 'Image must be smaller than 2MB',
+    avatarUpdated: 'Avatar updated'
+  },
+  lang: {
+    zh: '中文',
+    en: 'English',
+    switched: 'Language switched'
+  },
+  menu: {
+    tasksGroup: 'Tasks',
+    todoList: 'TODO List',
+    trash: 'Trash',
+    tags: 'Tags',
+    accountGroup: 'Account & Access',
+    users: 'Users',
+    ledgerGroup: 'Ledger (planned)',
+    transactions: 'Transactions',
+    funds: 'Funds',
+    settingsGroup: 'Settings (planned)',
+    systemSettings: 'System settings'
+  },
+  login: {
+    title: 'Welcome back',
+    username: 'Username',
+    password: 'Password',
+    usernamePlaceholder: 'Enter your username',
+    passwordPlaceholder: 'Enter your password',
+    submit: 'Sign in',
+    noAccount: 'No account yet?',
+    goRegister: 'Sign up',
+    success: 'Signed in successfully'
+  },
+  register: {
+    title: 'Create account',
+    username: 'Username',
+    password: 'Password',
+    confirmPassword: 'Confirm password',
+    usernamePlaceholder: '2-20 characters',
+    passwordPlaceholder: '6-32 characters',
+    confirmPlaceholder: 'Enter the password again',
+    submit: 'Sign up',
+    hasAccount: 'Already have an account?',
+    goLogin: 'Sign in',
+    success: 'Registered successfully, please sign in'
+  },
+  validation: {
+    usernameRequired: 'Please enter a username',
+    usernameLength: 'Username must be 2-20 characters',
+    passwordRequired: 'Please enter a password',
+    passwordLength: 'Password must be 6-32 characters',
+    confirmRequired: 'Please enter the password again',
+    confirmMismatch: 'The two passwords do not match',
+    todoTitleRequired: 'Please enter TODO content',
+    todoTitleLength: 'Cannot exceed 100 characters',
+    tagNameRequired: 'Please enter a tag name',
+    tagNameLength: 'Tag name must be 1-20 characters'
+  },
+  todo: {
+    title: 'TODO List',
+    searchPlaceholder: 'Search TODO',
+    tagFilterPlaceholder: 'Filter by tag',
+    addButton: 'Add TODO',
+    colDone: 'Done',
+    colTitle: 'Content',
+    colTags: 'Tags',
+    empty: 'No TODO yet, click "Add TODO" to create one',
+    deleteConfirm: 'Delete "{title}"? You can restore it from the trash.',
+    deleted: 'Moved to trash',
+    created: 'Added successfully',
+    saved: 'Saved',
+    dialogAdd: 'Add TODO',
+    dialogEdit: 'Edit TODO',
+    formTitle: 'Content',
+    formTags: 'Tags',
+    titlePlaceholder: 'Enter TODO content'
+  },
+  trash: {
+    title: 'Trash',
+    tip: 'Deleted TODOs are still stored in the database. Click "Restore" to bring one back.',
+    colTitle: 'Content',
+    colTags: 'Tags',
+    colDeletedAt: 'Deleted at',
+    empty: 'Trash is empty',
+    restored: 'Restored'
+  },
+  tag: {
+    title: 'Tags',
+    addButton: 'New tag',
+    colName: 'Name',
+    colTodoCount: 'TODOs',
+    empty: 'No tags yet, click "New tag" to create one',
+    dialogTitle: 'New tag',
+    namePlaceholder: 'e.g. Work / Urgent',
+    created: 'Tag created',
+    deleted: 'Deleted',
+    deleteConfirm: 'Delete tag "{name}"? It will be removed from all TODOs.'
+  },
+  userAdmin: {
+    title: 'Users',
+    searchPlaceholder: 'Search username',
+    tip: 'Note: you cannot change your own role or status, to avoid locking yourself out.',
+    colId: 'ID',
+    colUsername: 'Username',
+    colRole: 'Role',
+    colStatus: 'Status',
+    colTodoCount: 'TODOs',
+    colCreatedAt: 'Registered at',
+    empty: 'No users',
+    roleUpdated: '{name} is now {role}',
+    banned: '{name} has been disabled',
+    activated: '{name} has been enabled'
+  },
+  request: {
+    failed: 'Request failed, please try again later',
+    expired: 'Your session has expired, please sign in again'
+  },
+  route: {
+    login: 'Sign in',
+    register: 'Sign up',
+    todos: 'TODO List',
+    trash: 'Trash',
+    tags: 'Tags',
+    users: 'Users'
+  }
+}

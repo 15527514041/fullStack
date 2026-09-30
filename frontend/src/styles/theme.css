@@ -126,6 +126,44 @@ body {
 
 /* ================= 弹窗(参考 client 全局 el-dialog 样式) ================= */
 
+/* ================= 统一 tooltip(参考 client 全局 tooltip 覆盖) ================= */
+
+/* 菜单项 hover 与语言切换 hover 共用同一套气泡样式,避免两处不一致 */
+.app-tooltip.el-popper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  padding: 0 15px;
+  border: none;
+  border-radius: 14px;
+  background: var(--color-bg-card);
+  box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.08);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--color-text-1);
+  box-sizing: border-box;
+}
+
+/* 覆盖 Element Plus 深/浅两种效果的默认底色 */
+.app-tooltip.el-popper.is-dark,
+.app-tooltip.el-popper.is-light {
+  border: none;
+  background: var(--color-bg-card);
+  color: var(--color-text-1);
+}
+
+.app-tooltip.el-popper .el-popper__arrow {
+  display: none;
+}
+
+/* 菜单 tooltip 复用了菜单的 #title 插槽,需重置左外边距,否则文字偏右 */
+.app-tooltip.el-popper .menu-title {
+  margin-left: 0 !important;
+  display: inline-block;
+  line-height: 20px;
+}
+
 /* 弹窗垂直居中(EP 默认是从顶部 15vh 开始) */
 .el-overlay-dialog {
   display: flex;
@@ -222,6 +260,17 @@ body {
 
 .page-header .page-title {
   margin-bottom: 0;
+}
+
+/* 标题下的副标题(参考 client 收款方管理标题下的 desc) */
+.page-header .page-title + .page-subtitle {
+  margin-top: 8px;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--color-text-3);
 }
 
 .page-header .el-button {

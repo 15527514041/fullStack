@@ -1,0 +1,152 @@
+export default {
+  common: {
+    search: '查询',
+    reset: '重置',
+    add: '添加',
+    edit: '编辑',
+    delete: '删除',
+    cancel: '取消',
+    confirm: '确定',
+    tip: '提示',
+    restore: '恢复',
+    optional: '可选',
+    createdAt: '创建时间',
+    actions: '操作',
+    enabled: '启用',
+    disabled: '禁用',
+    roleAdmin: '管理员',
+    roleUser: '普通用户'
+  },
+  navbar: {
+    defaultUser: '用户',
+    language: '语言',
+    changeAvatar: '更换头像',
+    logout: '退出登录',
+    logoutConfirm: '确定要退出登录吗?',
+    collapse: '折叠',
+    avatarTypeError: '请选择图片文件',
+    avatarSizeError: '图片不能超过 2MB',
+    avatarUpdated: '头像已更新'
+  },
+  lang: {
+    zh: '中文',
+    en: 'English',
+    switched: '语言切换成功'
+  },
+  menu: {
+    tasksGroup: '任务管理',
+    todoList: 'TODO 列表',
+    trash: '回收站',
+    tags: '标签管理',
+    accountGroup: '账号与权限',
+    users: '用户管理',
+    ledgerGroup: '记账(规划中)',
+    transactions: '交易查询',
+    funds: '资金操作',
+    settingsGroup: '通用配置(规划中)',
+    systemSettings: '系统设置'
+  },
+  login: {
+    title: '欢迎回来',
+    username: '用户名',
+    password: '密码',
+    usernamePlaceholder: '请输入用户名',
+    passwordPlaceholder: '请输入密码',
+    submit: '登录',
+    noAccount: '没有账号?',
+    goRegister: '去注册',
+    success: '登录成功'
+  },
+  register: {
+    title: '创建账号',
+    username: '用户名',
+    password: '密码',
+    confirmPassword: '确认密码',
+    usernamePlaceholder: '2-20 个字符',
+    passwordPlaceholder: '6-32 个字符',
+    confirmPlaceholder: '请再次输入密码',
+    submit: '注册',
+    hasAccount: '已有账号?',
+    goLogin: '去登录',
+    success: '注册成功,请登录'
+  },
+  validation: {
+    usernameRequired: '请输入用户名',
+    usernameLength: '用户名长度为 2-20 个字符',
+    passwordRequired: '请输入密码',
+    passwordLength: '密码长度为 6-32 个字符',
+    confirmRequired: '请再次输入密码',
+    confirmMismatch: '两次输入的密码不一致',
+    todoTitleRequired: '请输入 TODO 内容',
+    todoTitleLength: '长度不能超过 100 个字符',
+    tagNameRequired: '请输入标签名',
+    tagNameLength: '标签名长度为 1-20 个字符'
+  },
+  todo: {
+    title: 'TODO 列表',
+    searchPlaceholder: '搜索 TODO',
+    tagFilterPlaceholder: '按标签筛选',
+    addButton: '添加 TODO',
+    colDone: '完成',
+    colTitle: '内容',
+    colTags: '标签',
+    empty: '还没有 TODO,点击「添加 TODO」创建一条',
+    deleteConfirm: '确定删除「{title}」吗?删除后可在回收站恢复',
+    deleted: '已移入回收站',
+    created: '添加成功',
+    saved: '已保存',
+    dialogAdd: '添加 TODO',
+    dialogEdit: '编辑 TODO',
+    formTitle: '内容',
+    formTags: '标签',
+    titlePlaceholder: '请输入 TODO 内容'
+  },
+  trash: {
+    title: '回收站',
+    tip: '回收站里的 TODO 仍然保存在数据库中,点击「恢复」即可回到列表。',
+    colTitle: '内容',
+    colTags: '标签',
+    colDeletedAt: '删除时间',
+    empty: '回收站是空的',
+    restored: '已恢复'
+  },
+  tag: {
+    title: '标签管理',
+    addButton: '新建标签',
+    colName: '标签名',
+    colTodoCount: '关联 TODO',
+    empty: '还没有标签,点击「新建标签」创建',
+    dialogTitle: '新建标签',
+    namePlaceholder: '例如:工作 / 紧急',
+    created: '标签已创建',
+    deleted: '已删除',
+    deleteConfirm: '确定删除标签「{name}」吗?删除后 TODO 上的该标签会一并移除'
+  },
+  userAdmin: {
+    title: '用户管理',
+    searchPlaceholder: '搜索用户名',
+    tip: '提示:不能修改自己的角色和状态,避免把自己锁死。',
+    colId: 'ID',
+    colUsername: '用户名',
+    colRole: '角色',
+    colStatus: '状态',
+    colTodoCount: 'TODO 数量',
+    colCreatedAt: '注册时间',
+    empty: '暂无用户',
+    roleUpdated: '已将「{name}」设为{role}',
+    banned: '已禁用「{name}」',
+    activated: '已启用「{name}」'
+  },
+  request: {
+    failed: '请求失败,请稍后重试',
+    expired: '登录状态已过期,请重新登录'
+  },
+  route: {
+    login: '登录',
+    register: '注册',
+    todos: 'TODO 列表',
+    trash: '回收站',
+    tags: '标签管理',
+    users: '用户管理'
+  }
+}

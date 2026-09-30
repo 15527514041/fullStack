@@ -2,15 +2,18 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowDown, Expand, Fold, Picture, SwitchButton } from '@element-plus/icons-vue'
+import { ArrowDown, Expand, Fold } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import MenuIcon from '@/components/MenuIcon.vue'
 import LogoMark from '@/components/LogoMark.vue'
+import LangSelect from '@/components/LangSelect.vue'
 import { uploadAvatar } from '@/api/user'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 const collapsed = ref(false)
 const userPanelVisible = ref(false)
@@ -30,27 +33,27 @@ interface MenuItem {
 const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
   const groups = [
     {
-      title: '任务管理',
+      title: t('menu.tasksGroup'),
       items: [
-        { path: '/', title: 'TODO 列表', icon: 'tasks' },
-        { path: '/trash', title: '回收站', icon: 'trash' },
-        { path: '/tags', title: '标签管理', icon: 'tag' }
+        { path: '/', title: t('menu.todoList'), icon: 'tasks' },
+        { path: '/trash', title: t('menu.trash'), icon: 'trash' },
+        { path: '/tags', title: t('menu.tags'), icon: 'tag' }
       ]
     },
     {
-      title: '账号与权限',
-      items: authStore.isAdmin ? [{ path: '/admin', title: '用户管理', icon: 'users' }] : []
+      title: t('menu.accountGroup'),
+      items: authStore.isAdmin ? [{ path: '/admin', title: t('menu.users'), icon: 'users' }] : []
     },
     {
-      title: '记账(规划中)',
+      title: t('menu.ledgerGroup'),
       items: [
-        { path: 'plan-transactions', title: '交易查询', icon: 'search', disabled: true },
-        { path: 'plan-funds', title: '资金操作', icon: 'wallet', disabled: true }
+        { path: 'plan-transactions', title: t('menu.transactions'), icon: 'search', disabled: true },
+        { path: 'plan-funds', title: t('menu.funds'), icon: 'wallet', disabled: true }
       ]
     },
     {
-      title: '通用配置(规划中)',
-      items: [{ path: 'plan-settings', title: '系统设置', icon: 'settings', disabled: true }]
+      title: t('menu.settingsGroup'),
+      items: [{ path: 'plan-settings', title: t('menu.systemSettings'), icon: 'settings', disabled: true }]
     }
   ]
 
@@ -73,12 +76,12 @@ async function handleAvatarChange(event: Event): Promise<void> {
   if (!file) return
 
   if (!file.type.startsWith('image/')) {
-    ElMessage.warning('请选择图片文件')
+    ElMessage.warning(t('navbar.avatarTypeError'))
     input.value = ''
     return
   }
   if (file.size > 2 * 1024 * 1024) {
-    ElMessage.warning('图片不能超过 2MB')
+    ElMessage.warning(t('navbar.avatarSizeError'))
     input.value = ''
     return
   }
@@ -86,7 +89,7 @@ async function handleAvatarChange(event: Event): Promise<void> {
   try {
     const result = await uploadAvatar(file)
     authStore.setAvatar(result.avatarUrl)
-    ElMessage.success('头像已更新')
+    ElMessage.success(t('navbar.avatarUpdated'))
   } catch {
     // 错误提示已在 axios 拦截器统一处理
   } finally {
@@ -101,10 +104,10 @@ function handleChangeAvatar(): void {
 
 async function handleLogout(): Promise<void> {
   try {
-    await ElMessageBox.confirm('确定要退出登录吗?', '提示', {
+    await ElMessageBox.confirm(t('navbar.logoutConfirm'), t('common.tip'), {
       showClose: false,
-      confirmButtonText: '确定',
-      cancelButtonText: '取消'
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel')
     })
   } catch {
     return // 用户取消
@@ -135,6 +138,11 @@ onUnmounted(() => {
       </div>
 
       <div class="navbar-right">
+        <LangSelect />
+
+        <!-- 语言切换与个人头像之间的分隔线(参考 client) -->
+        <span class="menu-divider" />
+
         <el-popover
           v-model:visible="userPanelVisible"
           trigger="click"
@@ -146,7 +154,7 @@ onUnmounted(() => {
           <template #reference>
             <div class="user-trigger">
               <el-avatar :size="34" :src="avatarUrl" class="user-avatar">{{ usernameInitial }}</el-avatar>
-              <span class="username">{{ authStore.user?.username || '用户' }}</span>
+              <span class="username">{{ authStore.user?.username || $t('navbar.defaultUser') }}</span>
               <el-icon class="chevron"><ArrowDown /></el-icon>
             </div>
           </template>
@@ -155,19 +163,19 @@ onUnmounted(() => {
             <div class="user-panel-info">
               <el-avatar :size="48" :src="avatarUrl" class="user-avatar">{{ usernameInitial }}</el-avatar>
               <div class="user-meta">
-                <div class="user-name">{{ authStore.user?.username || '用户' }}</div>
-                <div class="user-role">{{ authStore.isAdmin ? '管理员' : '普通用户' }}</div>
+                <div class="user-name">{{ authStore.user?.username || $t('navbar.defaultUser') }}</div>
+                <div class="user-role">{{ authStore.isAdmin ? $t('common.roleAdmin') : $t('common.roleUser') }}</div>
               </div>
             </div>
 
             <div class="user-panel-menu">
               <div class="panel-item" @click="handleChangeAvatar">
-                <el-icon><Picture /></el-icon>
-                <span>更换头像</span>
+                <MenuIcon name="avatar" :size="16" />
+                <span>{{ $t('navbar.changeAvatar') }}</span>
               </div>
               <div class="panel-item is-danger" @click="handleLogout">
-                <el-icon><SwitchButton /></el-icon>
-                <span>退出登录</span>
+                <MenuIcon name="logout" :size="16" />
+                <span>{{ $t('navbar.logout') }}</span>
               </div>
             </div>
           </div>
@@ -186,7 +194,7 @@ onUnmounted(() => {
           :collapse-transition="false"
           router
           class="sidebar-menu"
-          popper-class="sidebar-tooltip"
+          popper-class="app-tooltip"
         >
           <template v-for="group in menus" :key="group.title">
             <div class="menu-group-title">{{ group.title }}</div>
@@ -206,7 +214,7 @@ onUnmounted(() => {
 
         <div class="sidebar-toggle" @click="collapsed = !collapsed">
           <el-icon :size="22"><component :is="collapsed ? Expand : Fold" /></el-icon>
-          <span v-if="!collapsed" class="toggle-text">折叠</span>
+          <span v-if="!collapsed" class="toggle-text">{{ $t('navbar.collapse') }}</span>
         </div>
       </aside>
 
@@ -272,6 +280,15 @@ onUnmounted(() => {
   justify-content: flex-end;
   gap: 12px;
   min-width: 0;
+}
+
+/* 语言切换 ↔ 个人头像 的分隔线(参考 client) */
+.menu-divider {
+  width: 1px;
+  height: 32px;
+  margin: 0 8px;
+  flex-shrink: 0;
+  background-color: #f1f1f1;
 }
 
 /* 右上角用户触发区(参考 client:头像 + 昵称 + 下箭头) */
@@ -532,39 +549,6 @@ onUnmounted(() => {
 </style>
 
 <style>
-/* 折叠菜单 hover 的 tooltip(参考 client 的 sidebar-popper) */
-.sidebar-tooltip.el-popper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 50px;
-  padding: 0 15px;
-  border: none;
-  border-radius: 14px;
-  background: var(--color-bg-card);
-  box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.08);
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--color-text-1);
-  box-sizing: border-box;
-}
-
-.sidebar-tooltip.el-popper.is-dark {
-  background: var(--color-bg-card);
-  color: var(--color-text-1);
-}
-
-.sidebar-tooltip.el-popper .el-popper__arrow {
-  display: none;
-}
-
-/* tooltip 复用了菜单的 #title 插槽,需重置菜单项里的左外边距,否则文字偏右 */
-.sidebar-tooltip.el-popper .menu-title {
-  margin-left: 0 !important;
-  display: inline-block;
-  line-height: 20px;
-}
-
 /* 右上角用户下拉面板(参考 client) */
 .user-dropdown-popper.el-popover {
   --el-popover-padding: 0;

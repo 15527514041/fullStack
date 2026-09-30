@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import i18n from '@/lang'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -10,7 +11,7 @@ const routes: RouteRecordRaw[] = [
         path: '',
         name: 'login',
         component: () => import('@/views/LoginView.vue'),
-        meta: { title: '登录' }
+        meta: { titleKey: 'route.login' }
       }
     ]
   },
@@ -22,7 +23,7 @@ const routes: RouteRecordRaw[] = [
         path: '',
         name: 'register',
         component: () => import('@/views/RegisterView.vue'),
-        meta: { title: '注册' }
+        meta: { titleKey: 'route.register' }
       }
     ]
   },
@@ -35,25 +36,25 @@ const routes: RouteRecordRaw[] = [
         path: '',
         name: 'todos',
         component: () => import('@/views/TodoView.vue'),
-        meta: { title: 'TODO 列表', requiresAuth: true }
+        meta: { titleKey: 'route.todos', requiresAuth: true }
       },
       {
         path: 'trash',
         name: 'trash',
         component: () => import('@/views/TrashView.vue'),
-        meta: { title: '回收站', requiresAuth: true }
+        meta: { titleKey: 'route.trash', requiresAuth: true }
       },
       {
         path: 'tags',
         name: 'tags',
         component: () => import('@/views/TagsView.vue'),
-        meta: { title: '标签管理', requiresAuth: true }
+        meta: { titleKey: 'route.tags', requiresAuth: true }
       },
       {
         path: 'admin',
         name: 'admin',
         component: () => import('@/views/AdminView.vue'),
-        meta: { title: '用户管理', requiresAuth: true, requiresAdmin: true }
+        meta: { titleKey: 'route.users', requiresAuth: true, requiresAdmin: true }
       }
     ]
   },
@@ -85,11 +86,15 @@ router.beforeEach((to) => {
   }
 })
 
-// 全局后置守卫:同步页面标题
-router.afterEach((to) => {
+// 同步页面标题(切语言时由 App.vue 再调一次)
+export function syncDocumentTitle(): void {
+  const to = router.currentRoute.value
   const base = 'Confluo'
-  const title = typeof to.meta.title === 'string' ? to.meta.title : ''
-  document.title = title ? `${title} - ${base}` : base
-})
+  const key = typeof to.meta.titleKey === 'string' ? to.meta.titleKey : ''
+  document.title = key ? `${i18n.global.t(key)} - ${base}` : base
+}
+
+// 全局后置守卫:同步页面标题
+router.afterEach(syncDocumentTitle)
 
 export default router

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import LogoMark from '@/components/LogoMark.vue'
+import LangSelect from '@/components/LangSelect.vue'
 </script>
 
 <template>
@@ -9,6 +10,10 @@ import LogoMark from '@/components/LogoMark.vue'
       <div class="navbar-left">
         <div class="logo-mark"><LogoMark /></div>
         <span class="logo-text">Confluo</span>
+      </div>
+
+      <div class="navbar-right">
+        <LangSelect />
       </div>
     </header>
 
@@ -42,6 +47,15 @@ import LogoMark from '@/components/LogoMark.vue'
   align-items: center;
   gap: 12px;
   padding-left: 28px;
+}
+
+/* 右侧语言切换 */
+.navbar-right {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
 }
 
 .logo-mark {

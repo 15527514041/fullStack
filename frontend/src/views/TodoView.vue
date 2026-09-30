@@ -2,9 +2,13 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { createTodo, deleteTodo, getTodos, updateTodo } from '@/api/todo'
 import { getTags } from '@/api/tags'
+import { formatDateTime } from '@/utils/datetime'
 import type { TagItem, Todo } from '@/types'
+
+const { t } = useI18n()
 
 const todos = ref<Todo[]>([])
 const tags = ref<TagItem[]>([])
@@ -28,17 +32,18 @@ const form = reactive({
   tagIds: [] as number[]
 })
 
-const dialogTitle = computed(() => (editingTodoId.value === null ? '添加 TODO' : '编辑 TODO'))
+const dialogTitle = computed(() => (editingTodoId.value === null ? t('todo.dialogAdd') : t('todo.dialogEdit')))
 
-const rules: FormRules = {
+// 校验文案跟随语言,切换语言后重新生成
+const rules = computed<FormRules>(() => ({
   title: [
     {
       required: true,
       validator: (_rule, value: string, callback) => {
         if (!value || !value.trim()) {
-          callback(new Error('请输入 TODO 内容'))
+          callback(new Error(t('validation.todoTitleRequired')))
         } else if (value.trim().length > 100) {
-          callback(new Error('长度不能超过 100 个字符'))
+          callback(new Error(t('validation.todoTitleLength')))
         } else {
           callback()
         }
@@ -46,7 +51,7 @@ const rules: FormRules = {
       trigger: 'blur'
     }
   ]
-}
+}))
 
 async function loadTags(): Promise<void> {
   try {
@@ -101,10 +106,10 @@ async function handleSubmit(): Promise<void> {
     const payload = { title: form.title.trim(), tagIds: form.tagIds }
     if (editingTodoId.value === null) {
       await createTodo(payload)
-      ElMessage.success('添加成功')
+      ElMessage.success(t('todo.created'))
     } else {
       await updateTodo(editingTodoId.value, payload)
-      ElMessage.success('已保存')
+      ElMessage.success(t('todo.saved'))
     }
     dialogVisible.value = false
     await loadTodos()
@@ -137,11 +142,11 @@ async function handleToggle(todo: Todo): Promise<void> {
 
 async function handleDelete(todo: Todo): Promise<void> {
   try {
-    await ElMessageBox.confirm(`确定删除「${todo.title}」吗?删除后可在回收站恢复`, '提示', {
+    await ElMessageBox.confirm(t('todo.deleteConfirm', { title: todo.title }), t('common.tip'), {
       type: 'warning',
       showClose: false,
-      confirmButtonText: '删除',
-      cancelButtonText: '取消'
+      confirmButtonText: t('common.delete'),
+      cancelButtonText: t('common.cancel')
     })
   } catch {
     return // 用户取消
@@ -149,7 +154,7 @@ async function handleDelete(todo: Todo): Promise<void> {
 
   try {
     await deleteTodo(todo.id)
-    ElMessage.success('已移入回收站')
+    ElMessage.success(t('todo.deleted'))
     await loadTodos()
   } catch {
     // 错误提示已在 axios 拦截器统一处理
@@ -165,17 +170,17 @@ onMounted(() => {
 <template>
   <div class="list-page">
     <div class="page-header">
-      <div class="page-title">TODO 列表</div>
+      <div class="page-title">{{ $t('todo.title') }}</div>
       <el-button type="primary" @click="openAddDialog">
         <el-icon><Plus /></el-icon>
-        添加 TODO
+        {{ $t('todo.addButton') }}
       </el-button>
     </div>
 
     <div class="filter-bar">
       <el-input
         v-model="query.keyword"
-        placeholder="搜索 TODO"
+        :placeholder="$t('todo.searchPlaceholder')"
         clearable
         class="search-input"
         @keyup.enter="handleSearch"
@@ -184,7 +189,7 @@ onMounted(() => {
 
       <el-select
         v-model="query.tagId"
-        placeholder="按标签筛选"
+        :placeholder="$t('todo.tagFilterPlaceholder')"
         clearable
         class="tag-select"
         @change="handleSearch"
@@ -192,46 +197,46 @@ onMounted(() => {
         <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
       </el-select>
 
-      <el-button type="primary" @click="handleSearch">查询</el-button>
-      <el-button class="reset-btn" @click="handleReset">重置</el-button>
+      <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
+      <el-button class="reset-btn" @click="handleReset">{{ $t('common.reset') }}</el-button>
     </div>
 
     <el-skeleton v-if="loading && todos.length === 0" :rows="6" animated class="list-skeleton" />
 
     <el-table v-else :data="todos">
-      <el-table-column label="完成" width="80" align="center">
+      <el-table-column :label="$t('todo.colDone')" width="80" align="center">
         <template #default="{ row }">
           <el-switch v-model="row.completed" @change="handleToggle(row)" />
         </template>
       </el-table-column>
 
-      <el-table-column label="内容" min-width="220">
+      <el-table-column :label="$t('todo.colTitle')" min-width="220">
         <template #default="{ row }">
           <span :class="{ 'todo-done': row.completed }">{{ row.title }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column label="标签" min-width="160">
+      <el-table-column :label="$t('todo.colTags')" min-width="160">
         <template #default="{ row }">
           <el-tag v-for="tag in row.tags" :key="tag.id" class="tag-item" type="info">{{ tag.name }}</el-tag>
         </template>
       </el-table-column>
 
-      <el-table-column label="创建时间" width="170">
+      <el-table-column :label="$t('common.createdAt')" width="170">
         <template #default="{ row }">
-          {{ new Date(row.createdAt).toLocaleString() }}
+          {{ formatDateTime(row.createdAt) }}
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" width="160" align="center">
+      <el-table-column :label="$t('common.actions')" width="160" align="center">
         <template #default="{ row }">
-          <el-button link type="primary" @click="openEditDialog(row)">编辑</el-button>
-          <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+          <el-button link type="primary" @click="openEditDialog(row)">{{ $t('common.edit') }}</el-button>
+          <el-button link type="danger" @click="handleDelete(row)">{{ $t('common.delete') }}</el-button>
         </template>
       </el-table-column>
 
       <template #empty>
-        <el-empty description="还没有 TODO,点击「添加 TODO」创建一条" />
+        <el-empty :description="$t('todo.empty')" />
       </template>
     </el-table>
 
@@ -249,24 +254,24 @@ onMounted(() => {
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="min(640px, 94vw)" :show-close="false">
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-        <el-form-item label="内容" prop="title">
+        <el-form-item :label="$t('todo.formTitle')" prop="title">
           <el-input
             v-model="form.title"
-            placeholder="请输入 TODO 内容"
+            :placeholder="$t('todo.titlePlaceholder')"
             maxlength="100"
             show-word-limit
             @keyup.enter="handleSubmit"
           />
         </el-form-item>
-        <el-form-item label="标签">
-          <el-select v-model="form.tagIds" multiple collapse-tags placeholder="可选" style="width: 100%">
+        <el-form-item :label="$t('todo.formTags')">
+          <el-select v-model="form.tagIds" multiple collapse-tags :placeholder="$t('common.optional')" style="width: 100%">
             <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
           </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
