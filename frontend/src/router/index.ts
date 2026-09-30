@@ -4,15 +4,27 @@ import { useAuthStore } from '@/stores/auth'
 const routes: RouteRecordRaw[] = [
   {
     path: '/login',
-    name: 'login',
-    component: () => import('@/views/LoginView.vue'),
-    meta: { title: '登录' }
+    component: () => import('@/layouts/AuthLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'login',
+        component: () => import('@/views/LoginView.vue'),
+        meta: { title: '登录' }
+      }
+    ]
   },
   {
     path: '/register',
-    name: 'register',
-    component: () => import('@/views/RegisterView.vue'),
-    meta: { title: '注册' }
+    component: () => import('@/layouts/AuthLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'register',
+        component: () => import('@/views/RegisterView.vue'),
+        meta: { title: '注册' }
+      }
+    ]
   },
   {
     path: '/',
@@ -75,7 +87,7 @@ router.beforeEach((to) => {
 
 // 全局后置守卫:同步页面标题
 router.afterEach((to) => {
-  const base = 'Fullstack TODO'
+  const base = 'Confluo'
   const title = typeof to.meta.title === 'string' ? to.meta.title : ''
   document.title = title ? `${title} - ${base}` : base
 })

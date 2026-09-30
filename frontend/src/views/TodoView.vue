@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { createTodo, deleteTodo, getTodos, updateTodo } from '@/api/todo'
 import { getTags } from '@/api/tags'
 import type { TagItem, Todo } from '@/types'
@@ -17,22 +18,22 @@ const query = reactive({
   tagId: undefined as number | undefined
 })
 
-const editingId = ref<number | null>(null)
-const editingTitle = ref('')
-const editingTagIds = ref<number[]>([])
-
-// 新增弹窗
-const addDialogVisible = ref(false)
+// 新增 / 编辑弹窗:editingTodoId 为 null 表示新增
+const dialogVisible = ref(false)
+const editingTodoId = ref<number | null>(null)
 const submitting = ref(false)
-const addFormRef = ref<FormInstance>()
-const addForm = reactive({
+const formRef = ref<FormInstance>()
+const form = reactive({
   title: '',
   tagIds: [] as number[]
 })
 
-const addRules: FormRules = {
+const dialogTitle = computed(() => (editingTodoId.value === null ? '添加 TODO' : '编辑 TODO'))
+
+const rules: FormRules = {
   title: [
     {
+      required: true,
       validator: (_rule, value: string, callback) => {
         if (!value || !value.trim()) {
           callback(new Error('请输入 TODO 内容'))
@@ -74,22 +75,38 @@ async function loadTodos(): Promise<void> {
 }
 
 function openAddDialog(): void {
-  addForm.title = ''
-  addForm.tagIds = []
-  addFormRef.value?.clearValidate()
-  addDialogVisible.value = true
+  editingTodoId.value = null
+  form.title = ''
+  form.tagIds = []
+  formRef.value?.clearValidate()
+  dialogVisible.value = true
 }
 
-async function handleAddSubmit(): Promise<void> {
-  if (!addFormRef.value) return
-  const valid = await addFormRef.value.validate().catch(() => false)
+// 编辑复用同一个弹窗:回显内容与标签
+function openEditDialog(todo: Todo): void {
+  editingTodoId.value = todo.id
+  form.title = todo.title
+  form.tagIds = (todo.tags || []).map((tag) => tag.id)
+  formRef.value?.clearValidate()
+  dialogVisible.value = true
+}
+
+async function handleSubmit(): Promise<void> {
+  if (!formRef.value) return
+  const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
 
   submitting.value = true
   try {
-    await createTodo({ title: addForm.title.trim(), tagIds: addForm.tagIds })
-    addDialogVisible.value = false
-    ElMessage.success('添加成功')
+    const payload = { title: form.title.trim(), tagIds: form.tagIds }
+    if (editingTodoId.value === null) {
+      await createTodo(payload)
+      ElMessage.success('添加成功')
+    } else {
+      await updateTodo(editingTodoId.value, payload)
+      ElMessage.success('已保存')
+    }
+    dialogVisible.value = false
     await loadTodos()
   } catch {
     // 错误提示已在 axios 拦截器统一处理
@@ -118,38 +135,11 @@ async function handleToggle(todo: Todo): Promise<void> {
   }
 }
 
-function startEdit(todo: Todo): void {
-  editingId.value = todo.id
-  editingTitle.value = todo.title
-  editingTagIds.value = (todo.tags || []).map((tag) => tag.id)
-}
-
-function cancelEdit(): void {
-  editingId.value = null
-  editingTitle.value = ''
-  editingTagIds.value = []
-}
-
-async function handleEditSave(todo: Todo): Promise<void> {
-  const title = editingTitle.value.trim()
-  if (!title) {
-    ElMessage.warning('内容不能为空')
-    return
-  }
-  try {
-    await updateTodo(todo.id, { title, tagIds: editingTagIds.value })
-    editingId.value = null
-    ElMessage.success('已保存')
-    await loadTodos()
-  } catch {
-    // 错误提示已在 axios 拦截器统一处理
-  }
-}
-
 async function handleDelete(todo: Todo): Promise<void> {
   try {
     await ElMessageBox.confirm(`确定删除「${todo.title}」吗?删除后可在回收站恢复`, '提示', {
       type: 'warning',
+      showClose: false,
       confirmButtonText: '删除',
       cancelButtonText: '取消'
     })
@@ -173,8 +163,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <el-card>
-    <div class="toolbar">
+  <div class="list-page">
+    <div class="page-header">
+      <div class="page-title">TODO 列表</div>
+      <el-button type="primary" @click="openAddDialog">
+        <el-icon><Plus /></el-icon>
+        添加 TODO
+      </el-button>
+    </div>
+
+    <div class="filter-bar">
       <el-input
         v-model="query.keyword"
         placeholder="搜索 TODO"
@@ -194,11 +192,13 @@ onMounted(() => {
         <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
       </el-select>
 
-      <el-button @click="handleReset">重置</el-button>
-      <el-button type="primary" @click="openAddDialog">添加 TODO</el-button>
+      <el-button type="primary" @click="handleSearch">查询</el-button>
+      <el-button class="reset-btn" @click="handleReset">重置</el-button>
     </div>
 
-    <el-table v-loading="loading" :data="todos" empty-text="还没有 TODO,点击「添加 TODO」创建一条">
+    <el-skeleton v-if="loading && todos.length === 0" :rows="6" animated class="list-skeleton" />
+
+    <el-table v-else :data="todos">
       <el-table-column label="完成" width="80" align="center">
         <template #default="{ row }">
           <el-switch v-model="row.completed" @change="handleToggle(row)" />
@@ -207,31 +207,13 @@ onMounted(() => {
 
       <el-table-column label="内容" min-width="220">
         <template #default="{ row }">
-          <el-input
-            v-if="editingId === row.id"
-            v-model="editingTitle"
-            size="small"
-            @keyup.enter="handleEditSave(row)"
-          />
-          <span v-else :class="{ 'todo-done': row.completed }">{{ row.title }}</span>
+          <span :class="{ 'todo-done': row.completed }">{{ row.title }}</span>
         </template>
       </el-table-column>
 
       <el-table-column label="标签" min-width="160">
         <template #default="{ row }">
-          <el-select
-            v-if="editingId === row.id"
-            v-model="editingTagIds"
-            multiple
-            size="small"
-            collapse-tags
-            placeholder="选择标签"
-          >
-            <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
-          </el-select>
-          <template v-else>
-            <el-tag v-for="tag in row.tags" :key="tag.id" class="tag-item" type="info">{{ tag.name }}</el-tag>
-          </template>
+          <el-tag v-for="tag in row.tags" :key="tag.id" class="tag-item" type="info">{{ tag.name }}</el-tag>
         </template>
       </el-table-column>
 
@@ -243,17 +225,17 @@ onMounted(() => {
 
       <el-table-column label="操作" width="160" align="center">
         <template #default="{ row }">
-          <el-button v-if="editingId !== row.id" link type="primary" @click="startEdit(row)">编辑</el-button>
-          <template v-else>
-            <el-button link type="primary" @click="handleEditSave(row)">保存</el-button>
-            <el-button link @click="cancelEdit">取消</el-button>
-          </template>
+          <el-button link type="primary" @click="openEditDialog(row)">编辑</el-button>
           <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
+
+      <template #empty>
+        <el-empty description="还没有 TODO,点击「添加 TODO」创建一条" />
+      </template>
     </el-table>
 
-    <div class="pagination">
+    <div v-if="todos.length > 0" class="pagination-container">
       <el-pagination
         v-model:current-page="query.page"
         v-model:page-size="query.pageSize"
@@ -265,57 +247,45 @@ onMounted(() => {
       />
     </div>
 
-    <el-dialog v-model="addDialogVisible" title="添加 TODO" width="min(480px, 92vw)">
-      <el-form ref="addFormRef" :model="addForm" :rules="addRules" label-width="60px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="min(640px, 94vw)" :show-close="false">
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="内容" prop="title">
           <el-input
-            v-model="addForm.title"
+            v-model="form.title"
             placeholder="请输入 TODO 内容"
             maxlength="100"
             show-word-limit
-            @keyup.enter="handleAddSubmit"
+            @keyup.enter="handleSubmit"
           />
         </el-form-item>
         <el-form-item label="标签">
-          <el-select v-model="addForm.tagIds" multiple collapse-tags placeholder="可选" style="width: 100%">
+          <el-select v-model="form.tagIds" multiple collapse-tags placeholder="可选" style="width: 100%">
             <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
           </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="addDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleAddSubmit">确定</el-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
-  </el-card>
+  </div>
 </template>
 
 <style scoped>
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
-}
 
 .search-input {
-  width: 220px;
+  width: 210px;
 }
 
 .tag-select {
-  width: 180px;
+  width: 210px;
 }
 
 .tag-item {
   margin-right: 6px;
 }
 
-.pagination {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  margin-top: 16px;
-}
 
 .todo-done {
   color: #909399;

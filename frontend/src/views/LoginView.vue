@@ -92,25 +92,27 @@ async function handleSubmit(): Promise<void> {
 </template>
 
 <style scoped>
+/* 一屏布局:空间够时垂直居中,不够时可滚动,不会被裁掉 */
 .auth-page {
-  min-height: 100vh;
+  height: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 20px;
+  /* 底部多留一个 navbar 高度(80px),把内容整体上移,视觉上相对"整屏"垂直居中 */
+  padding: 24px 20px 104px;
   background: #fff;
+  overflow-y: auto;
 }
 
 .auth-box {
   width: 100%;
-  max-width: 480px;
+  max-width: 420px;
+  margin: auto;
 }
 
 .auth-title {
   text-align: center;
   font-size: 28px;
   font-weight: bold;
-  margin: 16px 0 36px;
+  margin: 0 0 36px;
 }
 
 .auth-btn {
@@ -118,18 +120,30 @@ async function handleSubmit(): Promise<void> {
   height: 50px;
   border-radius: 16px;
   font-size: 16px;
+  margin-bottom: 20px;
 }
 
 .auth-link {
   display: flex;
   justify-content: center;
   gap: 4px;
-  margin-top: 20px;
   font-size: 14px;
-  color: #606266;
+  color: var(--color-text-2);
 }
 
+/* 外框 50px 走全局,内框 48px(和 client 登录页一致) */
 :deep(.el-input) {
   --el-input-height: 48px;
+}
+
+:deep(.el-form-item) {
+  margin-bottom: 30px;
+}
+
+/* 屏幕特别矮时压缩底部留白,减少滚动距离 */
+@media (max-height: 700px) {
+  .auth-page {
+    padding-bottom: 24px;
+  }
 }
 </style>

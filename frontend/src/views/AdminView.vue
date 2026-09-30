@@ -39,6 +39,12 @@ function handleSearch(): void {
   loadUsers()
 }
 
+function handleReset(): void {
+  query.keyword = ''
+  query.page = 1
+  loadUsers()
+}
+
 async function handleRoleChange(user: AdminUser): Promise<void> {
   try {
     await updateUserRole(user.id, user.role)
@@ -61,8 +67,9 @@ onMounted(loadUsers)
 </script>
 
 <template>
-  <el-card>
-    <div class="toolbar">
+  <div class="list-page">
+    <div class="page-title">用户管理</div>
+    <div class="filter-bar">
       <el-input
         v-model="query.keyword"
         placeholder="搜索用户名"
@@ -71,10 +78,13 @@ onMounted(loadUsers)
         @keyup.enter="handleSearch"
         @clear="handleSearch"
       />
-      <el-button type="primary" @click="handleSearch">搜索</el-button>
+      <el-button type="primary" @click="handleSearch">查询</el-button>
+      <el-button class="reset-btn" @click="handleReset">重置</el-button>
     </div>
 
-    <el-table v-loading="loading" :data="users" empty-text="暂无用户">
+    <el-skeleton v-if="loading && users.length === 0" :rows="6" animated class="list-skeleton" />
+
+    <el-table v-else :data="users">
       <el-table-column prop="id" label="ID" width="70" />
 
       <el-table-column prop="username" label="用户名" min-width="140" />
@@ -117,9 +127,13 @@ onMounted(loadUsers)
           {{ new Date(row.createdAt).toLocaleString() }}
         </template>
       </el-table-column>
+
+      <template #empty>
+        <el-empty description="暂无用户" />
+      </template>
     </el-table>
 
-    <div class="pagination">
+    <div v-if="users.length > 0" class="pagination-container">
       <el-pagination
         v-model:current-page="query.page"
         v-model:page-size="query.pageSize"
@@ -132,26 +146,15 @@ onMounted(loadUsers)
     </div>
 
     <p class="tip">提示:不能修改自己的角色和状态,避免把自己锁死。</p>
-  </el-card>
+  </div>
 </template>
 
 <style scoped>
-.toolbar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-}
 
 .search-input {
   width: 240px;
 }
 
-.pagination {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  margin-top: 16px;
-}
 
 .tip {
   margin: 12px 0 0;

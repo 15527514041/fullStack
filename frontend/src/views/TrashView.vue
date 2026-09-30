@@ -40,10 +40,13 @@ onMounted(loadTrash)
 </script>
 
 <template>
-  <el-card>
+  <div class="list-page">
+    <div class="page-title">回收站</div>
     <div class="tip">回收站里的 TODO 仍然保存在数据库中,点击「恢复」即可回到列表。</div>
 
-    <el-table v-loading="loading" :data="todos" empty-text="回收站是空的">
+    <el-skeleton v-if="loading && todos.length === 0" :rows="6" animated class="list-skeleton" />
+
+    <el-table v-else :data="todos">
       <el-table-column label="内容" min-width="240">
         <template #default="{ row }">
           <span class="title">{{ row.title }}</span>
@@ -67,9 +70,13 @@ onMounted(loadTrash)
           <el-button link type="primary" @click="handleRestore(row)">恢复</el-button>
         </template>
       </el-table-column>
+
+      <template #empty>
+        <el-empty description="回收站是空的" />
+      </template>
     </el-table>
 
-    <div class="pagination">
+    <div v-if="todos.length > 0" class="pagination-container">
       <el-pagination
         v-model:current-page="query.page"
         v-model:page-size="query.pageSize"
@@ -78,7 +85,7 @@ onMounted(loadTrash)
         @current-change="loadTrash"
       />
     </div>
-  </el-card>
+  </div>
 </template>
 
 <style scoped>
@@ -96,9 +103,4 @@ onMounted(loadTrash)
   margin-right: 6px;
 }
 
-.pagination {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
-}
 </style>

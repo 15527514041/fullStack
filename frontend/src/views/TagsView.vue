@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { createTag, deleteTag, getTags } from '@/api/tags'
 import type { TagItem } from '@/types'
 
@@ -58,6 +59,7 @@ async function handleDelete(tag: TagItem): Promise<void> {
   try {
     await ElMessageBox.confirm(`确定删除标签「${tag.name}」吗?删除后 TODO 上的该标签会一并移除`, '提示', {
       type: 'warning',
+      showClose: false,
       confirmButtonText: '删除',
       cancelButtonText: '取消'
     })
@@ -78,12 +80,18 @@ onMounted(loadTags)
 </script>
 
 <template>
-  <el-card>
-    <div class="toolbar">
-      <el-button type="primary" @click="openDialog">新建标签</el-button>
+  <div class="list-page">
+    <div class="page-header">
+      <div class="page-title">标签管理</div>
+      <el-button type="primary" @click="openDialog">
+        <el-icon><Plus /></el-icon>
+        新建标签
+      </el-button>
     </div>
 
-    <el-table v-loading="loading" :data="tags" empty-text="还没有标签,点击「新建标签」创建">
+    <el-skeleton v-if="loading && tags.length === 0" :rows="6" animated class="list-skeleton" />
+
+    <el-table v-else :data="tags">
       <el-table-column prop="name" label="标签名" min-width="200">
         <template #default="{ row }">
           <el-tag type="info">{{ row.name }}</el-tag>
@@ -105,10 +113,14 @@ onMounted(loadTags)
           <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
+
+      <template #empty>
+        <el-empty description="还没有标签,点击「新建标签」创建" />
+      </template>
     </el-table>
 
-    <el-dialog v-model="dialogVisible" title="新建标签" width="min(420px, 92vw)">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="70px">
+    <el-dialog v-model="dialogVisible" title="新建标签" width="min(640px, 94vw)" :show-close="false">
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="标签名" prop="name">
           <el-input v-model="form.name" placeholder="例如:工作 / 紧急" maxlength="20" show-word-limit @keyup.enter="handleSubmit" />
         </el-form-item>
@@ -118,11 +130,8 @@ onMounted(loadTags)
         <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
-  </el-card>
+  </div>
 </template>
 
 <style scoped>
-.toolbar {
-  margin-bottom: 16px;
-}
 </style>
