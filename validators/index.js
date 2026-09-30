@@ -46,7 +46,7 @@ const todoSchemas = {
     keyword: z.string().trim().optional(),
     completed: boolQuery.optional(),
     tagId: z.coerce.number().int().positive().optional(),
-    deleted: boolQuery.default(false)
+    deleted: boolQuery.optional()
   })
 }
 
