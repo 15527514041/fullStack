@@ -1,0 +1,62 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  test:
+    name: 测试
+    runs-on: ubuntu-latest
+
+    # GitHub 会给这个 job 起一个临时 PostgreSQL 容器
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: fullstack
+          POSTGRES_PASSWORD: fullstack_pass
+          POSTGRES_DB: fullstack_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://fullstack:fullstack_pass@127.0.0.1:5432/fullstack_test
+      JWT_SECRET: ci-test-secret-0123456789abcdef0123456789abcdef
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 建表(应用迁移)
+        run: npx prisma migrate deploy
+
+      - name: 跑测试
+        run: npm test
+
+  deploy:
+    name: 部署
+    needs: test                          # ← 测试不过,绝不部署
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: SSH 部署到服务器
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: bash /root/fullStack/deploy.sh
