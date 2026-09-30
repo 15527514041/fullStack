@@ -14,12 +14,15 @@ export default {
     actions: '操作',
     enabled: '启用',
     disabled: '禁用',
+    loading: '加载中…',
+    noMore: '没有更多了',
     roleAdmin: '管理员',
     roleUser: '普通用户'
   },
   navbar: {
     defaultUser: '用户',
     language: '语言',
+    menu: '菜单',
     changeAvatar: '更换头像',
     logout: '退出登录',
     logoutConfirm: '确定要退出登录吗?',

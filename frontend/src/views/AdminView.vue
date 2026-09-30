@@ -1,18 +1,24 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { getUsers, updateUserRole, updateUserStatus } from '@/api/admin'
 import { useAuthStore } from '@/stores/auth'
+import { useIsMobile } from '@/composables/useIsMobile'
+import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import { formatDateTime } from '@/utils/datetime'
 import type { AdminUser } from '@/types'
 
 const authStore = useAuthStore()
 const { t } = useI18n()
+const { isMobile } = useIsMobile()
 
 const users = ref<AdminUser[]>([])
 const total = ref(0)
 const loading = ref(false)
+const loadingMore = ref(false)
+const sentinelRef = ref<HTMLElement | null>(null)
+const hasMore = computed(() => users.value.length < total.value)
 
 const query = reactive({
   page: 1,
@@ -20,22 +26,32 @@ const query = reactive({
   keyword: ''
 })
 
-async function loadUsers(): Promise<void> {
-  loading.value = true
+async function loadUsers(append = false): Promise<void> {
+  if (append) loadingMore.value = true
+  else loading.value = true
   try {
     const result = await getUsers({
       page: query.page,
       pageSize: query.pageSize,
       keyword: query.keyword.trim() || undefined
     })
-    users.value = result.list
+    users.value = append ? [...users.value, ...result.list] : result.list
     total.value = result.total
   } catch {
-    // 错误提示已在 axios 拦截器统一处理
+    // 错误提示已在 axios 拦截器统一处理;追加失败时回退页码,避免漏数据
+    if (append && query.page > 1) query.page -= 1
   } finally {
     loading.value = false
+    loadingMore.value = false
   }
 }
+
+// 移动端:滑到底部自动加载下一页(替代分页器)
+useInfiniteScroll(sentinelRef, () => {
+  if (!isMobile.value || loading.value || loadingMore.value || !hasMore.value) return
+  query.page += 1
+  loadUsers(true)
+})
 
 function handleSearch(): void {
   query.page = 1
@@ -102,6 +118,51 @@ onMounted(loadUsers)
 
     <el-skeleton v-if="loading && users.length === 0" :rows="6" animated class="list-skeleton" />
 
+    <!-- 移动端:卡片列表(角色/状态直接在卡片里操作) -->
+    <div v-else-if="isMobile" class="card-list">
+      <el-empty v-if="users.length === 0" :description="$t('userAdmin.empty')" />
+
+      <div v-for="row in users" :key="row.id" class="list-card">
+        <div class="card-head">
+          <div class="card-title">{{ row.username }}</div>
+          <span class="card-id">#{{ row.id }}</span>
+        </div>
+
+        <div class="card-field">
+          <span class="card-field-label">{{ $t('userAdmin.colRole') }}</span>
+          <el-select
+            v-model="row.role"
+            size="small"
+            :disabled="row.id === authStore.user?.id"
+            style="width: 130px"
+            @change="handleRoleChange(row)"
+          >
+            <el-option :label="$t('common.roleUser')" value="USER" />
+            <el-option :label="$t('common.roleAdmin')" value="ADMIN" />
+          </el-select>
+        </div>
+
+        <div class="card-field">
+          <span class="card-field-label">{{ $t('userAdmin.colStatus') }}</span>
+          <el-switch
+            v-model="row.status"
+            active-value="ACTIVE"
+            inactive-value="BANNED"
+            :active-text="$t('common.enabled')"
+            :inactive-text="$t('common.disabled')"
+            inline-prompt
+            :disabled="row.id === authStore.user?.id"
+            @change="handleStatusChange(row)"
+          />
+        </div>
+
+        <div class="card-meta">
+          <span>{{ $t('userAdmin.colTodoCount') }}:{{ row._count.todos }}</span>
+          <span>{{ $t('userAdmin.colCreatedAt') }}:{{ formatDateTime(row.createdAt) }}</span>
+        </div>
+      </div>
+    </div>
+
     <el-table v-else :data="users">
       <el-table-column prop="id" :label="$t('userAdmin.colId')" width="70" />
 
@@ -151,7 +212,13 @@ onMounted(loadUsers)
       </template>
     </el-table>
 
-    <div v-if="users.length > 0" class="pagination-container">
+    <!-- 移动端:上拉加载(替代分页器) -->
+    <div v-if="isMobile" ref="sentinelRef" class="load-more-sentinel">
+      <span v-if="loadingMore">{{ $t('common.loading') }}</span>
+      <span v-else-if="!hasMore && users.length > 0">{{ $t('common.noMore') }}</span>
+    </div>
+
+    <div v-if="!isMobile && users.length > 0" class="pagination-container">
       <el-pagination
         v-model:current-page="query.page"
         v-model:page-size="query.pageSize"

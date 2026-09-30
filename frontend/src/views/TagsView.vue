@@ -4,10 +4,12 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'elem
 import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { createTag, deleteTag, getTags } from '@/api/tags'
+import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTime } from '@/utils/datetime'
 import type { TagItem } from '@/types'
 
 const { t } = useI18n()
+const { isMobile } = useIsMobile()
 
 const tags = ref<TagItem[]>([])
 const loading = ref(false)
@@ -96,6 +98,26 @@ onMounted(loadTags)
 
     <el-skeleton v-if="loading && tags.length === 0" :rows="6" animated class="list-skeleton" />
 
+    <!-- 移动端:卡片列表 -->
+    <div v-else-if="isMobile" class="card-list">
+      <el-empty v-if="tags.length === 0" :description="$t('tag.empty')" />
+
+      <div v-for="row in tags" :key="row.id" class="list-card">
+        <div class="card-head">
+          <el-tag type="info">{{ row.name }}</el-tag>
+          <span class="card-id">{{ $t('tag.colTodoCount') }}:{{ row._count ? row._count.todos : 0 }}</span>
+        </div>
+
+        <div class="card-meta">
+          <span>{{ $t('common.createdAt') }}:{{ formatDateTime(row.createdAt) }}</span>
+        </div>
+
+        <div class="card-actions">
+          <el-button link type="danger" @click="handleDelete(row)">{{ $t('common.delete') }}</el-button>
+        </div>
+      </div>
+    </div>
+
     <el-table v-else :data="tags">
       <el-table-column prop="name" :label="$t('tag.colName')" min-width="200">
         <template #default="{ row }">
@@ -113,7 +135,7 @@ onMounted(loadTags)
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('common.actions')" width="100" align="center">
+      <el-table-column :label="$t('common.actions')" width="100" align="center" fixed="right">
         <template #default="{ row }">
           <el-button link type="danger" @click="handleDelete(row)">{{ $t('common.delete') }}</el-button>
         </template>

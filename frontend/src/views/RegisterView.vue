@@ -113,12 +113,12 @@ async function handleSubmit(): Promise<void> {
 </template>
 
 <style scoped>
-/* 一屏布局:空间够时垂直居中,不够时可滚动,不会被裁掉 */
+/* 距顶部固定高度(不再垂直居中,避免随内容多少上下浮动);空间不够时可滚动 */
 .auth-page {
   height: 100%;
   display: flex;
-  /* 底部多留一个 navbar 高度(80px),把内容整体上移,视觉上相对"整屏"垂直居中 */
-  padding: 24px 20px 104px;
+  align-items: flex-start;
+  padding: 80px 20px 40px;
   background: #fff;
   overflow-y: auto;
 }
@@ -126,7 +126,8 @@ async function handleSubmit(): Promise<void> {
 .auth-box {
   width: 100%;
   max-width: 420px;
-  margin: auto;
+  /* 只做水平居中;垂直位置由上面的 padding-top 决定 */
+  margin: 0 auto;
 }
 
 .auth-title {
@@ -165,6 +166,22 @@ async function handleSubmit(): Promise<void> {
 @media (max-height: 700px) {
   .auth-page {
     padding-bottom: 24px;
+  }
+}
+
+/* 移动端:导航栏变矮,表单区域同步收紧 */
+@media (max-width: 768px) {
+  .auth-page {
+    padding: 80px 16px 32px;
+  }
+
+  .auth-title {
+    font-size: 24px;
+    margin-bottom: 28px;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 24px;
   }
 }
 </style>

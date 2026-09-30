@@ -14,12 +14,15 @@ export default {
     actions: 'Actions',
     enabled: 'On',
     disabled: 'Off',
+    loading: 'Loading…',
+    noMore: 'No more data',
     roleAdmin: 'Admin',
     roleUser: 'User'
   },
   navbar: {
     defaultUser: 'User',
     language: 'Language',
+    menu: 'Menu',
     changeAvatar: 'Change avatar',
     logout: 'Sign out',
     logoutConfirm: 'Are you sure you want to sign out?',

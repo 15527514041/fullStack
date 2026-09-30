@@ -82,8 +82,18 @@ import LangSelect from '@/components/LangSelect.vue'
 }
 
 @media (max-width: 768px) {
+  .navbar {
+    height: 64px;
+    padding: 0 12px 0 0;
+  }
+
   .navbar-left {
-    padding-left: 16px;
+    padding-left: 12px;
+    gap: 8px;
+  }
+
+  .logo-text {
+    font-size: 17px;
   }
 }
 </style>

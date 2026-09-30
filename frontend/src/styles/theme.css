@@ -3,6 +3,8 @@
 *::before,
 *::after {
   box-sizing: border-box;
+  /* 移动端点按不出现系统高亮块(蓝色方块),交互反馈由样式自己给 */
+  -webkit-tap-highlight-color: transparent;
 }
 
 /*
@@ -337,13 +339,182 @@ body {
 /* 移动端 */
 @media (max-width: 768px) {
   .list-page {
-    padding: 16px;
+    padding: 14px 12px;
     border-radius: 12px;
+    /* 列表超过一屏时,卡片要跟着长高,不能只包住首屏 */
+    height: auto;
+    min-height: 100%;
   }
 
   .page-title {
     font-size: 18px;
   }
+
+  /* 标题行:按钮独占一行、占满宽度,方便点按 */
+  .page-header {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .page-header .el-button {
+    width: 100%;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  /* 筛选栏:控件换行排布,按钮等分 */
+  .filter-bar {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .filter-bar .el-button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* 表格:压缩行高,减少移动端纵向占用 */
+  .el-table th.el-table__cell {
+    height: 44px;
+  }
+
+  .el-table td.el-table__cell {
+    padding: 10px 0;
+  }
+
+  /* 弹窗:小屏收紧内边距 */
+  .el-dialog {
+    --el-dialog-padding-primary: 18px;
+    padding: 18px 16px;
+  }
+
+  .el-dialog .el-dialog__header {
+    padding-bottom: 14px;
+    font-size: 18px;
+  }
+}
+
+/* ================= 移动端卡片列表(小屏替代表格,字段完整可读) ================= */
+
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.list-card {
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-bg-card);
+  box-shadow: 0 2px 8px rgba(19, 28, 39, 0.04);
+}
+
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+  color: var(--color-text-1);
+  word-break: break-word;
+}
+
+.card-title.is-done {
+  color: var(--color-text-3);
+  font-weight: 500;
+  text-decoration: line-through;
+}
+
+.card-id {
+  flex-shrink: 0;
+  padding-top: 3px;
+  font-size: 12px;
+  color: var(--color-text-3);
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-text-3);
+}
+
+.card-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 卡片内的「标签 + 值」行(用于下拉、开关等控件) */
+.card-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.card-field-label {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--color-text-3);
+}
+
+/* 操作区:不加分隔线,用带底色的胶囊按钮,更精致也更好点 */
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.card-actions .el-button {
+  height: 32px;
+  padding: 0 14px;
+  margin-left: 0;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  background: var(--color-bg-bottom);
+}
+
+.card-actions .el-button.el-button--primary {
+  color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+}
+
+.card-actions .el-button.el-button--danger {
+  color: var(--el-color-danger);
+  background: var(--color-danger-1);
+}
+
+/* 上拉加载更多 */
+.load-more-sentinel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  font-size: 12px;
+  color: var(--color-text-3);
 }
 
 /* ================= 表单控件全局样式(参考 client) ================= */

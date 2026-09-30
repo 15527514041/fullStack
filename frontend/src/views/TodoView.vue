@@ -5,15 +5,21 @@ import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { createTodo, deleteTodo, getTodos, updateTodo } from '@/api/todo'
 import { getTags } from '@/api/tags'
+import { useIsMobile } from '@/composables/useIsMobile'
+import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import { formatDateTime } from '@/utils/datetime'
 import type { TagItem, Todo } from '@/types'
 
 const { t } = useI18n()
+const { isMobile } = useIsMobile()
 
 const todos = ref<Todo[]>([])
 const tags = ref<TagItem[]>([])
 const total = ref(0)
 const loading = ref(false)
+const loadingMore = ref(false)
+const sentinelRef = ref<HTMLElement | null>(null)
+const hasMore = computed(() => todos.value.length < total.value)
 
 const query = reactive({
   page: 1,
@@ -61,8 +67,9 @@ async function loadTags(): Promise<void> {
   }
 }
 
-async function loadTodos(): Promise<void> {
-  loading.value = true
+async function loadTodos(append = false): Promise<void> {
+  if (append) loadingMore.value = true
+  else loading.value = true
   try {
     const result = await getTodos({
       page: query.page,
@@ -70,14 +77,23 @@ async function loadTodos(): Promise<void> {
       keyword: query.keyword.trim() || undefined,
       tagId: query.tagId
     })
-    todos.value = result.list
+    todos.value = append ? [...todos.value, ...result.list] : result.list
     total.value = result.total
   } catch {
-    // 错误提示已在 axios 拦截器统一处理
+    // 错误提示已在 axios 拦截器统一处理;追加失败时回退页码,避免漏数据
+    if (append && query.page > 1) query.page -= 1
   } finally {
     loading.value = false
+    loadingMore.value = false
   }
 }
+
+// 移动端:滑到底部自动加载下一页(替代分页器)
+useInfiniteScroll(sentinelRef, () => {
+  if (!isMobile.value || loading.value || loadingMore.value || !hasMore.value) return
+  query.page += 1
+  loadTodos(true)
+})
 
 function openAddDialog(): void {
   editingTodoId.value = null
@@ -203,6 +219,31 @@ onMounted(() => {
 
     <el-skeleton v-if="loading && todos.length === 0" :rows="6" animated class="list-skeleton" />
 
+    <!-- 移动端:卡片列表(字段完整、点击区域更大) -->
+    <div v-else-if="isMobile" class="card-list">
+      <el-empty v-if="todos.length === 0" :description="$t('todo.empty')" />
+
+      <div v-for="row in todos" :key="row.id" class="list-card">
+        <div class="card-head">
+          <div class="card-title" :class="{ 'is-done': row.completed }">{{ row.title }}</div>
+          <el-switch v-model="row.completed" @change="handleToggle(row)" />
+        </div>
+
+        <div v-if="row.tags && row.tags.length" class="card-tags">
+          <el-tag v-for="tag in row.tags" :key="tag.id" type="info">{{ tag.name }}</el-tag>
+        </div>
+
+        <div class="card-meta">
+          <span>{{ $t('common.createdAt') }}:{{ formatDateTime(row.createdAt) }}</span>
+        </div>
+
+        <div class="card-actions">
+          <el-button link type="primary" @click="openEditDialog(row)">{{ $t('common.edit') }}</el-button>
+          <el-button link type="danger" @click="handleDelete(row)">{{ $t('common.delete') }}</el-button>
+        </div>
+      </div>
+    </div>
+
     <el-table v-else :data="todos">
       <el-table-column :label="$t('todo.colDone')" width="80" align="center">
         <template #default="{ row }">
@@ -228,7 +269,7 @@ onMounted(() => {
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('common.actions')" width="160" align="center">
+      <el-table-column :label="$t('common.actions')" width="160" align="center" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="openEditDialog(row)">{{ $t('common.edit') }}</el-button>
           <el-button link type="danger" @click="handleDelete(row)">{{ $t('common.delete') }}</el-button>
@@ -240,7 +281,13 @@ onMounted(() => {
       </template>
     </el-table>
 
-    <div v-if="todos.length > 0" class="pagination-container">
+    <!-- 移动端:上拉加载(替代分页器) -->
+    <div v-if="isMobile" ref="sentinelRef" class="load-more-sentinel">
+      <span v-if="loadingMore">{{ $t('common.loading') }}</span>
+      <span v-else-if="!hasMore && todos.length > 0">{{ $t('common.noMore') }}</span>
+    </div>
+
+    <div v-if="!isMobile && todos.length > 0" class="pagination-container">
       <el-pagination
         v-model:current-page="query.page"
         v-model:page-size="query.pageSize"

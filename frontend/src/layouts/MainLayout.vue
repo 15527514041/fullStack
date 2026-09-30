@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown, Expand, Fold } from '@element-plus/icons-vue'
@@ -16,6 +16,8 @@ const authStore = useAuthStore()
 const { t } = useI18n()
 
 const collapsed = ref(false)
+const isMobile = ref(false)
+const mobileMenuVisible = ref(false)
 const userPanelVisible = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
@@ -66,8 +68,21 @@ const avatarUrl = computed(() => authStore.user?.avatarUrl || '')
 const usernameInitial = computed(() => (authStore.user?.username || 'U').charAt(0).toUpperCase())
 
 function updateIsMobile(): void {
-  collapsed.value = window.matchMedia('(max-width: 768px)').matches
+  isMobile.value = window.matchMedia('(max-width: 768px)').matches
+  if (!isMobile.value) mobileMenuVisible.value = false
 }
+
+function toggleMobileMenu(): void {
+  mobileMenuVisible.value = !mobileMenuVisible.value
+}
+
+// 移动端点击菜单跳转后自动收起抽屉
+watch(
+  () => route.path,
+  () => {
+    mobileMenuVisible.value = false
+  }
+)
 
 
 async function handleAvatarChange(event: Event): Promise<void> {
@@ -132,9 +147,12 @@ onUnmounted(() => {
   <div class="app-wrapper">
     <!-- 顶部导航:左侧 logo 区(宽度与菜单一致)、右侧个人信息 -->
     <header class="navbar">
-      <div class="navbar-left" :style="{ width: sidebarWidth }">
+      <div class="navbar-left" :style="{ width: isMobile ? 'auto' : sidebarWidth }">
+        <div v-if="isMobile" class="mobile-toggle" @click="toggleMobileMenu">
+          <MenuIcon name="menu" :size="22" />
+        </div>
         <div class="logo-mark"><LogoMark /></div>
-        <span v-if="!collapsed" class="logo-text">Confluo</span>
+        <span v-if="isMobile || !collapsed" class="logo-text">Confluo</span>
       </div>
 
       <div class="navbar-right">
@@ -187,10 +205,21 @@ onUnmounted(() => {
 
     <div class="main-container">
       <!-- 侧边菜单:分类标题 + SVG 图标,active 带背景与右侧色条 -->
-      <aside class="sidebar" :class="{ 'is-collapse': collapsed }">
+      <aside
+        class="sidebar"
+        :class="{ 'is-collapse': collapsed && !isMobile, 'is-mobile': isMobile, 'is-open': mobileMenuVisible }"
+      >
+        <!-- 移动端面板头部:右上角关闭按钮(带底色) -->
+        <div v-if="isMobile" class="panel-head">
+          <span class="panel-head-title">{{ $t('navbar.menu') }}</span>
+          <div class="panel-close" @click="mobileMenuVisible = false">
+            <MenuIcon name="close" :size="16" />
+          </div>
+        </div>
+
         <el-menu
           :default-active="activeMenu"
-          :collapse="collapsed"
+          :collapse="collapsed && !isMobile"
           :collapse-transition="false"
           router
           class="sidebar-menu"
@@ -212,11 +241,14 @@ onUnmounted(() => {
           </template>
         </el-menu>
 
-        <div class="sidebar-toggle" @click="collapsed = !collapsed">
+        <div v-if="!isMobile" class="sidebar-toggle" @click="collapsed = !collapsed">
           <el-icon :size="22"><component :is="collapsed ? Expand : Fold" /></el-icon>
           <span v-if="!collapsed" class="toggle-text">{{ $t('navbar.collapse') }}</span>
         </div>
       </aside>
+
+      <!-- 移动端抽屉打开时的遮罩 -->
+      <div v-if="isMobile && mobileMenuVisible" class="sidebar-mask" @click="mobileMenuVisible = false" />
 
       <main class="app-main">
         <router-view />
@@ -418,6 +450,9 @@ onUnmounted(() => {
 /* 菜单项(参考稿):46px 高、上下 5px 间距、左右 32px 内边距 */
 .sidebar-menu :deep(.el-menu-item) {
   height: 46px;
+  /* 行高必须跟 item 同高:否则文字的行盒会比 item 高(EP 默认 56px),
+     点按高亮/选中背景画在行盒上就会「高出一下」闪 */
+  line-height: 46px;
   margin: 5px 0;
   padding: 0 32px !important;
   color: var(--color-text-2);
@@ -517,17 +552,141 @@ onUnmounted(() => {
   background: var(--color-bg-bottom);
 }
 
+/* 移动端导航栏的汉堡按钮 */
+.mobile-toggle {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: var(--color-text-1);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mobile-toggle:active {
+  background: var(--color-bg-bottom);
+}
+
+/* 移动端:侧栏变成从导航栏下方「往下拉出」的面板,内容超高时内部滚动 */
+.sidebar.is-mobile {
+  position: fixed;
+  top: 80px;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-height: calc(100vh - 80px);
+  /* 收起时整体上移到导航栏后面藏起来(z-index 低于导航栏);多移 12px 保证缝隙也不露 */
+  transform: translateY(calc(-100% - 12px));
+  transition: transform 0.28s ease;
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  z-index: 9;
+}
+
+.sidebar.is-mobile.is-open {
+  transform: translateY(0);
+}
+
+/* 移动端面板头部:标题 + 右上角关闭按钮 */
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 4px;
+}
+
+.panel-head-title {
+  font-size: 13px;
+  color: var(--color-text-3);
+}
+
+.panel-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-bg-bottom);
+  color: var(--color-text-2);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.panel-close:active {
+  background: var(--color-border);
+}
+
+/* 面板遮罩:点击关闭 */
+.sidebar-mask {
+  position: fixed;
+  top: 80px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 8;
+  background: rgba(0, 0, 0, 0.35);
+  animation: mask-fade-in 0.2s ease;
+}
+
+@keyframes mask-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 768px) {
   .navbar {
+    height: 64px;
     padding: 0 12px 0 0;
   }
 
+  .navbar-left {
+    padding-left: 10px;
+    gap: 8px;
+  }
+
+  .logo-text {
+    font-size: 17px;
+  }
+
   .navbar-right {
-    gap: 6px;
+    gap: 4px;
+  }
+
+  .menu-divider {
+    height: 24px;
+    margin: 0 4px;
+  }
+
+  /* 面板顶到 64px 的导航栏下沿,最大高度随视口 */
+  .sidebar.is-mobile,
+  .sidebar-mask {
+    top: 64px;
+  }
+
+  /* 面板与导航栏留 8px 间距 + 左右 12px 外边距,做成浮层卡片 */
+  .sidebar.is-mobile {
+    top: 72px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: calc(100vh - 88px);
+    border-radius: 16px;
   }
 
   .username {
     display: none;
+  }
+
+  .app-main {
+    padding: 12px;
   }
 
   .sidebar-menu :deep(.el-menu-item) {
@@ -540,10 +699,6 @@ onUnmounted(() => {
 
   .menu-group-title {
     padding: 12px 16px 0;
-  }
-
-  .app-main {
-    padding: 16px;
   }
 }
 </style>
