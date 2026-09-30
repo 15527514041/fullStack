@@ -1,74 +1,33 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { createTodo, deleteTodo, getTodos, updateTodo } from '@/api/todo'
-import { uploadAvatar } from '@/api/user'
-import { useAuthStore } from '@/stores/auth'
-import type { Todo } from '@/types'
-
-const router = useRouter()
-const authStore = useAuthStore()
+import { getTags } from '@/api/tags'
+import type { TagItem, Todo } from '@/types'
 
 const todos = ref<Todo[]>([])
+const tags = ref<TagItem[]>([])
 const total = ref(0)
 const loading = ref(false)
-
-const isMobile = ref(false)
 
 const query = reactive({
   page: 1,
   pageSize: 10,
-  keyword: ''
+  keyword: '',
+  tagId: undefined as number | undefined
 })
-
-const usernameInitial = computed(() => (authStore.user?.username || 'U').charAt(0).toUpperCase())
-const avatarUrl = computed(() => authStore.user?.avatarUrl || '')
-
-// 头像上传
-const fileInputRef = ref<HTMLInputElement | null>(null)
-
-function chooseAvatar(): void {
-  fileInputRef.value?.click()
-}
-
-async function handleAvatarChange(event: Event): Promise<void> {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (!file) return
-
-  // 前端先校验一次(后端还会再校验)
-  if (!file.type.startsWith('image/')) {
-    ElMessage.warning('请选择图片文件')
-    input.value = ''
-    return
-  }
-  if (file.size > 2 * 1024 * 1024) {
-    ElMessage.warning('图片不能超过 2MB')
-    input.value = ''
-    return
-  }
-
-  try {
-    const result = await uploadAvatar(file)
-    authStore.setAvatar(result.avatarUrl)
-    ElMessage.success('头像已更新')
-  } catch {
-    // 错误提示已在 axios 拦截器统一处理
-  } finally {
-    input.value = '' // 允许重复选择同一个文件
-  }
-}
 
 const editingId = ref<number | null>(null)
 const editingTitle = ref('')
+const editingTagIds = ref<number[]>([])
 
-// 添加 TODO 弹窗
+// 新增弹窗
 const addDialogVisible = ref(false)
 const submitting = ref(false)
 const addFormRef = ref<FormInstance>()
 const addForm = reactive({
-  title: ''
+  title: '',
+  tagIds: [] as number[]
 })
 
 const addRules: FormRules = {
@@ -88,12 +47,35 @@ const addRules: FormRules = {
   ]
 }
 
-function updateIsMobile(): void {
-  isMobile.value = window.matchMedia('(max-width: 768px)').matches
+async function loadTags(): Promise<void> {
+  try {
+    tags.value = await getTags()
+  } catch {
+    // 错误提示已在 axios 拦截器统一处理
+  }
+}
+
+async function loadTodos(): Promise<void> {
+  loading.value = true
+  try {
+    const result = await getTodos({
+      page: query.page,
+      pageSize: query.pageSize,
+      keyword: query.keyword.trim() || undefined,
+      tagId: query.tagId
+    })
+    todos.value = result.list
+    total.value = result.total
+  } catch {
+    // 错误提示已在 axios 拦截器统一处理
+  } finally {
+    loading.value = false
+  }
 }
 
 function openAddDialog(): void {
   addForm.title = ''
+  addForm.tagIds = []
   addFormRef.value?.clearValidate()
   addDialogVisible.value = true
 }
@@ -105,7 +87,7 @@ async function handleAddSubmit(): Promise<void> {
 
   submitting.value = true
   try {
-    await createTodo(addForm.title.trim())
+    await createTodo({ title: addForm.title.trim(), tagIds: addForm.tagIds })
     addDialogVisible.value = false
     ElMessage.success('添加成功')
     await loadTodos()
@@ -116,29 +98,14 @@ async function handleAddSubmit(): Promise<void> {
   }
 }
 
-async function loadTodos(): Promise<void> {
-  loading.value = true
-  try {
-    const result = await getTodos({
-      page: query.page,
-      pageSize: query.pageSize,
-      keyword: query.keyword.trim() || undefined
-    })
-    todos.value = result.list
-    total.value = result.total
-  } catch {
-    // 错误提示已在 axios 拦截器统一处理
-  } finally {
-    loading.value = false
-  }
-}
-
 function handleSearch(): void {
   query.page = 1
   loadTodos()
 }
 
-function handleSizeChange(): void {
+function handleReset(): void {
+  query.keyword = ''
+  query.tagId = undefined
   query.page = 1
   loadTodos()
 }
@@ -147,19 +114,20 @@ async function handleToggle(todo: Todo): Promise<void> {
   try {
     await updateTodo(todo.id, { completed: todo.completed })
   } catch {
-    // 失败时回滚显示状态
-    await loadTodos()
+    await loadTodos() // 失败时回滚显示
   }
 }
 
 function startEdit(todo: Todo): void {
   editingId.value = todo.id
   editingTitle.value = todo.title
+  editingTagIds.value = (todo.tags || []).map((tag) => tag.id)
 }
 
 function cancelEdit(): void {
   editingId.value = null
   editingTitle.value = ''
+  editingTagIds.value = []
 }
 
 async function handleEditSave(todo: Todo): Promise<void> {
@@ -169,8 +137,9 @@ async function handleEditSave(todo: Todo): Promise<void> {
     return
   }
   try {
-    await updateTodo(todo.id, { title })
+    await updateTodo(todo.id, { title, tagIds: editingTagIds.value })
     editingId.value = null
+    ElMessage.success('已保存')
     await loadTodos()
   } catch {
     // 错误提示已在 axios 拦截器统一处理
@@ -179,7 +148,7 @@ async function handleEditSave(todo: Todo): Promise<void> {
 
 async function handleDelete(todo: Todo): Promise<void> {
   try {
-    await ElMessageBox.confirm(`确定删除「${todo.title}」吗?`, '提示', {
+    await ElMessageBox.confirm(`确定删除「${todo.title}」吗?删除后可在回收站恢复`, '提示', {
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消'
@@ -190,114 +159,111 @@ async function handleDelete(todo: Todo): Promise<void> {
 
   try {
     await deleteTodo(todo.id)
-    ElMessage.success('删除成功')
+    ElMessage.success('已移入回收站')
     await loadTodos()
   } catch {
     // 错误提示已在 axios 拦截器统一处理
   }
 }
 
-function handleLogout(): void {
-  authStore.logout()
-  router.replace('/login')
-}
-
 onMounted(() => {
-  updateIsMobile()
-  window.addEventListener('resize', updateIsMobile)
+  loadTags()
   loadTodos()
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', updateIsMobile)
 })
 </script>
 
 <template>
-  <el-container class="todo-page">
-    <el-header class="todo-header">
-      <span class="todo-title">我的 TODO</span>
-      <div class="user-area">
-        <el-avatar
-          :size="28"
-          :src="avatarUrl"
-          class="user-avatar"
-          title="点击更换头像"
-          @click="chooseAvatar"
-        >
-          {{ usernameInitial }}
-        </el-avatar>
-        <input ref="fileInputRef" type="file" accept="image/*" class="hidden-input" @change="handleAvatarChange" />
-        <span class="username">{{ authStore.user?.username || '用户' }}</span>
-        <el-button v-if="authStore.isAdmin" text @click="router.push('/admin')">用户管理</el-button>
-        <el-button text @click="handleLogout">退出登录</el-button>
-      </div>
-    </el-header>
+  <el-card>
+    <div class="toolbar">
+      <el-input
+        v-model="query.keyword"
+        placeholder="搜索 TODO"
+        clearable
+        class="search-input"
+        @keyup.enter="handleSearch"
+        @clear="handleSearch"
+      />
 
-    <el-main>
-      <el-card>
-        <div class="toolbar">
+      <el-select
+        v-model="query.tagId"
+        placeholder="按标签筛选"
+        clearable
+        class="tag-select"
+        @change="handleSearch"
+      >
+        <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
+      </el-select>
+
+      <el-button @click="handleReset">重置</el-button>
+      <el-button type="primary" @click="openAddDialog">添加 TODO</el-button>
+    </div>
+
+    <el-table v-loading="loading" :data="todos" empty-text="还没有 TODO,点击「添加 TODO」创建一条">
+      <el-table-column label="完成" width="80" align="center">
+        <template #default="{ row }">
+          <el-switch v-model="row.completed" @change="handleToggle(row)" />
+        </template>
+      </el-table-column>
+
+      <el-table-column label="内容" min-width="220">
+        <template #default="{ row }">
           <el-input
-            v-model="query.keyword"
-            placeholder="搜索 TODO"
-            clearable
-            class="search-input"
-            @keyup.enter="handleSearch"
-            @clear="handleSearch"
+            v-if="editingId === row.id"
+            v-model="editingTitle"
+            size="small"
+            @keyup.enter="handleEditSave(row)"
           />
-          <el-button type="primary" @click="openAddDialog">添加 TODO</el-button>
-        </div>
+          <span v-else :class="{ 'todo-done': row.completed }">{{ row.title }}</span>
+        </template>
+      </el-table-column>
 
-        <div class="table-wrapper">
-          <el-table v-loading="loading" :data="todos" empty-text="还没有 TODO,点击「添加 TODO」创建一条">
-            <el-table-column label="完成" width="80" align="center">
-              <template #default="{ row }">
-                <el-switch v-model="row.completed" @change="handleToggle(row)" />
-              </template>
-            </el-table-column>
+      <el-table-column label="标签" min-width="160">
+        <template #default="{ row }">
+          <el-select
+            v-if="editingId === row.id"
+            v-model="editingTagIds"
+            multiple
+            size="small"
+            collapse-tags
+            placeholder="选择标签"
+          >
+            <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
+          </el-select>
+          <template v-else>
+            <el-tag v-for="tag in row.tags" :key="tag.id" class="tag-item" type="info">{{ tag.name }}</el-tag>
+          </template>
+        </template>
+      </el-table-column>
 
-            <el-table-column label="内容" min-width="220">
-              <template #default="{ row }">
-                <el-input
-                  v-if="editingId === row.id"
-                  v-model="editingTitle"
-                  size="small"
-                  @keyup.enter="handleEditSave(row)"
-                  @blur="handleEditSave(row)"
-                />
-                <span v-else :class="{ 'todo-done': row.completed }">{{ row.title }}</span>
-              </template>
-            </el-table-column>
+      <el-table-column label="创建时间" width="170">
+        <template #default="{ row }">
+          {{ new Date(row.createdAt).toLocaleString() }}
+        </template>
+      </el-table-column>
 
-            <el-table-column v-if="!isMobile" label="创建时间" width="180">
-              <template #default="{ row }">
-                {{ new Date(row.createdAt).toLocaleString() }}
-              </template>
-            </el-table-column>
+      <el-table-column label="操作" width="160" align="center">
+        <template #default="{ row }">
+          <el-button v-if="editingId !== row.id" link type="primary" @click="startEdit(row)">编辑</el-button>
+          <template v-else>
+            <el-button link type="primary" @click="handleEditSave(row)">保存</el-button>
+            <el-button link @click="cancelEdit">取消</el-button>
+          </template>
+          <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
 
-            <el-table-column label="操作" width="140" align="center">
-              <template #default="{ row }">
-                <el-button v-if="editingId !== row.id" link type="primary" @click="startEdit(row)">编辑</el-button>
-                <el-button v-else link @click="cancelEdit">取消</el-button>
-                <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-
-        <div class="pagination">
-          <el-pagination
-            v-model:current-page="query.page"
-            v-model:page-size="query.pageSize"
-            :total="total"
-            :page-sizes="[10, 20, 50]"
-            :layout="isMobile ? 'total, prev, pager, next' : 'total, sizes, prev, pager, next, jumper'"
-            @current-change="loadTodos"
-            @size-change="handleSizeChange"
-          />
-        </div>
-      </el-card>
-    </el-main>
+    <div class="pagination">
+      <el-pagination
+        v-model:current-page="query.page"
+        v-model:page-size="query.pageSize"
+        :total="total"
+        :page-sizes="[10, 20, 50]"
+        layout="total, sizes, prev, pager, next, jumper"
+        @current-change="loadTodos"
+        @size-change="handleSearch"
+      />
+    </div>
 
     <el-dialog v-model="addDialogVisible" title="添加 TODO" width="min(480px, 92vw)">
       <el-form ref="addFormRef" :model="addForm" :rules="addRules" label-width="60px">
@@ -310,63 +276,21 @@ onUnmounted(() => {
             @keyup.enter="handleAddSubmit"
           />
         </el-form-item>
+        <el-form-item label="标签">
+          <el-select v-model="addForm.tagIds" multiple collapse-tags placeholder="可选" style="width: 100%">
+            <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
+          </el-select>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="addDialogVisible = false">取消</el-button>
         <el-button type="primary" :loading="submitting" @click="handleAddSubmit">确定</el-button>
       </template>
     </el-dialog>
-  </el-container>
+  </el-card>
 </template>
 
 <style scoped>
-.todo-page {
-  min-height: 100vh;
-  background: #f5f7fa;
-}
-
-.todo-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 16px;
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
-}
-
-.todo-title {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.user-area {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.user-avatar {
-  background: #409eff;
-  font-size: 14px;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.hidden-input {
-  display: none;
-}
-
-.username {
-  font-size: 14px;
-  color: #303133;
-  max-width: 120px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -375,11 +299,15 @@ onUnmounted(() => {
 }
 
 .search-input {
-  width: 240px;
+  width: 220px;
 }
 
-.table-wrapper {
-  overflow-x: auto;
+.tag-select {
+  width: 180px;
+}
+
+.tag-item {
+  margin-right: 6px;
 }
 
 .pagination {
@@ -395,29 +323,9 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
-  .todo-header {
-    padding: 0 12px;
-  }
-
-  .todo-title {
-    font-size: 16px;
-  }
-
-  .username {
-    max-width: 72px;
-  }
-
-  .search-input {
+  .search-input,
+  .tag-select {
     width: 100%;
-    flex: 1 1 100%;
-  }
-
-  .toolbar .el-button {
-    flex: 1;
-  }
-
-  .pagination {
-    justify-content: center;
   }
 }
 </style>

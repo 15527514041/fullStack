@@ -15,6 +15,7 @@ async function registerAndLogin(username = 'alice') {
 
 beforeEach(async () => {
   await prisma.todo.deleteMany()
+  await prisma.tag.deleteMany()
   await prisma.user.deleteMany()
 })
 

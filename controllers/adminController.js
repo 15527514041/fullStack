@@ -1,8 +1,8 @@
 const adminService = require('../services/adminService')
 
 async function getUsers(req, res) {
-  const users = await adminService.listUsers()
-  res.json(users)
+  const result = await adminService.listUsers(req.validated.query)
+  res.json(result)
 }
 
 async function updateUserRole(req, res) {
@@ -11,7 +11,14 @@ async function updateUserRole(req, res) {
   res.json(user)
 }
 
+async function updateUserStatus(req, res) {
+  const { status } = req.validated.body
+  const user = await adminService.updateUserStatus(req.validated.params.id, status)
+  res.json(user)
+}
+
 module.exports = {
   getUsers,
-  updateUserRole
+  updateUserRole,
+  updateUserStatus
 }

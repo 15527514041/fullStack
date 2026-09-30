@@ -61,31 +61,49 @@ async function handleSubmit(): Promise<void> {
 
 <template>
   <div class="auth-page">
-    <el-card class="auth-card">
-      <template #header>
-        <div class="auth-header">注册</div>
-      </template>
+    <div class="auth-box">
+      <div class="auth-title">创建账号</div>
 
-      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" size="large" @keyup.enter="handleSubmit">
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-position="top"
+        size="large"
+        @keyup.enter="handleSubmit"
+      >
         <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" placeholder="2-20 个字符" clearable />
+          <el-input v-model="form.username" placeholder="2-20 个字符" clearable autocomplete="username" />
         </el-form-item>
+
         <el-form-item label="密码" prop="password">
-          <el-input v-model="form.password" type="password" placeholder="6-32 个字符" show-password />
+          <el-input
+            v-model="form.password"
+            type="password"
+            placeholder="6-32 个字符"
+            show-password
+            autocomplete="new-password"
+          />
         </el-form-item>
+
         <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input v-model="form.confirmPassword" type="password" placeholder="请再次输入密码" show-password />
+          <el-input
+            v-model="form.confirmPassword"
+            type="password"
+            placeholder="请再次输入密码"
+            show-password
+            autocomplete="new-password"
+          />
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" class="submit-btn" :loading="loading" @click="handleSubmit">注册</el-button>
-        </el-form-item>
+
+        <el-button type="primary" class="auth-btn" :loading="loading" @click="handleSubmit">注册</el-button>
       </el-form>
 
       <div class="auth-link">
-        已有账号?
+        <span>已有账号?</span>
         <el-link type="primary" @click="router.push('/login')">去登录</el-link>
       </div>
-    </el-card>
+    </div>
   </div>
 </template>
 
@@ -95,26 +113,39 @@ async function handleSubmit(): Promise<void> {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
-  background: #f5f7fa;
+  padding: 32px 20px;
+  background: #fff;
 }
 
-.auth-card {
-  width: 400px;
-  max-width: calc(100vw - 32px);
-}
-
-.auth-header {
-  text-align: center;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.submit-btn {
+.auth-box {
   width: 100%;
+  max-width: 480px;
+}
+
+.auth-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: bold;
+  margin: 16px 0 36px;
+}
+
+.auth-btn {
+  width: 100%;
+  height: 50px;
+  border-radius: 16px;
+  font-size: 16px;
 }
 
 .auth-link {
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 20px;
+  font-size: 14px;
+  color: #606266;
+}
+
+:deep(.el-input) {
+  --el-input-height: 48px;
 }
 </style>

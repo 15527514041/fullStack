@@ -16,15 +16,34 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/',
-    name: 'todos',
-    component: () => import('@/views/TodoView.vue'),
-    meta: { title: 'TODO 列表', requiresAuth: true }
-  },
-  {
-    path: '/admin',
-    name: 'admin',
-    component: () => import('@/views/AdminView.vue'),
-    meta: { title: '用户管理', requiresAuth: true, requiresAdmin: true }
+    component: () => import('@/layouts/MainLayout.vue'),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'todos',
+        component: () => import('@/views/TodoView.vue'),
+        meta: { title: 'TODO 列表', requiresAuth: true }
+      },
+      {
+        path: 'trash',
+        name: 'trash',
+        component: () => import('@/views/TrashView.vue'),
+        meta: { title: '回收站', requiresAuth: true }
+      },
+      {
+        path: 'tags',
+        name: 'tags',
+        component: () => import('@/views/TagsView.vue'),
+        meta: { title: '标签管理', requiresAuth: true }
+      },
+      {
+        path: 'admin',
+        name: 'admin',
+        component: () => import('@/views/AdminView.vue'),
+        meta: { title: '用户管理', requiresAuth: true, requiresAdmin: true }
+      }
+    ]
   },
   {
     path: '/:pathMatch(.*)*',
@@ -37,7 +56,7 @@ const router = createRouter({
   routes
 })
 
-// 全局前置守卫:未登录 -> 登录页;非管理员访问管理页 -> 回首页
+// 全局前置守卫:未登录 → 登录页;非管理员访问管理页 → 回首页
 router.beforeEach((to) => {
   const authStore = useAuthStore()
 

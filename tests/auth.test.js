@@ -9,6 +9,7 @@ const prisma = new PrismaClient()
 // 每个测试前清空数据,保证用例互相独立
 beforeEach(async () => {
   await prisma.todo.deleteMany()
+  await prisma.tag.deleteMany()
   await prisma.user.deleteMany()
 })
 
