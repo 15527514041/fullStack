@@ -66,7 +66,9 @@ const routes: RouteRecordRaw[] = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  // 每次切路由把文档滚动复位:移动端键盘/地址栏滚动后会残留偏移,导致导航栏被顶出屏幕
+  scrollBehavior: () => ({ top: 0, left: 0 })
 })
 
 // 全局前置守卫:未登录 → 登录页;非管理员访问管理页 → 回首页

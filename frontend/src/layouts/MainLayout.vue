@@ -20,6 +20,7 @@ const isMobile = ref(false)
 const mobileMenuVisible = ref(false)
 const userPanelVisible = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const appMainRef = ref<HTMLElement | null>(null)
 
 const expandedWidth = '256px'
 const collapsedWidth = '90px'
@@ -81,6 +82,8 @@ watch(
   () => route.path,
   () => {
     mobileMenuVisible.value = false
+    // 切页后内容区回到顶部,避免把上个页面的滚动位置带过来
+    appMainRef.value?.scrollTo({ top: 0 })
   }
 )
 
@@ -250,7 +253,7 @@ onUnmounted(() => {
       <!-- 移动端抽屉打开时的遮罩 -->
       <div v-if="isMobile && mobileMenuVisible" class="sidebar-mask" @click="mobileMenuVisible = false" />
 
-      <main class="app-main">
+      <main ref="appMainRef" class="app-main">
         <router-view />
       </main>
     </div>
@@ -259,7 +262,10 @@ onUnmounted(() => {
 
 <style scoped>
 .app-wrapper {
+  /* 移动端 100vh 是「地址栏隐藏后」的大高度,会比可视区高,导致整页可滚动;
+     键盘/地址栏滚动后跳转,导航栏会被顶出屏幕。dvh 跟随可视区高度,不支持时退回 vh。 */
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -578,6 +584,7 @@ onUnmounted(() => {
   right: 0;
   width: 100%;
   max-height: calc(100vh - 80px);
+  max-height: calc(100dvh - 80px);
   /* 收起时整体上移到导航栏后面藏起来(z-index 低于导航栏);多移 12px 保证缝隙也不露 */
   transform: translateY(calc(-100% - 12px));
   transition: transform 0.28s ease;
@@ -678,6 +685,7 @@ onUnmounted(() => {
     right: 12px;
     width: auto;
     max-height: calc(100vh - 88px);
+    max-height: calc(100dvh - 88px);
     border-radius: 16px;
   }
 

@@ -26,6 +26,7 @@ import LangSelect from '@/components/LangSelect.vue'
 <style scoped>
 .auth-wrapper {
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
