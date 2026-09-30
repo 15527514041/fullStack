@@ -60,6 +60,21 @@
   --el-border-radius-base: 12px;
 }
 
+/* 移动端:禁止双指缩放(触摸行为取交集,祖先禁用后所有子元素都不再支持缩放) */
+html,
+body {
+  touch-action: pan-x pan-y;
+  overscroll-behavior: none;
+}
+
+/* 桌面 / 触控板设备恢复默认,不干扰桌面端的缩放习惯 */
+@media (pointer: fine) {
+  html,
+  body {
+    touch-action: auto;
+  }
+}
+
 html,
 body,
 #app {
@@ -338,6 +353,14 @@ body {
 
 /* 移动端 */
 @media (max-width: 768px) {
+  /* iOS 在输入框字号小于 16px 时,聚焦会自动放大整个页面,这里统一成 16px */
+  .el-input__inner,
+  .el-textarea__inner,
+  .el-select__wrapper .el-select__placeholder,
+  .el-select__input {
+    font-size: 16px;
+  }
+
   .list-page {
     padding: 14px 12px;
     border-radius: 12px;
