@@ -4,6 +4,11 @@ on:
   push:
     branches: [master]
 
+# 同一分支的部署串行执行,后一次不会取消前一次
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   test:
     name: 测试

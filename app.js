@@ -18,6 +18,27 @@ const requestLogger = require('./middlewares/requestLogger')
 
 const app = express()
 
+const helmet = require('helmet')
+const rateLimit = require('express-rate-limit')
+
+// 反向代理场景:让 Express 认识真实客户端 IP(否则限流会把所有人当成同一个 IP!)
+app.set('trust proxy', 1)
+
+// 安全响应头:X-Frame-Options(防点击劫持)、X-Content-Type-Options 等
+app.use(helmet())
+
+// 请求体上限,防超大 JSON 打爆内存
+app.use(express.json({ limit: '1mb' }))
+
+// 登录/注册限流:同一 IP 15 分钟最多 20 次
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: '请求过于频繁,请稍后再试' }
+})
+
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173')
 .split(',')
 .map((item) => item.trim())
@@ -33,7 +54,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' })
 })
 
-app.use('/api/auth', authRouter)
+app.use('/api/auth', authLimiter, authRouter)
 app.use('/api/todos', todosRouter)
 app.use('/api/stats', statsRouter)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
