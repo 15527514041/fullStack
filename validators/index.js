@@ -6,6 +6,10 @@ const username = z.string().trim().min(2, '用户至少 2 个字符').max(20, '�
 const password = z.string().min(6, '密码至少 6 个字符').max(32, '密码最多 32 个字符')
 const title = z.string().trim().min(1, '内容不能为空').max(100, '内容最多 100 个字符')
 const tagName = z.string().trim().min(1, '标签名不能为空').max(20, '标签名最多 20 个字符')
+// 标签类型:取值直接对应 Element Plus el-tag 的语义类型
+const tagType = z.enum(['primary', 'success', 'info', 'warning', 'danger'], {
+  errorMap: () => ({ message: '标签类型不合法' })
+})
 const remark = z.string().trim().max(500, '备注最多 500 个字符').nullable()
 // 附件传的是上传记录 id(uuid)数组;传空数组表示清空附件
 const attachmentOssIds = z.array(z.string().uuid('附件 ID 不合法')).max(9, '最多上传 9 个附件')
@@ -60,7 +64,17 @@ const todoSchemas = {
 // ====== tag ======
 
 const tagSchemas = {
-  create: z.object({ name: tagName })
+  create: z.object({
+    name: tagName,
+    // 不传则按 primary 落库(老客户端/老数据兼容)
+    type: tagType.default('primary')
+  }),
+  update: z
+    .object({
+      name: tagName.optional(),
+      type: tagType.optional()
+    })
+    .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' })
 }
 
 // ====== admin ======

@@ -6,8 +6,15 @@ async function getTags(req, res) {
 }
 
 async function createTag(req, res) {
-  const tag = await tagService.createTag(req.user.id, req.validated.body.name)
+  const { name, type } = req.validated.body
+  const tag = await tagService.createTag(req.user.id, { name, type })
   res.status(201).json(tag)
+}
+
+async function updateTag(req, res) {
+  const { name, type } = req.validated.body
+  const tag = await tagService.updateTag(req.user.id, req.validated.params.id, { name, type })
+  res.json(tag)
 }
 
 async function deleteTag(req, res) {
@@ -18,5 +25,6 @@ async function deleteTag(req, res) {
 module.exports = {
   getTags,
   createTag,
+  updateTag,
   deleteTag
 }

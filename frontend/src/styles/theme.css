@@ -206,6 +206,22 @@ body {
   border-bottom: 1px solid var(--color-border);
 }
 
+/*
+ * 关闭按钮:EP 默认贴在弹窗右上角(right/top 都是 0),
+ * 弹窗越宽越显得偏;这里按标题行垂直居中,并和内容右边缘对齐。
+ */
+.el-dialog .el-dialog__headerbtn {
+  top: 25px;
+  right: 26px;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+}
+
+.el-dialog .el-dialog__headerbtn .el-dialog__close {
+  color: var(--color-text-3);
+}
+
 /* 内容超高时滚动,不撑破弹窗 */
 .el-dialog .el-dialog__body {
   max-height: calc(90vh - 111px);
@@ -416,6 +432,12 @@ body {
   .el-dialog .el-dialog__header {
     padding-bottom: 14px;
     font-size: 18px;
+  }
+
+  /* 小屏内边距收紧,关闭按钮跟着往上挪,仍然对齐标题行 */
+  .el-dialog .el-dialog__headerbtn {
+    top: 10px;
+    right: 8px;
   }
 }
 

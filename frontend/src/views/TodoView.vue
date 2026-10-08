@@ -251,7 +251,7 @@ onMounted(() => {
         <div v-if="row.remark" class="card-remark">{{ row.remark }}</div>
 
         <div v-if="row.tags && row.tags.length" class="card-tags">
-          <el-tag v-for="tag in row.tags" :key="tag.id" type="info">{{ tag.name }}</el-tag>
+          <el-tag v-for="tag in row.tags" :key="tag.id" :type="tag.type || 'primary'">{{ tag.name }}</el-tag>
         </div>
 
         <div v-if="attachmentIds(row).length" class="card-attachment">
@@ -278,16 +278,20 @@ onMounted(() => {
 
       <el-table-column :label="$t('todo.colTitle')" min-width="220">
         <template #default="{ row }">
-          <div class="todo-title-cell">
-            <span :class="{ 'todo-done': row.completed }">{{ row.title }}</span>
-            <span v-if="row.remark" class="todo-remark">{{ row.remark }}</span>
-          </div>
+          <span :class="{ 'todo-done': row.completed }">{{ row.title }}</span>
         </template>
       </el-table-column>
 
       <el-table-column :label="$t('todo.colTags')" min-width="140">
         <template #default="{ row }">
-          <el-tag v-for="tag in row.tags" :key="tag.id" class="tag-item" type="info">{{ tag.name }}</el-tag>
+          <el-tag v-for="tag in row.tags" :key="tag.id" class="tag-item" :type="tag.type || 'primary'">{{ tag.name }}</el-tag>
+        </template>
+      </el-table-column>
+
+      <el-table-column :label="$t('todo.colRemark')" min-width="200">
+        <template #default="{ row }">
+          <span v-if="row.remark" class="todo-remark-cell" :title="row.remark">{{ row.remark }}</span>
+          <span v-else class="todo-empty-cell">-</span>
         </template>
       </el-table-column>
 
@@ -346,6 +350,12 @@ onMounted(() => {
           />
         </el-form-item>
 
+        <el-form-item :label="$t('todo.formTags')">
+          <el-select v-model="form.tagIds" multiple collapse-tags :placeholder="$t('common.optional')" style="width: 100%">
+            <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
+          </el-select>
+        </el-form-item>
+
         <el-form-item :label="$t('todo.formRemark')">
           <el-input
             v-model="form.remark"
@@ -355,12 +365,6 @@ onMounted(() => {
             maxlength="500"
             show-word-limit
           />
-        </el-form-item>
-
-        <el-form-item :label="$t('todo.formTags')">
-          <el-select v-model="form.tagIds" multiple collapse-tags :placeholder="$t('common.optional')" style="width: 100%">
-            <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
-          </el-select>
         </el-form-item>
 
         <el-form-item :label="$t('todo.formAttachment')">
@@ -401,18 +405,16 @@ onMounted(() => {
   text-decoration: line-through;
 }
 
-/* 内容列:标题 + 备注(小字两行) */
-.todo-title-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.todo-remark {
-  font-size: 12px;
-  line-height: 18px;
-  color: var(--color-text-3);
-  word-break: break-word;
+/* 备注列:单独一列,超长省略,鼠标悬停看全文 */
+.todo-remark-cell {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--color-text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .todo-empty-cell {

@@ -22,9 +22,13 @@ export interface UploadAvatarResult {
 }
 
 // ===== 标签 =====
+/** 标签类型:与 Element Plus el-tag 的语义类型一一对应,直接透传不映射 */
+export type TagType = 'primary' | 'success' | 'info' | 'warning' | 'danger'
+
 export interface Tag {
   id: number
   name: string
+  type: TagType
 }
 
 export interface TagItem extends Tag {

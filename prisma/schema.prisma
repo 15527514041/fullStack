@@ -23,6 +23,15 @@ enum UploadVisibility {
   PRIVATE
 }
 
+// 标签类型:取值直接对应 Element Plus el-tag 的语义类型,前端不用再做映射
+enum TagType {
+  primary
+  success
+  info
+  warning
+  danger
+}
+
 model User {
   id          Int        @id @default(autoincrement())
   username    String     @unique
@@ -74,6 +83,7 @@ model TodoAttachment {
 model Tag {
   id        Int      @id @default(autoincrement())
   name      String
+  type      TagType  @default(primary)
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
   todos     Todo[]
