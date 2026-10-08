@@ -8,6 +8,8 @@ export interface UploadResult {
   ossId: string
   /** OSS 对象 key,形如 public/uploads/2026/10/xxx.png */
   key: string
+  /** 原始文件名(带扩展名),文件类附件展示用 */
+  originalName?: string | null
   /** 公共文件是永久直链;私有文件是带签名的临时地址 */
   url: string
   visibility: UploadVisibility
@@ -45,9 +47,16 @@ export function uploadFile(
   })
 }
 
-/** 访问地址接口:按 ossId 换地址(库里只存 ossId 时用,换 CDN/私有桶前端不用改) */
-export function getUploadUrl(ossId: string): Promise<UploadResult> {
-  return request<UploadResult>({ url: `/uploads/${ossId}`, method: 'get' })
+/**
+ * 访问地址接口:按 ossId 换地址(库里只存 ossId 时用,换 CDN/私有桶前端不用改)
+ * download=true 时后端会签成「带 content-disposition」的地址,浏览器直接下载
+ */
+export function getUploadUrl(ossId: string, options: { download?: boolean } = {}): Promise<UploadResult> {
+  return request<UploadResult>({
+    url: `/uploads/${ossId}`,
+    method: 'get',
+    params: options.download ? { download: 1 } : undefined
+  })
 }
 
 /** 删除文件(同时删 OSS 对象与记录) */

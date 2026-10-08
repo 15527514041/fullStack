@@ -101,7 +101,11 @@ export default {
     dialogAdd: 'Add TODO',
     dialogEdit: 'Edit TODO',
     formTitle: 'Content',
+    formRemark: 'Note',
+    formAttachment: 'Attachment',
     formTags: 'Tags',
+    colAttachment: 'Attachment',
+    remarkPlaceholder: 'Optional, extra details or a link',
     titlePlaceholder: 'Enter TODO content'
   },
   trash: {
@@ -146,13 +150,18 @@ export default {
   },
   upload: {
     pick: 'Choose a file',
-    change: 'Replace',
-    remove: 'Remove',
+    preview: 'Preview',
     uploading: 'Uploading…',
     success: 'Uploaded',
-    typeError: 'Only image files are supported',
-    sizeError: 'File must be smaller than {size}MB',
-    tip: 'Supports jpg / png / webp / gif, up to {size}MB each'
+    failed: 'Upload failed',
+    typeError: 'Invalid format, please upload {types}',
+    sizeError: 'Image must be smaller than {size}MB',
+    exceed: 'Up to {count} image(s)',
+    limitReached: 'Upload limit reached',
+    dropHint: 'Click or drag files here to upload',
+    tipPrefix: 'Upload a file smaller than',
+    tipMiddle: 'in the format',
+    tipSuffix: ''
   },
   route: {
     login: 'Sign in',

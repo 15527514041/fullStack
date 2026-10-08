@@ -7,6 +7,8 @@ export function getTodos(params?: TodoQuery): Promise<TodoListResult> {
 
 export interface CreateTodoPayload {
   title: string
+  remark?: string | null
+  attachmentOssIds?: string[]
   tagIds?: number[]
 }
 
@@ -16,6 +18,8 @@ export function createTodo(data: CreateTodoPayload): Promise<Todo> {
 
 export interface UpdateTodoPayload {
   title?: string
+  remark?: string | null
+  attachmentOssIds?: string[]
   completed?: boolean
   tagIds?: number[]
 }

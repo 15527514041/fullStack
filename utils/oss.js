@@ -87,11 +87,22 @@ async function removeObject(key) {
  * - PRIVATE → 带签名的临时地址
  * 以后换 CDN / 改策略,只改这里,业务和前端都不用动
  */
-function buildUrl(key, visibility = 'PUBLIC') {
+function buildUrl(key, visibility = 'PUBLIC', options = {}) {
+  const { download = false, filename = '' } = options
+  // 加 content-disposition 让浏览器直接下载而不是预览(文件名用原始名)
+  const disposition = download
+    ? `attachment; filename="${encodeURIComponent(filename || 'download')}"`
+    : null
+
   if (visibility === 'PRIVATE') {
-    return getClient().signatureUrl(key, { expires: getSignedUrlTtl() })
+    return getClient().signatureUrl(key, {
+      expires: getSignedUrlTtl(),
+      response: disposition ? { 'content-disposition': disposition } : undefined
+    })
   }
-  return `${getPublicBaseUrl()}/${key}`
+
+  const base = `${getPublicBaseUrl()}/${key}`
+  return disposition ? `${base}?response-content-disposition=${encodeURIComponent(disposition)}` : base
 }
 
 // 私有地址的过期时间(返回给前端做缓存判断);公共直链返回 null

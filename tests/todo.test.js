@@ -15,6 +15,7 @@ async function registerAndLogin(username = 'alice') {
 
 beforeEach(async () => {
   await prisma.todo.deleteMany()
+  await prisma.upload.deleteMany()
   await prisma.tag.deleteMany()
   await prisma.user.deleteMany()
 })
@@ -103,4 +104,98 @@ test('软删除后列表消失,恢复后回来', async () => {
   await request(app).post(`/api/todos/${id}/restore`).set('Authorization', `Bearer ${token}`)
   res = await request(app).get('/api/todos').set('Authorization', `Bearer ${token}`)
   assert.strictEqual(res.body.total, 1)
+})
+
+test('创建 TODO 可带备注与多个附件(附件必须是自己上传的)', async () => {
+  const aliceToken = await registerAndLogin('alice')
+  const bobToken = await registerAndLogin('bob')
+
+  const alice = await prisma.user.findUnique({ where: { username: 'alice' } })
+  const bob = await prisma.user.findUnique({ where: { username: 'bob' } })
+
+  // 直接建上传记录:测试不依赖 OSS(不走真实上传)
+  const aliceUpload1 = await prisma.upload.create({
+    data: {
+      key: 'private/todos/test-alice-1.png',
+      originalName: '设计稿.png',
+      visibility: 'PRIVATE',
+      mime: 'image/png',
+      size: 123,
+      uploaderId: alice.id
+    }
+  })
+  const aliceUpload2 = await prisma.upload.create({
+    data: {
+      key: 'private/todos/test-alice-2.pdf',
+      originalName: '需求文档.pdf',
+      visibility: 'PRIVATE',
+      mime: 'application/pdf',
+      size: 456,
+      uploaderId: alice.id
+    }
+  })
+  const bobUpload = await prisma.upload.create({
+    data: { key: 'private/todos/test-bob.png', visibility: 'PRIVATE', mime: 'image/png', size: 789, uploaderId: bob.id }
+  })
+
+  // 1) 带备注 + 两个自己的附件 → 201,按 sortOrder 顺序返回
+  const created = await request(app)
+    .post('/api/todos')
+    .set('Authorization', `Bearer ${aliceToken}`)
+    .send({ title: '带附件', remark: '记得买牛奶', attachmentOssIds: [aliceUpload1.id, aliceUpload2.id] })
+
+  assert.strictEqual(created.status, 201)
+  assert.strictEqual(created.body.remark, '记得买牛奶')
+  assert.deepStrictEqual(
+    created.body.attachments.map((item) => item.ossId),
+    [aliceUpload1.id, aliceUpload2.id]
+  )
+  assert.deepStrictEqual(
+    created.body.attachments.map((item) => item.sortOrder),
+    [0, 1]
+  )
+  assert.strictEqual(created.body.attachments[0].originalName, '设计稿.png')
+  assert.strictEqual(created.body.attachments[1].mime, 'application/pdf')
+
+  // 列表接口同样返回附件
+  const list = await request(app).get('/api/todos').set('Authorization', `Bearer ${aliceToken}`)
+  assert.strictEqual(list.body.list[0].attachments.length, 2)
+
+  // 2) 挂别人的附件 → 400
+  const denied = await request(app)
+    .post('/api/todos')
+    .set('Authorization', `Bearer ${aliceToken}`)
+    .send({ title: '偷附件', attachmentOssIds: [bobUpload.id] })
+  assert.strictEqual(denied.status, 400)
+  assert.strictEqual(denied.body.message, '附件不存在')
+
+  // 3) 更新备注 + 把附件替换成 1 个
+  const updated = await request(app)
+    .patch(`/api/todos/${created.body.id}`)
+    .set('Authorization', `Bearer ${aliceToken}`)
+    .send({ remark: '改一下', attachmentOssIds: [aliceUpload2.id] })
+
+  assert.strictEqual(updated.status, 200)
+  assert.strictEqual(updated.body.remark, '改一下')
+  assert.deepStrictEqual(
+    updated.body.attachments.map((item) => item.ossId),
+    [aliceUpload2.id]
+  )
+  assert.strictEqual(updated.body.attachments[0].sortOrder, 0)
+
+  // 4) 传空数组 → 清空附件
+  const cleared = await request(app)
+    .patch(`/api/todos/${created.body.id}`)
+    .set('Authorization', `Bearer ${aliceToken}`)
+    .send({ attachmentOssIds: [] })
+  assert.strictEqual(cleared.status, 200)
+  assert.deepStrictEqual(cleared.body.attachments, [])
+
+  // 5) 备注传空字符串 → 存 null
+  const remarkCleared = await request(app)
+    .patch(`/api/todos/${created.body.id}`)
+    .set('Authorization', `Bearer ${aliceToken}`)
+    .send({ remark: '   ' })
+  assert.strictEqual(remarkCleared.status, 200)
+  assert.strictEqual(remarkCleared.body.remark, null)
 })

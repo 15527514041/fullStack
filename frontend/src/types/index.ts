@@ -36,11 +36,25 @@ export interface TagItem extends Tag {
 export interface Todo {
   id: number
   title: string
+  /** 备注:非必填 */
+  remark?: string | null
   completed: boolean
   createdAt: string
   deletedAt?: string | null
   userId: number
+  /** 附件:非必填,可多个,走关联表 */
+  attachments?: TodoAttachment[]
   tags?: Tag[]
+}
+
+export interface TodoAttachment {
+  ossId: string
+  sortOrder: number
+  key?: string
+  originalName?: string | null
+  mime?: string
+  size?: number
+  visibility?: 'PUBLIC' | 'PRIVATE'
 }
 
 export interface TodoQuery {

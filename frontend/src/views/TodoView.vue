@@ -8,6 +8,8 @@ import { getTags } from '@/api/tags'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import { formatDateTime } from '@/utils/datetime'
+import OssUploader from '@/components/OssUploader.vue'
+import OssAttachmentPreview from '@/components/OssAttachmentPreview.vue'
 import type { TagItem, Todo } from '@/types'
 
 const { t } = useI18n()
@@ -35,6 +37,8 @@ const submitting = ref(false)
 const formRef = ref<FormInstance>()
 const form = reactive({
   title: '',
+  remark: '',
+  attachmentOssIds: [] as string[],
   tagIds: [] as number[]
 })
 
@@ -98,15 +102,19 @@ useInfiniteScroll(sentinelRef, () => {
 function openAddDialog(): void {
   editingTodoId.value = null
   form.title = ''
+  form.remark = ''
+  form.attachmentOssIds = []
   form.tagIds = []
   formRef.value?.clearValidate()
   dialogVisible.value = true
 }
 
-// 编辑复用同一个弹窗:回显内容与标签
+// 编辑复用同一个弹窗:回显内容、备注、附件与标签
 function openEditDialog(todo: Todo): void {
   editingTodoId.value = todo.id
   form.title = todo.title
+  form.remark = todo.remark || ''
+  form.attachmentOssIds = (todo.attachments || []).map((item) => item.ossId)
   form.tagIds = (todo.tags || []).map((tag) => tag.id)
   formRef.value?.clearValidate()
   dialogVisible.value = true
@@ -119,7 +127,13 @@ async function handleSubmit(): Promise<void> {
 
   submitting.value = true
   try {
-    const payload = { title: form.title.trim(), tagIds: form.tagIds }
+    const payload = {
+      title: form.title.trim(),
+      // 备注空串统一传 null(后端也做了归一化)
+      remark: form.remark.trim() || null,
+      attachmentOssIds: form.attachmentOssIds,
+      tagIds: form.tagIds
+    }
     if (editingTodoId.value === null) {
       await createTodo(payload)
       ElMessage.success(t('todo.created'))
@@ -146,6 +160,11 @@ function handleReset(): void {
   query.tagId = undefined
   query.page = 1
   loadTodos()
+}
+
+// 附件列的 ossId 列表(后端已按 sortOrder 排好)
+function attachmentIds(todo: Todo): string[] {
+  return (todo.attachments || []).map((item) => item.ossId)
 }
 
 async function handleToggle(todo: Todo): Promise<void> {
@@ -229,8 +248,14 @@ onMounted(() => {
           <el-switch v-model="row.completed" @change="handleToggle(row)" />
         </div>
 
+        <div v-if="row.remark" class="card-remark">{{ row.remark }}</div>
+
         <div v-if="row.tags && row.tags.length" class="card-tags">
           <el-tag v-for="tag in row.tags" :key="tag.id" type="info">{{ tag.name }}</el-tag>
+        </div>
+
+        <div v-if="attachmentIds(row).length" class="card-attachment">
+          <OssAttachmentPreview :value="attachmentIds(row)" :size="56" :max="3" :radius="8" />
         </div>
 
         <div class="card-meta">
@@ -253,13 +278,23 @@ onMounted(() => {
 
       <el-table-column :label="$t('todo.colTitle')" min-width="220">
         <template #default="{ row }">
-          <span :class="{ 'todo-done': row.completed }">{{ row.title }}</span>
+          <div class="todo-title-cell">
+            <span :class="{ 'todo-done': row.completed }">{{ row.title }}</span>
+            <span v-if="row.remark" class="todo-remark">{{ row.remark }}</span>
+          </div>
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('todo.colTags')" min-width="160">
+      <el-table-column :label="$t('todo.colTags')" min-width="140">
         <template #default="{ row }">
           <el-tag v-for="tag in row.tags" :key="tag.id" class="tag-item" type="info">{{ tag.name }}</el-tag>
+        </template>
+      </el-table-column>
+
+      <el-table-column :label="$t('todo.colAttachment')" width="170" class-name="cell-attachment">
+        <template #default="{ row }">
+          <OssAttachmentPreview v-if="attachmentIds(row).length" :value="attachmentIds(row)" :size="36" :max="3" :radius="6" />
+          <span v-else class="todo-empty-cell">-</span>
         </template>
       </el-table-column>
 
@@ -310,10 +345,32 @@ onMounted(() => {
             @keyup.enter="handleSubmit"
           />
         </el-form-item>
+
+        <el-form-item :label="$t('todo.formRemark')">
+          <el-input
+            v-model="form.remark"
+            type="textarea"
+            :rows="3"
+            :placeholder="$t('todo.remarkPlaceholder')"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+
         <el-form-item :label="$t('todo.formTags')">
           <el-select v-model="form.tagIds" multiple collapse-tags :placeholder="$t('common.optional')" style="width: 100%">
             <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
           </el-select>
+        </el-form-item>
+
+        <el-form-item :label="$t('todo.formAttachment')">
+          <OssUploader
+            v-model="form.attachmentOssIds"
+            folder="todos"
+            visibility="PRIVATE"
+            :limit="9"
+            :max-size-mb="10"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -342,6 +399,44 @@ onMounted(() => {
 .todo-done {
   color: #909399;
   text-decoration: line-through;
+}
+
+/* 内容列:标题 + 备注(小字两行) */
+.todo-title-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.todo-remark {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-text-3);
+  word-break: break-word;
+}
+
+.todo-empty-cell {
+  color: var(--color-text-4);
+}
+
+/* 附件列:内容垂直居中(单元格比内容高时不再顶到上边) */
+:deep(.cell-attachment .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 卡片里的备注与附件缩略图 */
+.card-remark {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-text-2);
+  word-break: break-word;
+}
+
+.card-attachment {
+  margin-top: 10px;
 }
 
 @media (max-width: 768px) {

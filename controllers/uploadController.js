@@ -40,7 +40,8 @@ async function uploadPrivate(req, res) {
 
 // 访问地址接口:私有文件会校验归属,并返回新的签名地址
 async function getFile(req, res) {
-  res.json(await uploadService.getUrl(req.params.ossId, req.user))
+  // ?download=1 时返回带 content-disposition 的地址,浏览器会直接下载
+  res.json(await uploadService.getUrl(req.params.ossId, req.user, { download: req.query.download === '1' }))
 }
 
 async function deleteFile(req, res) {

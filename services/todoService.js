@@ -5,6 +5,34 @@ const prisma = require('../utils/prisma')
 const todoInclude = {
   tags: {
     select: { id: true, name: true }
+  },
+  // 附件走关联表,按 sortOrder 排序;只回传元信息,地址由前端按 ossId 换
+  attachments: {
+    orderBy: { sortOrder: 'asc' },
+    select: {
+      ossId: true,
+      sortOrder: true,
+      upload: { select: { id: true, key: true, originalName: true, mime: true, size: true, visibility: true } }
+    }
+  }
+}
+
+// 关联表结构比较深,统一拍平成前端好用的数组
+function toTodoDTO(todo) {
+  if (!todo) return todo
+  const { attachments = [], ...rest } = todo
+
+  return {
+    ...rest,
+    attachments: attachments.map((item) => ({
+      ossId: item.ossId,
+      sortOrder: item.sortOrder,
+      key: item.upload?.key,
+      originalName: item.upload?.originalName ?? null,
+      mime: item.upload?.mime,
+      size: item.upload?.size,
+      visibility: item.upload?.visibility
+    }))
   }
 }
 
@@ -22,6 +50,29 @@ async function normalizeTagIds(userId, tagIds) {
   }
 
   return owned.map((tag) => tag.id)
+}
+
+// 附件归属校验:只能挂自己上传的文件(传了别人的 id 直接 400);去重并保持顺序
+async function normalizeAttachmentIds(userId, ossIds) {
+  if (!ossIds || ossIds.length === 0) return []
+
+  const unique = [...new Set(ossIds)]
+  const owned = await prisma.upload.findMany({
+    where: { id: { in: unique }, uploaderId: userId },
+    select: { id: true }
+  })
+  if (owned.length !== unique.length) {
+    throw new AppError('附件不存在', 400)
+  }
+
+  return unique
+}
+
+// 备注:空字符串统一存 null
+function normalizeRemark(value) {
+  if (value === undefined) return undefined
+  const trimmed = typeof value === 'string' ? value.trim() : ''
+  return trimmed || null
 }
 
 // deleted=true 时查回收站(已删除的),默认只查未删除的
@@ -50,28 +101,35 @@ async function listTodos(userId, query) {
     prisma.todo.count({ where })
   ])
 
-  return { list, total, page, pageSize }
+  return { list: list.map(toTodoDTO), total, page, pageSize }
 }
 
 async function getTodoById(id, userId) {
-  return prisma.todo.findFirst({
+  const todo = await prisma.todo.findFirst({
     where: { id, userId, deletedAt: null },
     include: todoInclude
   })
+  return toTodoDTO(todo)
 }
 
 async function createTodo(data, userId) {
   const tagIds = await normalizeTagIds(userId, data.tagIds)
+  const attachmentIds = await normalizeAttachmentIds(userId, data.attachmentOssIds)
 
-  return prisma.todo.create({
+  const todo = await prisma.todo.create({
     data: {
       title: data.title,
+      remark: normalizeRemark(data.remark) ?? null,
       completed: data.completed ?? false,
       userId,
-      tags: tagIds.length ? { connect: tagIds.map((id) => ({ id })) } : undefined
+      tags: tagIds.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
+      attachments: attachmentIds.length
+        ? { create: attachmentIds.map((ossId, index) => ({ ossId, sortOrder: index })) }
+        : undefined
     },
     include: todoInclude
   })
+  return toTodoDTO(todo)
 }
 
 async function updateTodo(id, userId, data) {
@@ -84,17 +142,27 @@ async function updateTodo(id, userId, data) {
 
   const payload = {}
   if (data.title !== undefined) payload.title = data.title
+  if (data.remark !== undefined) payload.remark = normalizeRemark(data.remark)
+  if (data.attachmentOssIds !== undefined) {
+    // 传空数组表示清空附件;整体替换(先删后建,顺序即数组顺序)
+    const attachmentIds = await normalizeAttachmentIds(userId, data.attachmentOssIds)
+    payload.attachments = {
+      deleteMany: {},
+      create: attachmentIds.map((ossId, index) => ({ ossId, sortOrder: index }))
+    }
+  }
   if (data.completed !== undefined) payload.completed = data.completed
   if (data.tagIds !== undefined) {
     const tagIds = await normalizeTagIds(userId, data.tagIds)
     payload.tags = { set: tagIds.map((tagId) => ({ id: tagId })) }
   }
 
-  return prisma.todo.update({
+  const updated = await prisma.todo.update({
     where: { id },
     data: payload,
     include: todoInclude
   })
+  return toTodoDTO(updated)
 }
 
 // 软删除:打上 deletedAt 时间戳,记录仍在
@@ -118,11 +186,12 @@ async function restoreTodo(id, userId) {
   if (!todo) {
     throw new AppError('Todo not found', 404)
   }
-  return prisma.todo.update({
+  const restored = await prisma.todo.update({
     where: { id },
     data: { deletedAt: null },
     include: todoInclude
   })
+  return toTodoDTO(restored)
 }
 
 module.exports = {

@@ -4,7 +4,19 @@ const path = require('path')
 const AppError = require('../errors/AppError')
 
 const IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
-const FILE_EXTS = [...IMAGE_EXTS, '.pdf']
+// 通用附件:图片 + 常见文档
+const FILE_EXTS = [
+  ...IMAGE_EXTS,
+  '.pdf',
+  '.doc',
+  '.docx',
+  '.xls',
+  '.xlsx',
+  '.ppt',
+  '.pptx',
+  '.txt',
+  '.zip'
+]
 
 const MAX_SIZE_MB = Number(process.env.OSS_MAX_SIZE_MB || 10)
 

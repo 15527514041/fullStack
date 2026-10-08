@@ -101,7 +101,11 @@ export default {
     dialogAdd: '添加 TODO',
     dialogEdit: '编辑 TODO',
     formTitle: '内容',
+    formRemark: '备注',
+    formAttachment: '附件',
     formTags: '标签',
+    colAttachment: '附件',
+    remarkPlaceholder: '可选,补充说明或链接',
     titlePlaceholder: '请输入 TODO 内容'
   },
   trash: {
@@ -146,13 +150,18 @@ export default {
   },
   upload: {
     pick: '选择文件',
-    change: '更换',
-    remove: '删除',
+    preview: '预览',
     uploading: '上传中…',
     success: '上传成功',
-    typeError: '只支持图片格式',
-    sizeError: '文件不能超过 {size}MB',
-    tip: '支持 jpg / png / webp / gif,单个不超过 {size}MB'
+    failed: '上传失败',
+    typeError: '文件格式不正确,请上传 {types} 格式的图片',
+    sizeError: '上传图片大小不能超过 {size}MB',
+    exceed: '最多上传 {count} 张图片',
+    limitReached: '已达上传数量上限',
+    dropHint: '点击或拖拽文件到此处上传',
+    tipPrefix: '请上传 大小不超过',
+    tipMiddle: '格式为',
+    tipSuffix: '的文件'
   },
   route: {
     login: '登录',

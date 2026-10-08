@@ -4,7 +4,25 @@ const prisma = require('../utils/prisma')
 const oss = require('../utils/oss')
 const AppError = require('../errors/AppError')
 
-const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']
+// 允许的类型:图片 + 常见文档
+// 说明:.doc/.xls/.ppt 是老版 OLE2 格式,file-type 识别不出具体类型,会回退用客户端声明的 mime
+const ALLOWED_MIME = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'application/zip',
+  // OLE2 容器(doc/xls/ppt 老格式)兜底
+  'application/x-cfb'
+]
 const VISIBILITIES = ['PUBLIC', 'PRIVATE']
 
 // 兼容 file-type 16(fromBuffer) 与 17+(fileTypeFromBuffer)
@@ -14,12 +32,16 @@ async function detectMime(buffer) {
 }
 
 // 统一出口:前端只认 ossId / url / expiresAt
-function toDTO(record) {
+function toDTO(record, options = {}) {
   return {
     ossId: record.id,
     key: record.key,
+    originalName: record.originalName,
     visibility: record.visibility,
-    url: oss.buildUrl(record.key, record.visibility),
+    url: oss.buildUrl(record.key, record.visibility, {
+      download: options.download,
+      filename: record.originalName || undefined
+    }),
     expiresAt: oss.expiresAt(record.visibility),
     size: record.size,
     mime: record.mime
@@ -58,6 +80,7 @@ async function upload({ buffer, originalname, mime, folder, visibility = 'PUBLIC
   const record = await prisma.upload.create({
     data: {
       key,
+      originalName: originalname || null,
       visibility,
       mime: realMime,
       size: buffer.length,
@@ -69,7 +92,7 @@ async function upload({ buffer, originalname, mime, folder, visibility = 'PUBLIC
 }
 
 // 按 ossId 取访问地址;私有文件只有上传者本人或管理员能取
-async function getUrl(ossId, user) {
+async function getUrl(ossId, user, options = {}) {
   const record = await prisma.upload.findUnique({ where: { id: ossId } })
   if (!record) throw new AppError('文件不存在', 404)
 
@@ -79,7 +102,7 @@ async function getUrl(ossId, user) {
     throw new AppError('没有权限访问该文件', 403)
   }
 
-  return toDTO(record)
+  return toDTO(record, options)
 }
 
 // 删除:先删 OSS 对象,再删记录(对象删失败不影响记录清理)

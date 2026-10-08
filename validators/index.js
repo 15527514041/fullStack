@@ -6,6 +6,9 @@ const username = z.string().trim().min(2, '用户至少 2 个字符').max(20, '�
 const password = z.string().min(6, '密码至少 6 个字符').max(32, '密码最多 32 个字符')
 const title = z.string().trim().min(1, '内容不能为空').max(100, '内容最多 100 个字符')
 const tagName = z.string().trim().min(1, '标签名不能为空').max(20, '标签名最多 20 个字符')
+const remark = z.string().trim().max(500, '备注最多 500 个字符').nullable()
+// 附件传的是上传记录 id(uuid)数组;传空数组表示清空附件
+const attachmentOssIds = z.array(z.string().uuid('附件 ID 不合法')).max(9, '最多上传 9 个附件')
 const idParams = z.object({
   id: z.coerce.number().int().positive('ID 必须是正整数')
 })
@@ -32,11 +35,15 @@ const authSchemas = {
 const todoSchemas = {
   create: z.object({
     title,
+    remark: remark.optional(),
+    attachmentOssIds: attachmentOssIds.optional(),
     tagIds: z.array(z.number().int().positive()).optional()
   }),
   update: z
     .object({
       title: title.optional(),
+      remark: remark.optional(),
+      attachmentOssIds: attachmentOssIds.optional(),
       completed: z.boolean().optional(),
       tagIds: z.array(z.number().int().positive()).optional()
     })
