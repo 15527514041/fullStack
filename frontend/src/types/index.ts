@@ -4,7 +4,8 @@ export type UserStatus = 'ACTIVE' | 'BANNED'
 export interface User {
   id: number
   username: string
-  avatarUrl?: string | null
+  /** 头像文件在上传记录里的 id(不是 URL;展示时用 useOssUrl 换地址) */
+  avatarOssId?: string | null
   role?: Role
   status?: UserStatus
 }
@@ -15,6 +16,8 @@ export interface LoginResult {
 }
 
 export interface UploadAvatarResult {
+  avatarOssId: string
+  /** 上传当次可直接用的地址(私有文件是签名地址,会过期) */
   avatarUrl: string
 }
 
@@ -62,7 +65,7 @@ export interface AdminUser {
   username: string
   role: Role
   status: UserStatus
-  avatarUrl: string | null
+  avatarOssId: string | null
   createdAt: string
   _count: { todos: number }
 }

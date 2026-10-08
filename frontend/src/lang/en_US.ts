@@ -144,6 +144,16 @@ export default {
     failed: 'Request failed, please try again later',
     expired: 'Your session has expired, please sign in again'
   },
+  upload: {
+    pick: 'Choose a file',
+    change: 'Replace',
+    remove: 'Remove',
+    uploading: 'Uploading…',
+    success: 'Uploaded',
+    typeError: 'Only image files are supported',
+    sizeError: 'File must be smaller than {size}MB',
+    tip: 'Supports jpg / png / webp / gif, up to {size}MB each'
+  },
   route: {
     login: 'Sign in',
     register: 'Sign up',

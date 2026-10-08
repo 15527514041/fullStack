@@ -144,6 +144,16 @@ export default {
     failed: '请求失败,请稍后重试',
     expired: '登录状态已过期,请重新登录'
   },
+  upload: {
+    pick: '选择文件',
+    change: '更换',
+    remove: '删除',
+    uploading: '上传中…',
+    success: '上传成功',
+    typeError: '只支持图片格式',
+    sizeError: '文件不能超过 {size}MB',
+    tip: '支持 jpg / png / webp / gif,单个不超过 {size}MB'
+  },
   route: {
     login: '登录',
     register: '注册',

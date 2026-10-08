@@ -6,16 +6,16 @@ async function findById(userId) {
     select: {
       id: true,
       username: true,
-      avatarUrl: true,
+      avatarOssId: true,
       role: true
     }
   })
 }
 
-async function updateAvatar(userId, avatarUrl) {
+async function updateAvatar(userId, avatarOssId) {
   return prisma.user.update({
     where: { id: userId },
-    data: { avatarUrl }
+    data: { avatarOssId }
   })
 }
 

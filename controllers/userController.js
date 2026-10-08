@@ -1,32 +1,36 @@
-const path = require('path')
-const fs = require('fs/promises')
 const userService = require('../services/userService')
+const uploadService = require('../services/uploadService')
+const AppError = require('../errors/AppError')
 
-const uploadDir = path.join(__dirname, '..', 'uploads')
-
-// 删除旧头像:只允许删 uploads 目录内的文件,失败不影响主流程
-async function removeOldAvatar(avatarUrl) {
-  if (!avatarUrl || !avatarUrl.startsWith('/uploads/')) return
-  const filePath = path.join(uploadDir, path.basename(avatarUrl))
-  try {
-    await fs.unlink(filePath)
-  } catch {
-    // 文件不存在或已被清理,忽略
-  }
-}
-
+// 头像:走「私有上传」,库里只存 ossId,展示时前端用访问地址接口换签名地址
 async function updateAvatar(req, res) {
   if (!req.file) {
-    return res.status(400).json({ message: '请选择要上传的图片' })
+    throw new AppError('请选择要上传的图片', 400)
   }
 
   const current = await userService.findById(req.user.id)
-  const avatarUrl = `/uploads/${req.file.filename}`
 
-  await userService.updateAvatar(req.user.id, avatarUrl)
-  await removeOldAvatar(current?.avatarUrl) // 先更新数据库,再删旧文件
+  const result = await uploadService.upload({
+    buffer: req.file.buffer,
+    originalname: req.file.originalname,
+    mime: req.file.mimetype,
+    folder: 'avatars',
+    visibility: 'PRIVATE',
+    uploaderId: req.user.id
+  })
 
-  res.json({ avatarUrl })
+  await userService.updateAvatar(req.user.id, result.ossId)
+
+  // 先更新数据库,再删旧头像;删失败不影响主流程
+  if (current?.avatarOssId) {
+    try {
+      await uploadService.remove(current.avatarOssId, req.user)
+    } catch (err) {
+      console.warn('[avatar] 删除旧头像失败', err.message)
+    }
+  }
+
+  res.json({ avatarOssId: result.ossId, avatarUrl: result.url })
 }
 
 module.exports = { updateAvatar }

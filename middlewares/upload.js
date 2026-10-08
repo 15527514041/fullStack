@@ -1,33 +1,34 @@
-const multer = require("multer")
-const path = require("path")
-const fs = require("fs")
+const multer = require('multer')
+const path = require('path')
 
 const AppError = require('../errors/AppError')
 
-const uploadDir = path.join(__dirname, '..', 'uploads')
-fs.mkdirSync(uploadDir, { recursive: true })
+const IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+const FILE_EXTS = [...IMAGE_EXTS, '.pdf']
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase()
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9)
-    cb(null, unique + ext)
-  }
-})
+const MAX_SIZE_MB = Number(process.env.OSS_MAX_SIZE_MB || 10)
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
-  fileFilter: (req, file, cb) => {
-    const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
-    const ext = path.extname(file.originalname).toLowerCase()
-    if (allowed.includes(ext)) {
+/**
+ * 上传器工厂
+ * - 内存存储:文件不落本地磁盘,直接交给 OSS
+ * - 扩展名只做粗筛,真实类型在 uploadService 里按文件头再校验一次
+ */
+function createUploader({ allowExts = IMAGE_EXTS, maxSizeMB = MAX_SIZE_MB } = {}) {
+  return multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: maxSizeMB * 1024 * 1024, files: 1 },
+    fileFilter: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase()
+      if (!allowExts.includes(ext)) {
+        return cb(new AppError(`不支持的文件类型:${ext || '未知'}`, 400))
+      }
       cb(null, true)
-    } else {
-      cb(new AppError('不支持的文件类型', 400))
     }
-  }
-})
+  })
+}
 
-module.exports = upload
+module.exports = {
+  createUploader,
+  imageUpload: createUploader(),
+  fileUpload: createUploader({ allowExts: FILE_EXTS })
+}

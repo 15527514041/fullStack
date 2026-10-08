@@ -18,7 +18,7 @@ async function listUsers(query) {
         username: true,
         role: true,
         status: true,
-        avatarUrl: true,
+        avatarOssId: true,
         createdAt: true,
         _count: { select: { todos: true } }
       },

@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n'
 import MenuIcon from '@/components/MenuIcon.vue'
 import LogoMark from '@/components/LogoMark.vue'
 import LangSelect from '@/components/LangSelect.vue'
+import { useOssUrl } from '@/composables/useOssUrl'
 import { uploadAvatar } from '@/api/user'
 import { useAuthStore } from '@/stores/auth'
 
@@ -65,7 +66,8 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
 
 const activeMenu = computed(() => (route.path === '' ? '/' : route.path))
 const sidebarWidth = computed(() => (collapsed.value ? collapsedWidth : expandedWidth))
-const avatarUrl = computed(() => authStore.user?.avatarUrl || '')
+// 头像存的是 ossId,展示时换成签名地址(私有文件;签名过期会由 @error 重新取)
+const { url: avatarUrl, refresh: refreshAvatar } = useOssUrl(computed(() => authStore.user?.avatarOssId))
 const usernameInitial = computed(() => (authStore.user?.username || 'U').charAt(0).toUpperCase())
 
 function updateIsMobile(): void {
@@ -106,7 +108,7 @@ async function handleAvatarChange(event: Event): Promise<void> {
 
   try {
     const result = await uploadAvatar(file)
-    authStore.setAvatar(result.avatarUrl)
+    authStore.setAvatar(result.avatarOssId)
     ElMessage.success(t('navbar.avatarUpdated'))
   } catch {
     // 错误提示已在 axios 拦截器统一处理
@@ -174,7 +176,7 @@ onUnmounted(() => {
         >
           <template #reference>
             <div class="user-trigger">
-              <el-avatar :size="34" :src="avatarUrl" class="user-avatar">{{ usernameInitial }}</el-avatar>
+              <el-avatar :size="34" :src="avatarUrl" class="user-avatar" @error="refreshAvatar">{{ usernameInitial }}</el-avatar>
               <span class="username">{{ authStore.user?.username || $t('navbar.defaultUser') }}</span>
               <el-icon class="chevron"><ArrowDown /></el-icon>
             </div>
@@ -182,7 +184,7 @@ onUnmounted(() => {
 
           <div class="user-panel">
             <div class="user-panel-info">
-              <el-avatar :size="48" :src="avatarUrl" class="user-avatar">{{ usernameInitial }}</el-avatar>
+              <el-avatar :size="48" :src="avatarUrl" class="user-avatar" @error="refreshAvatar">{{ usernameInitial }}</el-avatar>
               <div class="user-meta">
                 <div class="user-name">{{ authStore.user?.username || $t('navbar.defaultUser') }}</div>
                 <div class="user-role">{{ authStore.isAdmin ? $t('common.roleAdmin') : $t('common.roleUser') }}</div>

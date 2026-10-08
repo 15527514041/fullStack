@@ -17,16 +17,39 @@ enum UserStatus {
   BANNED
 }
 
+// 文件可见性:公共文件直链永久可访问;私有文件走签名地址,且只有本人/管理员能取
+enum UploadVisibility {
+  PUBLIC
+  PRIVATE
+}
+
 model User {
-  id        Int        @id @default(autoincrement())
-  username  String     @unique
-  password  String
-  avatarUrl String?
-  role      Role       @default(USER)
-  status    UserStatus @default(ACTIVE)
-  todos     Todo[]
-  tags      Tag[]
-  createdAt DateTime   @default(now())
+  id          Int        @id @default(autoincrement())
+  username    String     @unique
+  password    String
+  // 只存上传记录的 ossId,不存 URL:换域名/CDN/签名策略都不用改库
+  avatarOssId String?
+  role        Role       @default(USER)
+  status      UserStatus @default(ACTIVE)
+  todos       Todo[]
+  tags        Tag[]
+  uploads     Upload[]
+  createdAt   DateTime   @default(now())
+}
+
+model Upload {
+  // id 对外就是 ossId
+  id         String           @id @default(uuid())
+  key        String           @unique
+  visibility UploadVisibility @default(PRIVATE)
+  mime       String
+  size       Int
+  uploader   User?            @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
+  uploaderId Int?
+  createdAt  DateTime         @default(now())
+
+  @@index([uploaderId])
+  @@index([visibility])
 }
 
 model Tag {

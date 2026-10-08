@@ -26,8 +26,8 @@ COPY utils ./utils
 ENV NODE_ENV=production
 EXPOSE 3008
 
-# 非 root 用户运行,并保证 uploads 目录可写
-RUN mkdir -p /app/uploads && chown -R node:node /app
+# 非 root 用户运行(文件都存 OSS,容器内不再需要可写的 uploads 目录)
+RUN chown -R node:node /app
 USER node
 
 CMD ["node", "server.js"]

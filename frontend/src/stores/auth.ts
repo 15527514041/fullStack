@@ -23,10 +23,10 @@ export const useAuthStore = defineStore('auth', () => {
     await registerApi(payload)
   }
 
-  // 上传头像后更新本地用户信息并持久化
-  function setAvatar(avatarUrl: string): void {
+  // 上传头像后更新本地用户信息并持久化(存的是 ossId,展示时再换地址)
+  function setAvatar(avatarOssId: string): void {
     if (!user.value) return
-    user.value = { ...user.value, avatarUrl }
+    user.value = { ...user.value, avatarOssId }
     setUser(user.value)
   }
 

@@ -21,7 +21,7 @@ const auth = async (req, res, next) => {
 
   const user = await prisma.user.findUnique({
     where: { id: payload.userId },
-    select: { id: true, username: true, role: true, status: true, avatarUrl: true }
+    select: { id: true, username: true, role: true, status: true, avatarOssId: true }
   })
 
   if (!user) {
