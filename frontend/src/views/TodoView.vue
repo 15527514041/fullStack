@@ -10,7 +10,7 @@ import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import { formatDateTime } from '@/utils/datetime'
 import OssUploader from '@/components/OssUploader.vue'
 import OssAttachmentPreview from '@/components/OssAttachmentPreview.vue'
-import type { TagItem, Todo } from '@/types'
+import type { TagItem, TagType, Todo } from '@/types'
 
 const { t } = useI18n()
 const { isMobile } = useIsMobile()
@@ -167,6 +167,11 @@ function attachmentIds(todo: Todo): string[] {
   return (todo.attachments || []).map((item) => item.ossId)
 }
 
+// 多选标签按类型着色:老数据没有 type 时按 primary 兜底
+function tagTypeOf(tagId: number): TagType {
+  return tags.value.find((item) => item.id === tagId)?.type || 'primary'
+}
+
 async function handleToggle(todo: Todo): Promise<void> {
   try {
     await updateTodo(todo.id, { completed: todo.completed })
@@ -229,7 +234,9 @@ onMounted(() => {
         class="tag-select"
         @change="handleSearch"
       >
-        <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
+        <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id">
+          <el-tag :type="tag.type || 'primary'">{{ tag.name }}</el-tag>
+        </el-option>
       </el-select>
 
       <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
@@ -351,8 +358,23 @@ onMounted(() => {
         </el-form-item>
 
         <el-form-item :label="$t('todo.formTags')">
-          <el-select v-model="form.tagIds" multiple collapse-tags :placeholder="$t('common.optional')" style="width: 100%">
-            <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
+          <!-- 选中的标签用各自的类型颜色回显(EP 默认是一律中性灰) -->
+          <el-select v-model="form.tagIds" multiple class="tag-multiselect" :placeholder="$t('common.optional')" style="width: 100%">
+            <template #tag="{ data, deleteTag, selectDisabled }">
+              <el-tag
+                v-for="item in data"
+                :key="item.value"
+                class="tag-multiselect__chip"
+                :type="tagTypeOf(item.value)"
+                :closable="!selectDisabled && !item.isDisabled"
+                @close="deleteTag($event, item)"
+              >
+                {{ item.currentLabel }}
+              </el-tag>
+            </template>
+            <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id">
+              <el-tag :type="tag.type || 'primary'">{{ tag.name }}</el-tag>
+            </el-option>
           </el-select>
         </el-form-item>
 
@@ -393,6 +415,19 @@ onMounted(() => {
 
 .tag-select {
   width: 210px;
+}
+
+/* 表单里的多选标签:选中项换成各自颜色的标签,多选时自动换行 */
+.tag-multiselect :deep(.el-select__selection) {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+.tag-multiselect__chip {
+  height: 28px !important;
+  padding: 0 10px !important;
+  line-height: 28px !important;
+  border-radius: 8px !important;
 }
 
 .tag-item {
