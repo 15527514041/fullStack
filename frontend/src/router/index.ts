@@ -45,6 +45,13 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'route.trash', requiresAuth: true }
       },
       {
+        // 详情页:复用主布局,靠 meta.noSidebar 隐藏侧栏(参考 client)
+        path: 'todos/:id',
+        name: 'todo-detail',
+        component: () => import('@/views/TodoDetailView.vue'),
+        meta: { titleKey: 'route.todoDetail', requiresAuth: true, noSidebar: true }
+      },
+      {
         path: 'tags',
         name: 'tags',
         component: () => import('@/views/TagsView.vue'),

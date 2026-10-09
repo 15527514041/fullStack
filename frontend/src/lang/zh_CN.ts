@@ -3,6 +3,8 @@ export default {
     search: '查询',
     reset: '重置',
     add: '添加',
+    detail: '详情',
+    back: '返回',
     edit: '编辑',
     delete: '删除',
     cancel: '取消',
@@ -106,6 +108,14 @@ export default {
     formAttachment: '附件',
     formTags: '标签',
     colAttachment: '附件',
+    detailTitle: 'TODO 详情',
+    detailBasic: '基本信息',
+    detailTime: '时间信息',
+    detailStatus: '状态',
+    detailDone: '已完成',
+    detailUndone: '未完成',
+    detailNotFound: 'TODO 不存在或已被删除',
+    detailBackList: '返回列表',
     remarkPlaceholder: '可选,补充说明或链接',
     titlePlaceholder: '请输入 TODO 内容'
   },
@@ -177,6 +187,7 @@ export default {
     register: '注册',
     todos: 'TODO 列表',
     trash: '回收站',
+    todoDetail: 'TODO 详情',
     tags: '标签管理',
     users: '用户管理'
   }

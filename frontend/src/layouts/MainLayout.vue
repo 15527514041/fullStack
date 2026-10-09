@@ -66,6 +66,11 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
 
 const activeMenu = computed(() => (route.path === '' ? '/' : route.path))
 const sidebarWidth = computed(() => (collapsed.value ? collapsedWidth : expandedWidth))
+
+// 详情页等通过路由 meta.noSidebar 隐藏菜单栏(参考 client):
+// 桌面不渲染侧栏,移动端连汉堡按钮一起隐藏,内容区自动铺满;头部宽度也不再对齐菜单宽度
+const noSidebar = computed(() => route.meta.noSidebar === true)
+const showSidebar = computed(() => !isMobile.value && !noSidebar.value)
 // 头像存的是 ossId,展示时换成签名地址(私有文件;签名过期会由 @error 重新取)
 const { url: avatarUrl, refresh: refreshAvatar } = useOssUrl(computed(() => authStore.user?.avatarOssId))
 const usernameInitial = computed(() => (authStore.user?.username || 'U').charAt(0).toUpperCase())
@@ -152,8 +157,8 @@ onUnmounted(() => {
   <div class="app-wrapper">
     <!-- 顶部导航:左侧 logo 区(宽度与菜单一致)、右侧个人信息 -->
     <header class="navbar">
-      <div class="navbar-left" :style="{ width: isMobile ? 'auto' : sidebarWidth }">
-        <div v-if="isMobile" class="mobile-toggle" @click="toggleMobileMenu">
+      <div class="navbar-left" :style="{ width: showSidebar ? sidebarWidth : 'auto' }">
+        <div v-if="isMobile && !noSidebar" class="mobile-toggle" @click="toggleMobileMenu">
           <MenuIcon name="menu" :size="22" />
         </div>
         <div class="logo-mark"><LogoMark /></div>
@@ -211,6 +216,7 @@ onUnmounted(() => {
     <div class="main-container">
       <!-- 侧边菜单:分类标题 + SVG 图标,active 带背景与右侧色条 -->
       <aside
+        v-if="!noSidebar"
         class="sidebar"
         :class="{ 'is-collapse': collapsed && !isMobile, 'is-mobile': isMobile, 'is-open': mobileMenuVisible }"
       >
@@ -253,9 +259,10 @@ onUnmounted(() => {
       </aside>
 
       <!-- 移动端抽屉打开时的遮罩 -->
-      <div v-if="isMobile && mobileMenuVisible" class="sidebar-mask" @click="mobileMenuVisible = false" />
+      <div v-if="mobileMenuVisible && !noSidebar" class="sidebar-mask" @click="mobileMenuVisible = false" />
 
-      <main ref="appMainRef" class="app-main">
+      <!-- 隐藏菜单栏时内容区整块铺满:去掉外边距与灰底,由页面自己控制留白(参考 client) -->
+      <main ref="appMainRef" class="app-main" :class="{ 'is-full': noSidebar }">
         <router-view />
       </main>
     </div>
@@ -560,6 +567,12 @@ onUnmounted(() => {
   background: var(--color-bg-bottom);
 }
 
+/* 无菜单栏(详情页等):内容区不留内边距、不用灰底,页面自己撑满 */
+.app-main.is-full {
+  padding: 0;
+  background: var(--el-bg-color);
+}
+
 /* 移动端导航栏的汉堡按钮 */
 .mobile-toggle {
   width: 34px;
@@ -697,6 +710,10 @@ onUnmounted(() => {
 
   .app-main {
     padding: 12px;
+  }
+
+  .app-main.is-full {
+    padding: 0;
   }
 
   .sidebar-menu :deep(.el-menu-item) {

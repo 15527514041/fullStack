@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
@@ -13,6 +14,7 @@ import OssAttachmentPreview from '@/components/OssAttachmentPreview.vue'
 import type { TagItem, TagType, Todo } from '@/types'
 
 const { t } = useI18n()
+const router = useRouter()
 const { isMobile } = useIsMobile()
 
 const todos = ref<Todo[]>([])
@@ -172,6 +174,11 @@ function tagTypeOf(tagId: number): TagType {
   return tags.value.find((item) => item.id === tagId)?.type || 'primary'
 }
 
+// 详情单独一个页面(样式参考 client 的详情页)
+function openDetail(todo: Todo): void {
+  router.push({ name: 'todo-detail', params: { id: todo.id } })
+}
+
 async function handleToggle(todo: Todo): Promise<void> {
   try {
     await updateTodo(todo.id, { completed: todo.completed })
@@ -270,6 +277,7 @@ onMounted(() => {
         </div>
 
         <div class="card-actions">
+          <el-button link type="primary" @click="openDetail(row)">{{ $t('common.detail') }}</el-button>
           <el-button link type="primary" @click="openEditDialog(row)">{{ $t('common.edit') }}</el-button>
           <el-button link type="danger" @click="handleDelete(row)">{{ $t('common.delete') }}</el-button>
         </div>
@@ -317,6 +325,7 @@ onMounted(() => {
 
       <el-table-column :label="$t('common.actions')" width="160" align="center" fixed="right">
         <template #default="{ row }">
+          <el-button link type="primary" @click="openDetail(row)">{{ $t('common.detail') }}</el-button>
           <el-button link type="primary" @click="openEditDialog(row)">{{ $t('common.edit') }}</el-button>
           <el-button link type="danger" @click="handleDelete(row)">{{ $t('common.delete') }}</el-button>
         </template>

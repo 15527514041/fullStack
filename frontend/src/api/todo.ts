@@ -5,6 +5,10 @@ export function getTodos(params?: TodoQuery): Promise<TodoListResult> {
   return request<TodoListResult>({ url: '/todos', method: 'get', params })
 }
 
+export function getTodo(id: number): Promise<Todo> {
+  return request<Todo>({ url: `/todos/${id}`, method: 'get' })
+}
+
 export interface CreateTodoPayload {
   title: string
   remark?: string | null

@@ -3,6 +3,8 @@ export default {
     search: 'Search',
     reset: 'Reset',
     add: 'Add',
+    detail: 'Detail',
+    back: 'Back',
     edit: 'Edit',
     delete: 'Delete',
     cancel: 'Cancel',
@@ -106,6 +108,14 @@ export default {
     formAttachment: 'Attachment',
     formTags: 'Tags',
     colAttachment: 'Attachment',
+    detailTitle: 'TODO Detail',
+    detailBasic: 'Basic info',
+    detailTime: 'Time',
+    detailStatus: 'Status',
+    detailDone: 'Completed',
+    detailUndone: 'Pending',
+    detailNotFound: 'TODO not found or deleted',
+    detailBackList: 'Back to list',
     remarkPlaceholder: 'Optional, extra details or a link',
     titlePlaceholder: 'Enter TODO content'
   },
@@ -177,6 +187,7 @@ export default {
     register: 'Sign up',
     todos: 'TODO List',
     trash: 'Trash',
+    todoDetail: 'TODO Detail',
     tags: 'Tags',
     users: 'Users'
   }
