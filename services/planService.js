@@ -67,6 +67,8 @@ function buildItems(data) {
         name: item.name,
         startTime: NO_TIME_KINDS.includes(kind) ? null : item.startTime,
         endTime: NO_TIME_KINDS.includes(kind) ? null : item.endTime,
+        // 只有待办有"完成"概念,其它三类恒为 false
+        completed: kind === 'TODO' ? Boolean(item.completed) : false,
         sortOrder: index
       })
     })
@@ -87,6 +89,7 @@ function pickItems(items, kind) {
       name: item.name,
       startTime: item.startTime ?? null,
       endTime: item.endTime ?? null,
+      completed: item.completed ?? false,
       durationMinutes: toDurationMinutes(item),
       sortOrder: item.sortOrder
     }))

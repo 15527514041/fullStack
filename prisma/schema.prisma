@@ -174,6 +174,8 @@ model DailyPlanItem {
   // HH:mm;TODO 类没有时间,PLANNED / ACTUAL 由接口层强制必填
   startTime String?
   endTime   String?
+  // 待办是否已完成(勾上=完成,界面上文字加删除线);其它三类恒为 false
+  completed Boolean           @default(false)
   sortOrder Int               @default(0)
   createdAt DateTime          @default(now())
 

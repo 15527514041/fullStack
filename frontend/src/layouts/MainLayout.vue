@@ -45,6 +45,13 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
       ]
     },
     {
+      title: t('menu.growthGroup'),
+      items: [
+        { path: '/reflections', title: t('menu.reflections'), icon: 'reflect' },
+        { path: '/plans', title: t('menu.plans'), icon: 'schedule' }
+      ]
+    },
+    {
       title: t('menu.accountGroup'),
       items: authStore.isAdmin ? [{ path: '/admin', title: t('menu.users'), icon: 'users' }] : []
     },

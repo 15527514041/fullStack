@@ -922,3 +922,603 @@ body {
     display: none !important;
   }
 }
+
+/* ================= 卡片流列表页(参考 client 收款方管理) ================= */
+
+/* 面板:30px 大圆角白底,内边距 30/22 */
+.feed-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 30px 22px;
+  background: var(--el-bg-color);
+  border-radius: 30px;
+}
+
+/* 标题行:主标题 + 副标题在左,新增按钮在右 */
+.feed-head {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 0 10px;
+}
+
+.feed-head .main-title {
+  margin-bottom: 8px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text-1);
+}
+
+.feed-head .subtitle {
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--color-text-3);
+}
+
+.feed-head .add-button {
+  flex-shrink: 0;
+  height: 40px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.feed-head .add-button .el-icon {
+  margin-right: 6px;
+}
+
+/* 区间 tab:今天 / 过去 7 天 / 过去 30 天 / 全部 */
+.feed-filter {
+  flex-shrink: 0;
+  margin-bottom: 8px;
+  padding: 0 10px;
+}
+
+.feed-filter .el-tabs__header {
+  margin-bottom: 0;
+}
+
+.feed-filter .el-tabs__item {
+  font-size: 14px;
+}
+
+/* 卡片流:自己滚动,滚到底由哨兵触发下一页 */
+.feed-section {
+  flex: 1;
+  min-height: 0;
+  padding: 8px 10px 0;
+  overflow-y: auto;
+}
+
+.feed-card {
+  margin-bottom: 18px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 24px;
+  background: var(--color-bg-card-1);
+  box-shadow: 0 0 8px 1px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.feed-card:hover {
+  border-color: var(--el-color-primary);
+}
+
+.feed-card:last-child {
+  margin-bottom: 0;
+}
+
+.feed-card .card-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+
+.feed-card .card-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.feed-card .card-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.feed-card .card-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--color-text-1);
+}
+
+/* 小圆角胶囊:和 client 的 relation-tag 一致 */
+.feed-card .pill {
+  display: inline-block;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 100px;
+  background: var(--color-brand-1);
+  color: var(--color-brand-6);
+  font-size: 12px;
+  line-height: 22px;
+}
+
+.feed-card .card-summary {
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-text-3);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feed-card .card-right {
+  flex-shrink: 0;
+  margin-left: 12px;
+  color: var(--color-text-3);
+  font-size: 16px;
+  transition: color 0.3s ease;
+}
+
+.feed-card:hover .card-right {
+  color: var(--el-color-primary);
+}
+
+/* 上拉加载哨兵 + 到底提示 */
+.feed-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  font-size: 12px;
+  color: var(--color-text-3);
+}
+
+.feed-empty {
+  padding: 60px 20px 40px;
+}
+
+@media (max-width: 768px) {
+  .feed-page {
+    height: auto;
+    min-height: 100%;
+    padding: 18px 14px;
+    border-radius: 18px;
+  }
+
+  .feed-head {
+    margin-bottom: 14px;
+    padding: 0;
+  }
+
+  .feed-head .main-title {
+    font-size: 18px;
+  }
+
+  .feed-head .add-button {
+    width: 100%;
+  }
+
+  .feed-filter {
+    padding: 0;
+  }
+
+  .feed-section {
+    padding: 8px 0 0;
+    overflow: visible;
+  }
+
+  .feed-card {
+    margin-bottom: 12px;
+    border-radius: 18px;
+  }
+}
+
+/* ================= 详情 / 整页表单(参考 client 收款方管理-详情) ================= */
+
+.detail-page {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 30px 32px;
+  background: var(--el-bg-color);
+  border-radius: 18px;
+}
+
+/* 隐藏菜单栏时外层已铺满,页面自己不留圆角,只保留左右留白 */
+.detail-page.is-full {
+  padding: 20px 20px 60px;
+  border-radius: 0;
+}
+
+/* 底部固定操作条时给内容留出位置 */
+.detail-page.is-full.has-actions {
+  padding-bottom: 120px;
+}
+
+.detail-header {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto 20px;
+}
+
+.detail-title {
+  max-width: 70%;
+  overflow: hidden;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--color-text-1);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* 30px 圆角白卡片 + 柔和阴影 */
+.info-card {
+  padding: 0 30px 24px;
+  border-radius: 30px;
+  background: var(--color-bg-card-1);
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.08);
+}
+
+.section-title {
+  padding: 30px 0 10px;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-text-1);
+}
+
+/* 底部固定操作条(参考 client):删除在左,取消/保存在中 */
+.detail-actions {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--color-bg-card-1);
+  box-shadow: 0 -1px 21.4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.detail-actions .el-button {
+  height: 50px;
+  min-width: 140px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* 卡片上方的操作行:删除按钮放在卡片外侧、靠右(参考 client 来款人详情) */
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.delete-btn {
+  flex-shrink: 0;
+  height: 30px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text-2);
+  border-color: var(--el-border-color);
+}
+
+.delete-btn:hover {
+  color: var(--color-danger-6);
+  border-color: var(--color-danger-6);
+  background: var(--color-danger-1);
+}
+
+@media (max-width: 768px) {
+  .detail-page {
+    padding: 14px 12px;
+    border-radius: 12px;
+  }
+
+  .detail-page.is-full {
+    padding: 12px 12px 40px;
+    border-radius: 0;
+  }
+
+  .detail-page.is-full.has-actions {
+    padding-bottom: 96px;
+  }
+
+  .detail-header {
+    height: 40px;
+    margin-bottom: 14px;
+  }
+
+  .detail-title {
+    max-width: 60%;
+    font-size: 18px;
+  }
+
+  .info-card {
+    padding: 0 20px 20px;
+    border-radius: 30px;
+  }
+
+  .section-title {
+    padding: 20px 0 8px;
+    font-size: 15px;
+  }
+
+  .detail-actions {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .detail-actions .el-button {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 15px;
+  }
+
+  .delete-btn {
+    height: 28px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+}
+
+/* ---------- 整页表单里的「行」:反思项 / 待办 / 时间安排 / 随写备注 ---------- */
+
+.form-row {
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-bg-bottom);
+}
+
+.form-row-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 100px;
+  background: var(--color-brand-1);
+  color: var(--color-brand-6);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* 带右侧操作按钮的分节标题:标题在左、按钮在右(参考 client KYB 相关人员) */
+.section-title.has-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.section-title.has-actions .title-text {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+}
+
+/* 标题下的说明行(比如反思详情里整张卡片共用的「日期 + 周几」) */
+.section-title.has-actions .title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.section-title.has-actions .title-desc {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-3);
+}
+
+.section-title.has-actions .el-button {
+  height: 30px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.section-title.has-actions .el-button .action-icon {
+  margin-right: 6px;
+}
+
+/* ================= 区块里的灰卡片(参考 client KYB 企业资料提交-相关人员) ================= */
+
+.detail-card {
+  border-radius: 24px;
+  background: var(--color-bg-bottom);
+  padding: 30px;
+}
+
+.detail-card + .detail-card {
+  margin-top: 20px;
+}
+
+.detail-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 头部只有操作按钮时:靠右 */
+.detail-card__head.is-actions-only {
+  justify-content: flex-end;
+}
+
+.detail-card__left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+
+.detail-card__title {
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--color-text-1);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-card__summary {
+  font-size: 14px;
+  color: var(--color-text-2);
+}
+
+.detail-card__tag {
+  flex-shrink: 0;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 100px;
+  background: var(--color-brand-2);
+  color: var(--color-brand-6);
+  font-size: 12px;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.detail-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-card__actions .el-button {
+  color: var(--color-text-2);
+  transition: color 0.2s ease;
+}
+
+.detail-card__actions .el-button:hover {
+  color: var(--color-brand-6);
+}
+
+.detail-card__body {
+  padding-top: 30px;
+}
+
+.detail-card__row {
+  display: flex;
+  margin-bottom: 10px;
+  line-height: 28px;
+}
+
+.detail-card__row:last-of-type {
+  margin-bottom: 0;
+}
+
+.detail-card__label {
+  flex-shrink: 0;
+  width: 96px;
+  color: var(--color-text-3);
+  font-size: 14px;
+}
+
+.detail-card__value {
+  flex: 1;
+  min-width: 0;
+  color: var(--color-text-1);
+  font-size: 14px;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+/* 没有标题行的明细卡片:内容在左,操作按钮靠右垂直居中 */
+.detail-card.is-plain {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.detail-card.is-plain .detail-card__rows {
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-card.is-plain .detail-card__actions {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .section-title.has-actions .el-button {
+    height: 28px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .detail-card {
+    border-radius: 18px;
+    padding: 12px;
+  }
+
+  .detail-card__head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .detail-card__left {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .detail-card__title {
+    font-size: 15px;
+    white-space: normal;
+  }
+
+  .detail-card__row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .detail-card__label,
+  .detail-card__value {
+    font-size: 12px;
+  }
+
+  .detail-card__label {
+    width: auto;
+  }
+}

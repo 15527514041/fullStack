@@ -77,6 +77,98 @@ export interface TodoListResult {
   pageSize: number
 }
 
+// ===== 通用:分页返回 =====
+export interface PagedResult<T> {
+  list: T[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+// ===== 个人成长:每日反思 =====
+export interface ReflectionItem {
+  id?: number
+  /** 描述经过(必填) */
+  experience: string
+  /** 分析原因 */
+  reason?: string | null
+  /** 改进措施 */
+  measure?: string | null
+  sortOrder?: number
+}
+
+export interface DailyReflection {
+  id: number
+  /** YYYY-MM-DD(星期由前端按日期算) */
+  date: string
+  items: ReflectionItem[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface ReflectionPayload {
+  date: string
+  items: ReflectionItem[]
+}
+
+// ===== 个人成长:日程规划 =====
+/** 明细类型:待办 / 计划完成 / 实际完成 / 随写备注 */
+export type PlanItemKind = 'TODO' | 'PLANNED' | 'ACTUAL' | 'NOTE'
+
+/** 规划明细项:待办与随写备注只有 name;计划/实际另有起止时间(用时由后端算) */
+export interface PlanItem {
+  id?: number
+  /** 待办名称 / 事项 / 随写备注的内容 */
+  name: string
+  /** 待办是否已完成(勾上=完成,文字加删除线);其它三类恒为 false */
+  completed?: boolean
+  /** HH:mm,只有计划完成与实际完成有 */
+  startTime?: string | null
+  endTime?: string | null
+  /** 用时(分钟),后端按起止时间算,只读 */
+  durationMinutes?: number | null
+  sortOrder?: number
+}
+
+export interface DailyPlan {
+  id: number
+  date: string
+  todos: PlanItem[]
+  planned: PlanItem[]
+  actual: PlanItem[]
+  notes: PlanItem[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+/** 列表只回四类计数,不带明细 */
+export interface DailyPlanListItem {
+  id: number
+  date: string
+  todoCount: number
+  plannedCount: number
+  actualCount: number
+  noteCount: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface PlanPayload {
+  date: string
+  todos?: Array<{ name: string; completed?: boolean }>
+  planned?: Array<{ name: string; startTime: string; endTime: string }>
+  actual?: Array<{ name: string; startTime: string; endTime: string }>
+  notes?: Array<{ name: string }>
+}
+
+/** 两个成长模块列表共用的查询参数:tab 换算出的日期区间 + 分页 */
+export interface DateRangeQuery {
+  page?: number
+  pageSize?: number
+  from?: string
+  to?: string
+}
+
 // ===== 管理端 =====
 export interface AdminUser {
   id: number

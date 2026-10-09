@@ -127,7 +127,13 @@ const planScheduleItem = z
   })
 
 const planTodoList = z
-  .array(z.object({ name: z.string().trim().min(1, '待办事项不能为空').max(100, '待办事项最多 100 个字符') }))
+  .array(
+    z.object({
+      name: z.string().trim().min(1, '待办事项不能为空').max(100, '待办事项最多 100 个字符'),
+      // 勾上表示完成
+      completed: z.boolean().optional()
+    })
+  )
   .max(50, '待办事项最多 50 条')
 const planScheduleList = z.array(planScheduleItem).max(50, '时间安排最多 50 条')
 // 随写备注:只有内容,和待办/计划/实际同级

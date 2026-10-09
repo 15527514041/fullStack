@@ -116,67 +116,7 @@ onMounted(loadDetail)
 </template>
 
 <style scoped>
-.detail-page {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 30px 32px;
-  background: var(--el-bg-color);
-  border-radius: 18px;
-}
-
-/* 无菜单栏:去圆角,内边距收到 client 详情页的 20px(内容列自己居中) */
-.detail-page.is-full {
-  padding: 20px 20px 60px;
-  border-radius: 0;
-}
-
-/* 标题居中、返回按钮贴左(参考 client 详情页头部) */
-.detail-header {
-  position: relative;
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 48px;
-  /* 和内容列同宽:标题居中在卡片上方,返回按钮与卡片左边缘对齐(参考 client) */
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto 20px;
-}
-
-.detail-title {
-  max-width: 70%;
-  overflow: hidden;
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--color-text-1);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.detail-container {
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-/* 卡片:白底 + 柔和阴影 + 30px 大圆角(参考 client) */
-.info-card {
-  padding: 0 30px 24px;
-  border-radius: 30px;
-  background: var(--color-bg-card-1);
-  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.08);
-}
-
-.section-title {
-  padding: 30px 0 10px;
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--color-text-1);
-}
-
+/* 页面外壳、卡片、分节标题都在全局 theme.css 里(.detail-page/.info-card/.section-title) */
 .info-item {
   display: flex;
   align-items: flex-start;
@@ -216,36 +156,6 @@ onMounted(loadDetail)
 }
 
 @media (max-width: 768px) {
-  .detail-page {
-    padding: 14px 12px;
-    border-radius: 12px;
-  }
-
-  .detail-page.is-full {
-    padding: 12px 12px 40px;
-    border-radius: 0;
-  }
-
-  .detail-header {
-    height: 40px;
-    margin-bottom: 14px;
-  }
-
-  .detail-title {
-    max-width: 60%;
-    font-size: 18px;
-  }
-
-  .info-card {
-    padding: 0 20px 20px;
-    border-radius: 30px;
-  }
-
-  .section-title {
-    padding: 20px 0 8px;
-    font-size: 15px;
-  }
-
   .label {
     min-width: 84px;
     max-width: 84px;

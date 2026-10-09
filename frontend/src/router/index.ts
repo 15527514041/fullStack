@@ -58,6 +58,37 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'route.tags', requiresAuth: true }
       },
       {
+        path: 'reflections',
+        name: 'reflections',
+        component: () => import('@/views/ReflectionView.vue'),
+        meta: { titleKey: 'route.reflections', requiresAuth: true }
+      },
+      {
+        path: 'plans',
+        name: 'plans',
+        component: () => import('@/views/PlanView.vue'),
+        meta: { titleKey: 'route.plans', requiresAuth: true }
+      },
+      {
+        // 反思详情:展示某天的条目,新增/编辑走弹窗,靠 meta.noSidebar 隐藏菜单栏
+        path: 'reflections/:id',
+        name: 'reflection-detail',
+        component: () => import('@/views/ReflectionDetailView.vue'),
+        meta: { titleKey: 'route.reflectionDetail', requiresAuth: true, noSidebar: true }
+      },
+      {
+        path: 'plans/new',
+        name: 'plan-new',
+        component: () => import('@/views/PlanEditView.vue'),
+        meta: { titleKey: 'route.planNew', requiresAuth: true, noSidebar: true }
+      },
+      {
+        path: 'plans/:id',
+        name: 'plan-edit',
+        component: () => import('@/views/PlanEditView.vue'),
+        meta: { titleKey: 'route.planEdit', requiresAuth: true, noSidebar: true }
+      },
+      {
         path: 'admin',
         name: 'admin',
         component: () => import('@/views/AdminView.vue'),

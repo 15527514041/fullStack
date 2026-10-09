@@ -192,6 +192,44 @@ test('列表只返回三类计数,按日期倒序;from/to 过滤生效', async (
   assert.strictEqual(range.body.list[0].date, '2026-10-09')
 })
 
+test('待办可以勾选完成(completed),计划/实际/备注恒为 false', async () => {
+  const token = await registerAndLogin()
+  const auth = (req) => req.set('Authorization', `Bearer ${token}`)
+
+  const created = await auth(request(app).post('/api/plans')).send({
+    date: '2026-10-06',
+    todos: [
+      { name: '写周报', completed: true },
+      { name: '健身' }
+    ],
+    planned: [{ name: '写周报', startTime: '09:00', endTime: '10:30' }],
+    notes: [{ name: '随手记一句' }]
+  })
+
+  assert.strictEqual(created.status, 201)
+  // 不传 completed 的待办默认未完成
+  assert.deepStrictEqual(
+    created.body.todos.map((item) => item.completed),
+    [true, false]
+  )
+  // 其它三类没有完成概念
+  assert.strictEqual(created.body.planned[0].completed, false)
+  assert.strictEqual(created.body.notes[0].completed, false)
+
+  // 勾选状态跟着整体替换走:取消第一条、勾上第二条
+  const patched = await auth(request(app).patch(`/api/plans/${created.body.id}`)).send({
+    todos: [
+      { name: '写周报', completed: false },
+      { name: '健身', completed: true }
+    ]
+  })
+  assert.strictEqual(patched.status, 200)
+  assert.deepStrictEqual(
+    patched.body.todos.map((item) => item.completed),
+    [false, true]
+  )
+})
+
 test('只传计划的某一类时只替换该类,其它两类保持不动', async () => {
   const token = await registerAndLogin()
   const auth = (req) => req.set('Authorization', `Bearer ${token}`)
