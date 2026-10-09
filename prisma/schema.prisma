@@ -32,6 +32,14 @@ enum TagType {
   danger
 }
 
+// 日程规划的列表项类型:待办清单 / 计划完成 / 实际完成 / 随写备注
+enum DailyPlanItemKind {
+  TODO    // 待办事项:只有名称,序号即 sortOrder
+  PLANNED // 计划完成:起止时间 + 事项(用时由起止时间算)
+  ACTUAL  // 实际完成:同上
+  NOTE    // 随写备注:只有内容
+}
+
 model User {
   id          Int        @id @default(autoincrement())
   username    String     @unique
@@ -43,6 +51,8 @@ model User {
   todos       Todo[]
   tags        Tag[]
   uploads     Upload[]
+  reflections DailyReflection[]
+  plans       DailyPlan[]
   createdAt   DateTime   @default(now())
 }
 
@@ -107,4 +117,65 @@ model Todo {
   tags        Tag[]
 
   @@index([userId])
+}
+
+// ===== 个人成长:每日反思 =====
+// 一天一条(date + userId 唯一),记录里挂多条反思项
+model DailyReflection {
+  id        Int              @id @default(autoincrement())
+  // 只存年月日:接口收发都用 YYYY-MM-DD,落库固定 UTC 零点,避免时区把日期挪一天
+  date      DateTime         @db.Date
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  items     ReflectionItem[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // 唯一索引本身就覆盖 (userId, date) 查询,不用再建普通索引
+  @@unique([userId, date])
+}
+
+// 反思项:描述经过 + 分析原因 + 改进措施
+model ReflectionItem {
+  id           Int             @id @default(autoincrement())
+  reflection   DailyReflection @relation(fields: [reflectionId], references: [id], onDelete: Cascade)
+  reflectionId Int
+  experience   String
+  reason       String?
+  measure      String?
+  sortOrder    Int             @default(0)
+  createdAt    DateTime        @default(now())
+
+  @@index([reflectionId])
+}
+
+// ===== 个人成长:日程规划 =====
+// 一天一条(date + userId 唯一),记录里挂四类列表项(待办 / 计划完成 / 实际完成 / 随写备注)
+model DailyPlan {
+  id        Int             @id @default(autoincrement())
+  date      DateTime        @db.Date
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  items     DailyPlanItem[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@unique([userId, date])
+}
+
+// 规划列表项:四类共用一张表,用 kind 区分
+model DailyPlanItem {
+  id        Int               @id @default(autoincrement())
+  plan      DailyPlan         @relation(fields: [planId], references: [id], onDelete: Cascade)
+  planId    Int
+  kind      DailyPlanItemKind
+  // 待办名称 / 事项 / 随写备注的内容
+  name      String
+  // HH:mm;TODO 类没有时间,PLANNED / ACTUAL 由接口层强制必填
+  startTime String?
+  endTime   String?
+  sortOrder Int               @default(0)
+  createdAt DateTime          @default(now())
+
+  @@index([planId, kind])
 }

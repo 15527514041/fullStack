@@ -77,6 +77,84 @@ const tagSchemas = {
     .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' })
 }
 
+// ====== 每日反思 / 日程规划 ======
+
+// 只收日期(YYYY-MM-DD):库里是 DATE 类型,带上时分秒反而容易踩时区
+const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD')
+const timeOfDay = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, '时间格式应为 HH:mm')
+// 星期不存库、也不进接口:它是 date 推导出来的,前端展示时自己算
+
+// 列表页的 tab(今天 / 过去 7 天 / 过去 30 天 / 全部)由前端换算成 from/to
+const dateRange = z
+  .object({
+    ...pageParams,
+    from: dateOnly.optional(),
+    to: dateOnly.optional()
+  })
+  .refine((data) => !data.from || !data.to || data.from <= data.to, {
+    message: '开始日期不能晚于结束日期',
+    path: ['to']
+  })
+
+const reflectionItem = z.object({
+  experience: z.string().trim().min(1, '描述经过不能为空').max(500, '描述经过最多 500 字'),
+  reason: z.string().trim().max(500, '分析原因最多 500 字').nullish(),
+  measure: z.string().trim().max(500, '改进措施最多 500 字').nullish()
+})
+const reflectionItems = z.array(reflectionItem).min(1, '至少写一条反思').max(20, '每天最多 20 条反思')
+
+const reflectionSchemas = {
+  create: z.object({ date: dateOnly, items: reflectionItems }),
+  update: z
+    .object({
+      date: dateOnly.optional(),
+      items: reflectionItems.optional()
+    })
+    .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' }),
+  query: dateRange
+}
+
+// 时间范围:起止都必填,且结束必须晚于开始(HH:mm 字符串直接比大小即可)
+const planScheduleItem = z
+  .object({
+    name: z.string().trim().min(1, '事项不能为空').max(100, '事项最多 100 个字符'),
+    startTime: timeOfDay,
+    endTime: timeOfDay
+  })
+  .refine((item) => item.endTime > item.startTime, {
+    message: '结束时间必须晚于开始时间',
+    path: ['endTime']
+  })
+
+const planTodoList = z
+  .array(z.object({ name: z.string().trim().min(1, '待办事项不能为空').max(100, '待办事项最多 100 个字符') }))
+  .max(50, '待办事项最多 50 条')
+const planScheduleList = z.array(planScheduleItem).max(50, '时间安排最多 50 条')
+// 随写备注:只有内容,和待办/计划/实际同级
+const planNoteList = z
+  .array(z.object({ name: z.string().trim().min(1, '备注内容不能为空').max(500, '备注最多 500 个字符') }))
+  .max(50, '备注最多 50 条')
+
+const planSchemas = {
+  create: z.object({
+    date: dateOnly,
+    todos: planTodoList.default([]),
+    planned: planScheduleList.default([]),
+    actual: planScheduleList.default([]),
+    notes: planNoteList.default([])
+  }),
+  update: z
+    .object({
+      date: dateOnly.optional(),
+      todos: planTodoList.optional(),
+      planned: planScheduleList.optional(),
+      actual: planScheduleList.optional(),
+      notes: planNoteList.optional()
+    })
+    .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' }),
+  query: dateRange
+}
+
 // ====== admin ======
 
 const adminSchemas = {
@@ -96,6 +174,8 @@ module.exports = {
   authSchemas,
   todoSchemas,
   tagSchemas,
+  reflectionSchemas,
+  planSchemas,
   adminSchemas,
   idParams
 }
