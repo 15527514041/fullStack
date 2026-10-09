@@ -42,12 +42,18 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http:/
 app.use(cors({ origin: allowedOrigins }))
 app.use(requestLogger)
 
+// 测试环境关掉限流:用例会反复注册/登录(光 plans.test.js 一个文件就要 22 次),
+// 不关的话会被自己的配额挡住,报一堆看不懂的 401/429。
+// node --test 会在每个测试子进程里设置 NODE_TEST_CONTEXT,拿它判断"正在跑测试"
+const isTestRun = Boolean(process.env.NODE_TEST_CONTEXT) || process.env.NODE_ENV === 'test'
+
 // 登录/注册限流:同一 IP 15 分钟最多 20 次
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 20,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  skip: () => isTestRun,
   message: { message: '请求过于频繁,请稍后再试' }
 })
 
