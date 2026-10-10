@@ -20,3 +20,15 @@ export function getExtension(name?: string | null): string {
   if (!name || !name.includes('.')) return ''
   return name.slice(name.lastIndexOf('.') + 1).toLowerCase()
 }
+
+/** 触发浏览器下载(blob → 临时 a 标签,用完立刻撤销 objectURL) */
+export function downloadBlob(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}

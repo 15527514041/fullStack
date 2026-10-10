@@ -6,7 +6,8 @@ import { useI18n } from 'vue-i18n'
 import { deletePlan, getPlan } from '@/api/plan'
 import ActionIcon from '@/components/ActionIcon.vue'
 import BackButton from '@/components/BackButton.vue'
-import { formatDate, formatDayLabel, formatDuration } from '@/utils/datetime'
+import { useImageExport } from '@/composables/useImageExport'
+import { formatDate, formatDuration, formatWeekday } from '@/utils/datetime'
 import type { DailyPlan } from '@/types'
 
 /**
@@ -21,8 +22,9 @@ const { t } = useI18n()
 const planId = computed(() => Number(route.params.id))
 const loading = ref(true)
 const plan = ref<DailyPlan | null>(null)
-// 标题用记录自己的日期:2026-10-09 规划
-const pageTitle = computed(() => (plan.value ? t('plan.detailTitle', { date: plan.value.date }) : ''))
+// 导出的通用能力(节点 → PNG → 下载):loading 与成功/失败提示都在 composable 里
+const { exporting, exportImage } = useImageExport()
+const cardRef = ref<HTMLElement | null>(null)
 // 接口 404(不存在或已删除)时不弹错误,直接走空状态
 const notFound = ref(false)
 
@@ -55,6 +57,17 @@ function openEdit(): void {
   router.push({ name: 'plan-edit', params: { id: planId.value }, query: { from: 'detail' } })
 }
 
+// 导出这张卡片:标题用页面标题,文件名带日期
+function handleExport(): void {
+  const data = plan.value
+  if (!data) return
+
+  exportImage(cardRef.value, {
+    title: t('plan.detailTitle'),
+    fileName: t('plan.exportFileName', { date: data.date })
+  })
+}
+
 async function handleDelete(): Promise<void> {
   try {
     await ElMessageBox.confirm(t('plan.deleteConfirm', { date: formatDate(plan.value?.date) }), t('common.tip'), {
@@ -83,7 +96,7 @@ onMounted(loadDetail)
   <div class="detail-page is-full">
     <div class="detail-header">
       <BackButton :fallback="{ name: 'plans' }" />
-      <div class="detail-title">{{ pageTitle }}</div>
+      <div class="detail-title">{{ $t('plan.detailTitle') }}</div>
     </div>
 
     <div class="detail-container">
@@ -94,25 +107,20 @@ onMounted(loadDetail)
       </el-empty>
 
       <template v-else>
-        <!-- 操作行在卡片外侧、靠右:编辑进表单,删除整条记录 -->
+        <!-- 操作行在卡片外侧、靠右:导出图片 / 编辑进表单 / 删除整条记录 -->
         <div class="card-action-row">
+          <el-button :loading="exporting" @click="handleExport">{{ $t('common.export') }}</el-button>
           <el-button @click="openEdit">{{ $t('common.edit') }}</el-button>
           <el-button class="is-danger" @click="handleDelete">{{ $t('common.delete') }}</el-button>
         </div>
 
         <!-- 「工」字型:上=待办事项,中=计划完成|实际完成(左右对比),下=随写备注 -->
-        <div class="info-card plan-view">
-          <!-- 顶部:日期 + 星期(后端不存星期,按日期算) -->
-          <section class="plan-section">
-            <div class="plan-section__head">
-              <h3 class="plan-section__title">{{ $t('plan.dateLabel') }}</h3>
-            </div>
-            <div class="plan-list">
-              <div class="plan-row">
-                <span class="plan-value">{{ formatDayLabel(plan.date) }}</span>
-              </div>
-            </div>
-          </section>
+        <div ref="cardRef" class="info-card plan-view">
+          <!-- 顶部:日期一行纯文本 —— 日期 + 2026-10-10 + 周六(星期由日期算,后端不存) -->
+          <p class="plan-date-line">
+            <span class="plan-date-line__label">{{ $t('plan.dateLabel') }}</span>
+            <span>{{ plan.date }} {{ formatWeekday(plan.date) }}</span>
+          </p>
 
           <div class="plan-divider" />
 
@@ -149,8 +157,13 @@ onMounted(loadDetail)
 
               <div class="plan-list">
                 <div v-for="(item, index) in plan[section.field]" :key="item.id ?? index" class="plan-row">
-                  <!-- 点亮了才显示:没标记重要就不占位 -->
-                  <ActionIcon v-if="item.important" name="caret" :size="16" class="plan-important" />
+                  <!-- 小三角一直占位(16px),没点亮就隐藏:同一栏里各行的时间才对得齐 -->
+                  <ActionIcon
+                    name="caret"
+                    :size="16"
+                    class="plan-important"
+                    :class="{ 'is-hidden': !item.important }"
+                  />
                   <span class="plan-range">{{ item.startTime }} - {{ item.endTime }}</span>
                   <span class="plan-name">{{ item.name }}</span>
                   <span class="plan-duration">{{ formatDuration(item.durationMinutes) }}</span>
@@ -314,15 +327,30 @@ onMounted(loadDetail)
   color: var(--color-brand-6);
 }
 
-/* 计划 / 实际行首的「重要」小三角(只在点亮时渲染):橙色 */
+/* 计划 / 实际行首的「重要」小三角:点亮橙色,未点亮隐藏但仍占位(保证左对齐) */
 .plan-important {
   flex-shrink: 0;
   color: var(--color-warning-6);
 }
 
-.plan-value {
+.plan-important.is-hidden {
+  visibility: hidden;
+}
+
+/* 日期:一行纯文本,标签淡一点,日期 + 周几跟在后面 */
+.plan-date-line {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0;
   font-size: 14px;
+  line-height: 22px;
   color: var(--color-text-1);
+}
+
+.plan-date-line__label {
+  flex-shrink: 0;
+  color: var(--color-text-3);
 }
 
 .plan-note {
