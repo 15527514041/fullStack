@@ -137,22 +137,21 @@ onMounted(loadDetail)
       <el-skeleton v-if="loading" :rows="6" animated />
 
       <template v-else-if="record">
-        <!-- 反思内容:日期+星期整张卡片共用一份(标题下方),每条只展示三栏明细 + 右侧删除/编辑 -->
-        <div class="info-card">
-          <div class="section-title has-actions">
-            <div class="title-block">
-              <span class="title-text">{{ $t('reflection.itemsTitle') }}</span>
-              <span class="title-desc">{{ formatDayLabel(record.date) }}</span>
-            </div>
+        <!-- 每条反思:三栏明细 + 右上角删除 / 编辑 -->
+        <div class="info-card reflection-card">
+          <!-- 卡片内的标题行:左边「日期 + 星期」,右边「添加一条」 -->
+          <div class="card-action-row">
+            <div class="card-action-title">{{ formatDayLabel(record.date) }}</div>
             <el-button type="primary" size="small" @click="openAdd">
-              <ActionIcon name="add" :size="16" />
+              <ActionIcon name="add" :size="16" class="card-action-icon" />
               {{ $t('reflection.addItem') }}
             </el-button>
           </div>
 
           <div v-for="(item, index) in items" :key="item.id || index" class="detail-card">
-            <!-- 头部只放操作图标(靠右),左边保持干净 -->
-            <div class="detail-card__head is-actions-only">
+            <!-- 头部:左边带底色的序号,右边删除 / 编辑 -->
+            <div class="detail-card__head">
+              <span class="form-row-index">{{ index + 1 }}</span>
               <div class="detail-card__actions">
                 <el-button link type="primary" :title="$t('common.delete')" @click="removeItem(index)">
                   <ActionIcon name="delete" :size="20" />
@@ -164,16 +163,16 @@ onMounted(loadDetail)
             </div>
 
             <div class="detail-card__body">
-              <div class="detail-card__row">
-                <span class="detail-card__label">{{ $t('reflection.experience') }}:</span>
+              <div class="detail-card__field is-primary">
+                <span class="detail-card__label">{{ $t('reflection.experience') }}</span>
                 <span class="detail-card__value">{{ item.experience }}</span>
               </div>
-              <div class="detail-card__row">
-                <span class="detail-card__label">{{ $t('reflection.reason') }}:</span>
+              <div class="detail-card__field">
+                <span class="detail-card__label">{{ $t('reflection.reason') }}</span>
                 <span class="detail-card__value">{{ item.reason || '-' }}</span>
               </div>
-              <div class="detail-card__row">
-                <span class="detail-card__label">{{ $t('reflection.measure') }}:</span>
+              <div class="detail-card__field">
+                <span class="detail-card__label">{{ $t('reflection.measure') }}</span>
                 <span class="detail-card__value">{{ item.measure || '-' }}</span>
               </div>
             </div>
@@ -201,8 +200,44 @@ onMounted(loadDetail)
   margin-top: 20px;
 }
 
-/* 头部只有图标,明细行紧跟其后,间距收窄(不用 KYB 的 30px) */
-.detail-card .detail-card__body {
-  padding-top: 12px;
+/* 卡片内的标题行:左标题、右按钮 */
+.card-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.card-action-title {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 26px;
+  color: var(--color-text-1);
+}
+
+/* 标题行里的「添加一条」:和标题同一行,高度收一下 */
+.card-action-row :deep(.el-button) {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+/* 图标和文字留点间距(原来靠全局 .section-title.has-actions 那条规则) */
+.card-action-icon {
+  margin-right: 6px;
+}
+
+/* 标题搬到卡片外之后,卡片自己补上顶部留白(原来由 .section-title 撑着) */
+.reflection-card {
+  padding-top: 30px;
+}
+
+@media (max-width: 768px) {
+  .reflection-card {
+    padding-top: 20px;
+  }
 }
 </style>

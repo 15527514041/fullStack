@@ -1427,11 +1427,12 @@ body {
 .detail-card {
   border-radius: 24px;
   background: var(--color-bg-bottom);
-  padding: 30px;
+  /* 一条记录一张灰卡片,内边距比整页表单收一点,多条并排时更耐看 */
+  padding: 20px 24px;
 }
 
 .detail-card + .detail-card {
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 .detail-card__head {
@@ -1495,33 +1496,42 @@ body {
 }
 
 .detail-card__body {
-  padding-top: 30px;
+  padding-top: 12px;
 }
 
-.detail-card__row {
-  display: flex;
-  margin-bottom: 10px;
-  line-height: 28px;
-}
-
-.detail-card__row:last-of-type {
-  margin-bottom: 0;
+/* 字段:标签在上、内容在下(竖排),标签加粗当小标题用 */
+.detail-card__field + .detail-card__field {
+  margin-top: 14px;
 }
 
 .detail-card__label {
-  flex-shrink: 0;
-  width: 96px;
+  display: block;
+  margin-bottom: 4px;
   color: var(--color-text-3);
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
 }
 
 .detail-card__value {
-  flex: 1;
-  min-width: 0;
+  display: block;
   color: var(--color-text-1);
   font-size: 14px;
+  line-height: 22px;
   word-break: break-word;
   white-space: pre-wrap;
+}
+
+/* 第一个字段是每条记录的主内容:字号和字重都重一档 */
+.detail-card__field.is-primary .detail-card__value {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+/* 其余字段是补充信息:颜色浅一档 */
+.detail-card__field:not(.is-primary) .detail-card__value {
+  color: var(--color-text-2);
 }
 
 /* 没有标题行的明细卡片:内容在左,操作按钮靠右垂直居中 */
@@ -1549,7 +1559,7 @@ body {
 
   .detail-card {
     border-radius: 18px;
-    padding: 12px;
+    padding: 16px;
   }
 
   .detail-card__head {
@@ -1567,17 +1577,11 @@ body {
     white-space: normal;
   }
 
-  .detail-card__row {
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .detail-card__label,
-  .detail-card__value {
+  .detail-card__label {
     font-size: 12px;
   }
 
-  .detail-card__label {
-    width: auto;
+  .detail-card__field:not(.is-primary) .detail-card__value {
+    font-size: 13px;
   }
 }
