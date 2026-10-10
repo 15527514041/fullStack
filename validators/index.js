@@ -119,7 +119,9 @@ const planScheduleItem = z
   .object({
     name: z.string().trim().min(1, '事项不能为空').max(100, '事项最多 100 个字符'),
     startTime: timeOfDay,
-    endTime: timeOfDay
+    endTime: timeOfDay,
+    // 点亮小三角 = 这件事比较重要
+    important: z.boolean().optional()
   })
   .refine((item) => item.endTime > item.startTime, {
     message: '结束时间必须晚于开始时间',

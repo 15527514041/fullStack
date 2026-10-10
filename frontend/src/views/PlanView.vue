@@ -6,43 +6,52 @@ import { useI18n } from 'vue-i18n'
 import { getPlans } from '@/api/plan'
 import { useDateRangeTabs, type DateRangeTab } from '@/composables/useDateRangeTabs'
 import { useFeedList } from '@/composables/useFeedList'
-import { formatDayLabel } from '@/utils/datetime'
+import { formatDayLabel, toDateString } from '@/utils/datetime'
 import type { DailyPlanListItem } from '@/types'
 
 /**
  * 日程规划列表(样式参考 client 收款方管理):卡片流 + 日期区间 tab + 滑动分页,不用表格
- * 列表接口只回四类计数,卡片就用四个胶囊展示
+ * 列表接口只回四类计数,卡片展示前三个(待办 / 计划 / 实际);点卡片进详情页
  */
 const router = useRouter()
 const { t } = useI18n()
 
-const { tab, range } = useDateRangeTabs('today')
+const { tab, range } = useDateRangeTabs('all')
 const tabs = computed<Array<{ value: DateRangeTab; label: string }>>(() => [
+  { value: 'all', label: t('common.all') },
   { value: 'today', label: t('common.today') },
   { value: 'week', label: t('growth.last7') },
-  { value: 'month', label: t('growth.last30') },
-  { value: 'all', label: t('common.all') }
+  { value: 'month', label: t('growth.last30') }
 ])
 
 const sentinelRef = ref<HTMLElement | null>(null)
 const { items, loading, loadingMore, hasMore } = useFeedList<DailyPlanListItem>(getPlans, range, sentinelRef)
 
-// 卡片上的四个计数胶囊
+// 卡片上的计数胶囊(随写只有一条,不再展示)
 function pills(row: DailyPlanListItem): Array<{ key: string; text: string }> {
   return [
     { key: 'todos', text: t('plan.todoCount', { count: row.todoCount }) },
     { key: 'planned', text: t('plan.plannedCount', { count: row.plannedCount }) },
-    { key: 'actual', text: t('plan.actualCount', { count: row.actualCount }) },
-    { key: 'notes', text: t('plan.noteCount', { count: row.noteCount }) }
+    { key: 'actual', text: t('plan.actualCount', { count: row.actualCount }) }
   ]
+}
+
+// 只有「今天 / 明天」额外给个橙色标签,其它日期不给
+function dayBadge(date: string): string {
+  const today = new Date()
+  if (date === toDateString(today)) return t('plan.todayBadge')
+
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  return date === toDateString(tomorrow) ? t('plan.tomorrowBadge') : ''
 }
 
 function openCreate(): void {
   router.push({ name: 'plan-new' })
 }
 
-function openEdit(row: DailyPlanListItem): void {
-  router.push({ name: 'plan-edit', params: { id: row.id } })
+function openDetail(row: DailyPlanListItem): void {
+  router.push({ name: 'plan-detail', params: { id: row.id } })
 }
 </script>
 
@@ -70,12 +79,13 @@ function openEdit(row: DailyPlanListItem): void {
       <el-empty v-else-if="!items.length" class="feed-empty" :description="$t('plan.empty')" />
 
       <template v-else>
-        <div v-for="row in items" :key="row.id" class="feed-card" @click="openEdit(row)">
+        <div v-for="row in items" :key="row.id" class="feed-card" @click="openDetail(row)">
           <div class="card-content">
             <div class="card-left">
               <div class="card-title-row">
                 <span class="card-title">{{ formatDayLabel(row.date) }}</span>
                 <span v-for="pill in pills(row)" :key="pill.key" class="pill">{{ pill.text }}</span>
+                <span v-if="dayBadge(row.date)" class="pill pill--day">{{ dayBadge(row.date) }}</span>
               </div>
             </div>
             <div class="card-right">
@@ -92,3 +102,11 @@ function openEdit(row: DailyPlanListItem): void {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* 今日 / 明日:橙色胶囊,和列表里其它计数胶囊(绿色)区分开 */
+.feed-card .pill--day {
+  background: var(--color-warning-1);
+  color: var(--color-warning-6);
+}
+</style>

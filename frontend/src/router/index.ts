@@ -83,7 +83,15 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'route.planNew', requiresAuth: true, noSidebar: true }
       },
       {
+        // 详情页:只读展示 + 卡片外侧的编辑/删除
         path: 'plans/:id',
+        name: 'plan-detail',
+        component: () => import('@/views/PlanDetailView.vue'),
+        meta: { titleKey: 'route.planDetail', requiresAuth: true, noSidebar: true }
+      },
+      {
+        // 编辑页:从详情页的「编辑」进入,整页表单
+        path: 'plans/:id/edit',
         name: 'plan-edit',
         component: () => import('@/views/PlanEditView.vue'),
         meta: { titleKey: 'route.planEdit', requiresAuth: true, noSidebar: true }

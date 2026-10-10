@@ -176,6 +176,8 @@ model DailyPlanItem {
   endTime   String?
   // 待办是否已完成(勾上=完成,界面上文字加删除线);其它三类恒为 false
   completed Boolean           @default(false)
+  // 计划 / 实际是否标记为重要(点亮小三角);待办与随写恒为 false
+  important Boolean           @default(false)
   sortOrder Int               @default(0)
   createdAt DateTime          @default(now())
 

@@ -1,19 +1,20 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { CopyDocument } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { createPlan, deletePlan, getPlan, updatePlan } from '@/api/plan'
+import { createPlan, getPlan, updatePlan } from '@/api/plan'
 import ActionIcon from '@/components/ActionIcon.vue'
 import BackButton from '@/components/BackButton.vue'
-import { formatDate, formatWeekdayLong, toDateString } from '@/utils/datetime'
+import { formatWeekdayLong, toDateString } from '@/utils/datetime'
 import type { PlanPayload } from '@/types'
 
 /**
  * 日程规划的新增 / 编辑(整页表单,无菜单栏)
  * 一份记录 = 某天 + 四类列表:待办事项 / 计划完成 / 实际完成 / 随写备注
  * 计划与实际每行是「起止时间 + 事项」,用时由后端按起止时间算,这里只读展示
+ * 删除整条记录的操作只在详情页提供,这里不出现
  */
 interface PlanFormRow {
   name: string
@@ -21,6 +22,8 @@ interface PlanFormRow {
   endTime: string
   /** 待办专用:勾上表示完成 */
   completed: boolean
+  /** 计划 / 实际专用:点亮小三角表示比较重要 */
+  important: boolean
 }
 
 const route = useRoute()
@@ -31,6 +34,12 @@ const editingId = computed(() => (route.params.id ? Number(route.params.id) : nu
 const isNew = computed(() => editingId.value === null)
 const pageTitle = computed(() => (isNew.value ? t('plan.addTitle') : t('plan.editTitle')))
 const weekdayText = computed(() => formatWeekdayLong(form.date))
+
+// 从详情页的「编辑」进来会带上 from=detail:取消 / 保存后回详情页,而不是一路回列表
+const fromDetail = computed(() => route.query.from === 'detail')
+const backTarget = computed<RouteLocationRaw>(() =>
+  isNew.value ? { name: 'plans' } : { name: 'plan-detail', params: { id: editingId.value as number } }
+)
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -50,11 +59,25 @@ const form = reactive<{
 })
 
 function emptyRow(): PlanFormRow {
-  return { name: '', startTime: '', endTime: '', completed: false }
+  return { name: '', startTime: '', endTime: '', completed: false, important: false }
 }
 
-function toggleCompleted(row: PlanFormRow): void {
+// 打勾前必须已经有内容:空行直接给提示,不让勾上(否则保存时才发现更绕)
+function toggleCompleted(row: PlanFormRow, index: number): void {
+  if (!row.completed && !row.name.trim()) {
+    ElMessage.warning(t('plan.nameRequired', { label: t('plan.todoSection'), index: index + 1 }))
+    return
+  }
   row.completed = !row.completed
+}
+
+// 点小三角:点亮 = 这件事比较重要(同样要求先填内容)
+function toggleImportant(row: PlanFormRow, index: number, labelKey: string): void {
+  if (!row.important && !row.name.trim()) {
+    ElMessage.warning(t('plan.nameRequired', { label: t(labelKey), index: index + 1 }))
+    return
+  }
+  row.important = !row.important
 }
 
 // 随写备注只保留一条:界面上不提供增删,提交时仍是 list 结构
@@ -118,7 +141,7 @@ function buildNameList(rows: PlanFormRow[], labelKey: string, withCompleted = fa
 function buildScheduleList(
   rows: PlanFormRow[],
   labelKey: string
-): Array<{ name: string; startTime: string; endTime: string }> | null {
+): Array<{ name: string; startTime: string; endTime: string; important: boolean }> | null {
   const cleaned = cleanRows(rows)
 
   for (let index = 0; index < cleaned.length; index += 1) {
@@ -138,7 +161,12 @@ function buildScheduleList(
     }
   }
 
-  return cleaned.map((row) => ({ name: row.name, startTime: row.startTime, endTime: row.endTime }))
+  return cleaned.map((row) => ({
+    name: row.name,
+    startTime: row.startTime,
+    endTime: row.endTime,
+    important: row.important
+  }))
 }
 
 function buildPayload(): PlanPayload | null {
@@ -186,14 +214,21 @@ async function loadDetail(): Promise<void> {
 }
 
 function toFormRows(
-  items: Array<{ name: string; completed?: boolean; startTime?: string | null; endTime?: string | null }>
+  items: Array<{
+    name: string
+    completed?: boolean
+    important?: boolean
+    startTime?: string | null
+    endTime?: string | null
+  }>
 ): PlanFormRow[] {
   if (!items.length) return [emptyRow()]
   return items.map((item) => ({
     name: item.name,
     startTime: item.startTime || '',
     endTime: item.endTime || '',
-    completed: item.completed ?? false
+    completed: item.completed ?? false,
+    important: item.important ?? false
   }))
 }
 
@@ -215,7 +250,7 @@ async function handleSubmit(): Promise<void> {
       await updatePlan(editingId.value as number, payload)
       ElMessage.success(t('plan.updated'))
     }
-    router.push({ name: 'plans' })
+    goBack()
   } catch {
     // 同一天重复(409)等提示由 axios 拦截器统一处理
   } finally {
@@ -223,25 +258,13 @@ async function handleSubmit(): Promise<void> {
   }
 }
 
-async function handleDelete(): Promise<void> {
-  try {
-    await ElMessageBox.confirm(t('plan.deleteConfirm', { date: formatDate(form.date) }), t('common.tip'), {
-      type: 'warning',
-      showClose: false,
-      confirmButtonText: t('common.delete'),
-      cancelButtonText: t('common.cancel')
-    })
-  } catch {
-    return // 用户取消
+// 取消 / 保存后去哪:从详情页进来就原路回详情页(详情页会重新拉一次数据),否则回列表
+function goBack(): void {
+  if (fromDetail.value && window.history.state?.back) {
+    router.back()
+    return
   }
-
-  try {
-    await deletePlan(editingId.value as number)
-    ElMessage.success(t('plan.deleted'))
-    router.push({ name: 'plans' })
-  } catch {
-    // 错误提示由 axios 拦截器统一处理
-  }
+  router.push(backTarget.value)
 }
 
 onMounted(loadDetail)
@@ -250,7 +273,7 @@ onMounted(loadDetail)
 <template>
   <div class="detail-page is-full has-actions">
     <div class="detail-header">
-      <BackButton :fallback="{ name: 'plans' }" />
+      <BackButton :fallback="backTarget" />
       <div class="detail-title">{{ pageTitle }}</div>
     </div>
 
@@ -259,11 +282,6 @@ onMounted(loadDetail)
 
       <!-- 「工」字型:上=待办事项,中=计划完成|实际完成(左右对比),下=随写备注 -->
       <div v-else class="info-card plan-form">
-        <!-- 删除整天:卡片内部右上角 -->
-        <el-button v-if="!isNew" plain class="delete-btn card-delete" @click="handleDelete">
-          {{ $t('common.delete') }}
-        </el-button>
-
         <!-- 顶部也是一个 section:标题「日期」,内容一行两项 —— 日期 + 星期(只读,选日期自动回填) -->
         <section class="plan-section plan-date">
           <div class="plan-section__head">
@@ -282,7 +300,7 @@ onMounted(loadDetail)
         </section>
 
         <!-- 日期与下方内容用实线分隔 -->
-        <div class="plan-divider is-solid" />
+        <div class="plan-divider" />
 
         <!-- 上:待办事项 -->
         <section class="plan-section">
@@ -301,20 +319,29 @@ onMounted(loadDetail)
               <span class="form-row-index">{{ index + 1 }}</span>
               <el-input v-model="row.name" :placeholder="$t('plan.todoPlaceholder')" maxlength="100" />
               <span class="row-actions">
-                <el-button
-                  class="row-check"
-                  link
-                  :title="row.completed ? $t('plan.markUndone') : $t('plan.markDone')"
-                  @click="toggleCompleted(row)"
+                <el-tooltip
+                  :content="row.completed ? $t('plan.markUndone') : $t('plan.markDone')"
+                  placement="top"
                 >
-                  <ActionIcon name="check" :size="18" />
-                </el-button>
-                <el-button class="row-insert" link :title="$t('common.insert')" @click="insertRow(form.todos, index)">
-                  <ActionIcon name="add" :size="18" />
-                </el-button>
-                <el-button class="row-delete" link :title="$t('common.delete')" @click="removeRow(form.todos, index)">
-                  <ActionIcon name="delete" :size="18" />
-                </el-button>
+                  <el-button
+                    class="row-check"
+                    link
+                    :aria-label="row.completed ? $t('plan.markUndone') : $t('plan.markDone')"
+                    @click="toggleCompleted(row, index)"
+                  >
+                    <ActionIcon name="check" :size="18" />
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip :content="$t('common.insert')" placement="top">
+                  <el-button class="row-insert" link :aria-label="$t('common.insert')" @click="insertRow(form.todos, index)">
+                    <ActionIcon name="add" :size="18" />
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip :content="$t('common.delete')" placement="top">
+                  <el-button class="row-delete" link :aria-label="$t('common.delete')" @click="removeRow(form.todos, index)">
+                    <ActionIcon name="delete" :size="18" />
+                  </el-button>
+                </el-tooltip>
               </span>
             </div>
           </div>
@@ -335,14 +362,27 @@ onMounted(loadDetail)
               </div>
             </div>
 
-            <!-- 一行:序号 + 起止时间范围 + 事项 + 行尾操作(插入/删除),多条共用灰色背景 -->
+            <!-- 一行:重要小三角 + 起止时间范围 + 事项 + 行尾操作(插入/删除),多条共用灰色背景 -->
             <div class="plan-list">
               <div
                 v-for="(row, index) in form[section.field]"
                 :key="`${section.field}-${index}`"
                 class="form-row form-row--compact"
               >
-                <span class="form-row-index">{{ index + 1 }}</span>
+                <el-tooltip
+                  :content="row.important ? $t('plan.markUnimportant') : $t('plan.markImportant')"
+                  placement="top"
+                >
+                  <el-button
+                    class="row-important"
+                    link
+                    :class="{ 'is-on': row.important }"
+                    :aria-label="row.important ? $t('plan.markUnimportant') : $t('plan.markImportant')"
+                    @click="toggleImportant(row, index, section.titleKey)"
+                  >
+                    <ActionIcon name="caret" :size="16" />
+                  </el-button>
+                </el-tooltip>
                 <el-time-picker
                   is-range
                   class="plan-range"
@@ -356,22 +396,26 @@ onMounted(loadDetail)
                 />
                 <el-input v-model="row.name" class="plan-name" :placeholder="$t('plan.itemPlaceholder')" maxlength="100" />
                 <span class="row-actions">
-                  <el-button
-                    class="row-insert"
-                    link
-                    :title="$t('common.insert')"
-                    @click="insertRow(form[section.field], index)"
-                  >
-                    <ActionIcon name="add" :size="18" />
-                  </el-button>
-                  <el-button
-                    class="row-delete"
-                    link
-                    :title="$t('common.delete')"
-                    @click="removeRow(form[section.field], index)"
-                  >
-                    <ActionIcon name="delete" :size="18" />
-                  </el-button>
+                  <el-tooltip :content="$t('common.insert')" placement="top">
+                    <el-button
+                      class="row-insert"
+                      link
+                      :aria-label="$t('common.insert')"
+                      @click="insertRow(form[section.field], index)"
+                    >
+                      <ActionIcon name="add" :size="18" />
+                    </el-button>
+                  </el-tooltip>
+                  <el-tooltip :content="$t('common.delete')" placement="top">
+                    <el-button
+                      class="row-delete"
+                      link
+                      :aria-label="$t('common.delete')"
+                      @click="removeRow(form[section.field], index)"
+                    >
+                      <ActionIcon name="delete" :size="18" />
+                    </el-button>
+                  </el-tooltip>
                 </span>
               </div>
             </div>
@@ -401,7 +445,7 @@ onMounted(loadDetail)
     </div>
 
     <div class="detail-actions">
-      <el-button @click="router.push({ name: 'plans' })">{{ $t('common.cancel') }}</el-button>
+      <el-button @click="goBack">{{ $t('common.cancel') }}</el-button>
       <el-button type="primary" :loading="submitting" @click="handleSubmit">{{ $t('common.save') }}</el-button>
     </div>
   </div>
@@ -424,14 +468,13 @@ onMounted(loadDetail)
   gap: 16px;
 }
 
-/* 分组分隔线:默认虚线,is-solid 用于日期下方那条 */
+/* 分组分隔线:3px 实线 + 两头倒圆角(「工」字的两横) */
 .plan-divider {
+  height: 3px;
   margin: 20px 0;
-  border-top: 1px dashed var(--color-border);
-}
-
-.plan-divider.is-solid {
-  border-top-style: solid;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-border);
 }
 
 .plan-section__head {
@@ -489,9 +532,21 @@ onMounted(loadDetail)
   padding-left: 0;
 }
 
+/* 「工」字中间那条竖线:同样 3px 实线 + 圆头,用伪元素画才能圆角 */
 .plan-columns > .plan-section:last-child {
+  position: relative;
   padding-right: 0;
-  border-left: 1px dashed var(--color-border);
+}
+
+.plan-columns > .plan-section:last-child::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--color-border);
 }
 
 .plan-section {
@@ -511,14 +566,19 @@ onMounted(loadDetail)
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
-/* 容器内部不再画任何分隔线(行与行靠内边距分开) */
-.plan-list--grid .form-row--compact {
-  padding: 10px 16px 10px 0;
+/*
+ * 容器内部不再画任何分隔线(行与行靠内边距分开)
+ * 选择器要写成 .form-row.form-row--compact:下面基础行样式同样是两个类,
+ * 写成一个类的 .plan-list--grid .form-row--compact 会因为同权重被后面的 padding: 10px 0 覆盖
+ */
+.plan-list--grid .form-row.form-row--compact {
+  /* 左右两条之间的留白:两侧各 24px(共 48px),原来只有 16px 太挤 */
+  padding: 10px 24px 10px 0;
   border: none;
 }
 
-.plan-list--grid .form-row--compact:nth-child(even) {
-  padding: 10px 0 10px 16px;
+.plan-list--grid .form-row.form-row--compact:nth-child(even) {
+  padding: 10px 0 10px 24px;
 }
 
 /* 每一行都是紧凑的单行:序号(最左) + 内容 + 删除(最右) */
@@ -567,9 +627,20 @@ onMounted(loadDetail)
 
 .form-row--compact :deep(.row-insert),
 .form-row--compact :deep(.row-delete),
-.form-row--compact :deep(.row-check) {
+.form-row--compact :deep(.row-check),
+.form-row--compact :deep(.row-important) {
   padding: 0;
   color: var(--color-text-3);
+}
+
+/* 计划 / 实际每行行首的「重要」小三角:未点亮浅灰,点亮橙色 */
+.form-row--compact :deep(.row-important) {
+  color: var(--color-text-4);
+}
+
+.form-row--compact :deep(.row-important.is-on),
+.form-row--compact :deep(.row-important:hover) {
+  color: var(--color-warning-6);
 }
 
 .form-row--compact :deep(.row-check) {
@@ -605,17 +676,6 @@ onMounted(loadDetail)
   padding: 10px 14px;
 }
 
-/* 整天的删除按钮:卡片内部右上角 */
-.plan-form {
-  position: relative;
-}
-
-.card-delete {
-  position: absolute;
-  top: 26px;
-  right: 30px;
-}
-
 @media (max-width: 768px) {
   .plan-form {
     padding-top: 18px;
@@ -640,10 +700,17 @@ onMounted(loadDetail)
     padding: 0;
   }
 
+  /* 窄屏:竖线改横线,同样是 3px 圆头 */
   .plan-columns > .plan-section:last-child {
-    border-left: none;
-    border-top: 1px dashed var(--color-border);
     padding-top: 14px;
+  }
+
+  .plan-columns > .plan-section:last-child::before {
+    top: 0;
+    bottom: auto;
+    right: 0;
+    width: auto;
+    height: 3px;
   }
 
   /* 窄屏:手柄和删除在第一行,内容独占第二行 */
@@ -673,14 +740,9 @@ onMounted(loadDetail)
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .plan-list--grid .form-row--compact,
-  .plan-list--grid .form-row--compact:nth-child(even) {
+  .plan-list--grid .form-row.form-row--compact,
+  .plan-list--grid .form-row.form-row--compact:nth-child(even) {
     padding: 10px 0;
-  }
-
-  .card-delete {
-    top: 18px;
-    right: 20px;
   }
 }
 </style>

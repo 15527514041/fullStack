@@ -17,12 +17,12 @@ import type { DailyReflection } from '@/types'
 const router = useRouter()
 const { t } = useI18n()
 
-const { tab, range } = useDateRangeTabs('today')
+const { tab, range } = useDateRangeTabs('all')
 const tabs = computed<Array<{ value: DateRangeTab; label: string }>>(() => [
+  { value: 'all', label: t('common.all') },
   { value: 'today', label: t('common.today') },
   { value: 'week', label: t('growth.last7') },
-  { value: 'month', label: t('growth.last30') },
-  { value: 'all', label: t('common.all') }
+  { value: 'month', label: t('growth.last30') }
 ])
 
 const sentinelRef = ref<HTMLElement | null>(null)

@@ -53,6 +53,9 @@ function toDurationMinutes(item) {
 // 只有待办和随写备注没有时间范围
 const NO_TIME_KINDS = ['TODO', 'NOTE']
 
+// 只有计划完成 / 实际完成有「重要」标记
+const IMPORTANT_KINDS = ['PLANNED', 'ACTUAL']
+
 // 把四类入参摊平成一张子表的行;没传的类别不生成行(传空数组 = 清空该类)
 function buildItems(data) {
   const rows = []
@@ -69,6 +72,8 @@ function buildItems(data) {
         endTime: NO_TIME_KINDS.includes(kind) ? null : item.endTime,
         // 只有待办有"完成"概念,其它三类恒为 false
         completed: kind === 'TODO' ? Boolean(item.completed) : false,
+        // 只有计划/实际有"重要"标记,待办与随写恒为 false
+        important: IMPORTANT_KINDS.includes(kind) ? Boolean(item.important) : false,
         sortOrder: index
       })
     })
@@ -90,6 +95,7 @@ function pickItems(items, kind) {
       startTime: item.startTime ?? null,
       endTime: item.endTime ?? null,
       completed: item.completed ?? false,
+      important: item.important ?? false,
       durationMinutes: toDurationMinutes(item),
       sortOrder: item.sortOrder
     }))

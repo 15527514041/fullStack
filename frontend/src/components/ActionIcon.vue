@@ -5,7 +5,7 @@ import { computed } from 'vue'
  * 操作类图标:原样取自 client 的 src/assets/icons/svg/(KYB 企业资料提交-相关人员 用的就是这几个)
  * 线性图标统一 currentColor,尺寸由 size 控制
  */
-export type ActionIconName = 'delete' | 'edit' | 'arrow-down' | 'arrow-up' | 'add' | 'drag' | 'check'
+export type ActionIconName = 'delete' | 'edit' | 'arrow-down' | 'arrow-up' | 'add' | 'drag' | 'check' | 'caret'
 
 const props = withDefaults(defineProps<{ name: ActionIconName; size?: number }>(), { size: 20 })
 
@@ -64,6 +64,13 @@ const ICONS: Record<ActionIconName, IconDef> = {
     paths: [
       'M7.50008 10.0003L9.16675 11.667L12.5001 8.33366M18.3334 10.0003C18.3334 14.6027 14.6025 18.3337 10.0001 18.3337C5.39771 18.3337 1.66675 14.6027 1.66675 10.0003C1.66675 5.39795 5.39771 1.66699 10.0001 1.66699C14.6025 1.66699 18.3334 5.39795 18.3334 10.0003Z'
     ]
+  },
+  // 空心小三角(尖朝上、三个角都倒了圆):计划/实际每行的「重要」开关(点亮=重要)
+  // 圆角是画进路径里的(用二次贝塞尔切角),比只靠 stroke-linejoin 更圆润
+  caret: {
+    viewBox: '0 0 20 20',
+    strokeWidth: '1.66667',
+    paths: ['M8.38 6.52Q10 4 11.62 6.52L15.58 12.68Q17.2 15.2 14.2 15.2L5.8 15.2Q2.8 15.2 4.42 12.68Z']
   }
 }
 

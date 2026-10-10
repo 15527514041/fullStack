@@ -230,6 +230,46 @@ test('待办可以勾选完成(completed),计划/实际/备注恒为 false', asy
   )
 })
 
+test('计划/实际可以标记重要(important),待办与随写恒为 false', async () => {
+  const token = await registerAndLogin()
+  const auth = (req) => req.set('Authorization', `Bearer ${token}`)
+
+  const created = await auth(request(app).post('/api/plans')).send({
+    date: '2026-10-05',
+    todos: [{ name: '写周报' }],
+    planned: [
+      { name: '写周报', startTime: '09:00', endTime: '10:30', important: true },
+      { name: '健身', startTime: '19:00', endTime: '20:00' }
+    ],
+    actual: [{ name: '写周报', startTime: '09:15', endTime: '11:00' }],
+    notes: [{ name: '随手记一句' }]
+  })
+
+  assert.strictEqual(created.status, 201)
+  // 不传 important 的计划默认不是重要
+  assert.deepStrictEqual(
+    created.body.planned.map((item) => item.important),
+    [true, false]
+  )
+  // 其它三类没有「重要」概念
+  assert.strictEqual(created.body.actual[0].important, false)
+  assert.strictEqual(created.body.todos[0].important, false)
+  assert.strictEqual(created.body.notes[0].important, false)
+
+  // 标记跟着整体替换走:取消第一条、点亮第二条
+  const patched = await auth(request(app).patch(`/api/plans/${created.body.id}`)).send({
+    planned: [
+      { name: '写周报', startTime: '09:00', endTime: '10:30', important: false },
+      { name: '健身', startTime: '19:00', endTime: '20:00', important: true }
+    ]
+  })
+  assert.strictEqual(patched.status, 200)
+  assert.deepStrictEqual(
+    patched.body.planned.map((item) => item.important),
+    [false, true]
+  )
+})
+
 test('只传计划的某一类时只替换该类,其它两类保持不动', async () => {
   const token = await registerAndLogin()
   const auth = (req) => req.set('Authorization', `Bearer ${token}`)

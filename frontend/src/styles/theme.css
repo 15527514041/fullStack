@@ -145,13 +145,19 @@ body {
 
 /* ================= 统一 tooltip(参考 client 全局 tooltip 覆盖) ================= */
 
-/* 菜单项 hover 与语言切换 hover 共用同一套气泡样式,避免两处不一致 */
-.app-tooltip.el-popper {
+/*
+ * 全局 tooltip:所有 el-tooltip 都走这套浅色气泡(白底 + 14px 圆角 + 柔和阴影 + 无箭头),
+ * 不再用 Element Plus 默认的黑底 is-dark。加新 tooltip 时不用再写 effect / popper-class。
+ *
+ * 必须排除 Element Plus 的组件弹层:下拉 / 选择器 / 日期面板 / popover 的根节点也带 el-tooltip 类,
+ * 不挡掉会把 date-picker 面板、用户菜单面板的 padding、圆角一起改坏。
+ * 排除项用 :where() 包住(权重记 0),这样本规则权重只有两个类,不会盖掉页面自己的 tooltip 微调。
+ */
+.el-popper.el-tooltip:where(:not([class*='__popper'])):where(:not([class*='__dropdown'])):where(:not(.el-popover)) {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 50px;
-  padding: 0 15px;
+  padding: 8px 12px;
   border: none;
   border-radius: 14px;
   background: var(--color-bg-card);
@@ -162,16 +168,15 @@ body {
   box-sizing: border-box;
 }
 
-/* 覆盖 Element Plus 深/浅两种效果的默认底色 */
-.app-tooltip.el-popper.is-dark,
-.app-tooltip.el-popper.is-light {
-  border: none;
-  background: var(--color-bg-card);
-  color: var(--color-text-1);
+/* 箭头跟着一起去掉(和语言切换那个 tooltip 一致) */
+.el-popper.el-tooltip:where(:not([class*='__popper'])):where(:not([class*='__dropdown'])):where(:not(.el-popover)) .el-popper__arrow {
+  display: none;
 }
 
-.app-tooltip.el-popper .el-popper__arrow {
-  display: none;
+/* 语言切换的 tooltip 里是一面国旗 + 文字,单独给足高度和内边距 */
+.app-tooltip.el-tooltip {
+  height: 50px;
+  padding: 0 15px;
 }
 
 /* 菜单 tooltip 复用了菜单的 #title 插槽,需重置左外边距,否则文字偏右 */

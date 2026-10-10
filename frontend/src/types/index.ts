@@ -122,6 +122,8 @@ export interface PlanItem {
   name: string
   /** 待办是否已完成(勾上=完成,文字加删除线);其它三类恒为 false */
   completed?: boolean
+  /** 计划/实际是否标记为重要(点亮小三角);待办与随写恒为 false */
+  important?: boolean
   /** HH:mm,只有计划完成与实际完成有 */
   startTime?: string | null
   endTime?: string | null
@@ -156,8 +158,8 @@ export interface DailyPlanListItem {
 export interface PlanPayload {
   date: string
   todos?: Array<{ name: string; completed?: boolean }>
-  planned?: Array<{ name: string; startTime: string; endTime: string }>
-  actual?: Array<{ name: string; startTime: string; endTime: string }>
+  planned?: Array<{ name: string; startTime: string; endTime: string; important?: boolean }>
+  actual?: Array<{ name: string; startTime: string; endTime: string; important?: boolean }>
   notes?: Array<{ name: string }>
 }
 
