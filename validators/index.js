@@ -57,7 +57,13 @@ const todoSchemas = {
     keyword: z.string().trim().optional(),
     completed: boolQuery.optional(),
     tagId: z.coerce.number().int().positive().optional(),
-    deleted: boolQuery.optional()
+    deleted: boolQuery.optional(),
+    // 时间范围:待办的 createdAt 是时间戳,前端按用户本地时区算好 UTC 时刻再传,所以收 ISO 字符串
+    from: z.string().datetime({ offset: true }).optional(),
+    to: z.string().datetime({ offset: true }).optional()
+  }).refine((data) => !data.from || !data.to || data.from <= data.to, {
+    message: '开始时间不能晚于结束时间',
+    path: ['to']
   })
 }
 

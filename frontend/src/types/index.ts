@@ -44,6 +44,8 @@ export interface Todo {
   remark?: string | null
   completed: boolean
   createdAt: string
+  /** 最近一次更新时间 */
+  updatedAt: string
   deletedAt?: string | null
   userId: number
   /** 附件:非必填,可多个,走关联表 */
@@ -68,6 +70,9 @@ export interface TodoQuery {
   completed?: boolean
   tagId?: number
   deleted?: boolean
+  /** 创建时间范围(ISO,按本地时区算好的起止时刻) */
+  from?: string
+  to?: string
 }
 
 export interface TodoListResult {
@@ -179,6 +184,8 @@ export interface AdminUser {
   status: UserStatus
   avatarOssId: string | null
   createdAt: string
+  /** 最近一次登录成功的时间(从没登录过是 null) */
+  lastLoginAt: string | null
   _count: { todos: number; reflections: number; plans: number }
 }
 

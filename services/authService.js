@@ -42,6 +42,9 @@ const login = async (username, password) => {
     throw new AppError('账号已被禁用', 403)
   }
 
+  // 记录最近登录时间(后台用户列表展示用)
+  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
+
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' })
   return {
     token,

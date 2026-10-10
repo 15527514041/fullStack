@@ -78,9 +78,16 @@ function normalizeRemark(value) {
 
 // deleted=true 时查回收站(已删除的),默认只查未删除的
 async function listTodos(userId, query) {
-  const { page = 1, pageSize = 10, keyword, completed, tagId, deleted = false } = query
+  const { page = 1, pageSize = 10, keyword, completed, tagId, deleted = false, from, to } = query
 
   const where = { userId, deletedAt: deleted ? { not: null } : null }
+  // 创建时间范围:前端传的是按用户本地时区算好的 UTC 时刻(ISO 字符串)
+  if (from || to) {
+    where.createdAt = {
+      ...(from ? { gte: new Date(from) } : {}),
+      ...(to ? { lte: new Date(to) } : {})
+    }
+  }
   if (keyword) {
     where.title = { contains: keyword, mode: 'insensitive' }
   }

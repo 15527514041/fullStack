@@ -199,7 +199,8 @@ onUnmounted(() => {
               <el-avatar :size="48" :src="avatarUrl" class="user-avatar" @error="refreshAvatar">{{ usernameInitial }}</el-avatar>
               <div class="user-meta">
                 <div class="user-name">{{ authStore.user?.username || $t('navbar.defaultUser') }}</div>
-                <div class="user-role">{{ authStore.isAdmin ? $t('common.roleAdmin') : $t('common.roleUser') }}</div>
+                <!-- 只有管理员才显示角色;普通用户不占这一行 -->
+                <div v-if="authStore.isAdmin" class="user-role">{{ $t('common.roleAdmin') }}</div>
               </div>
             </div>
 

@@ -110,6 +110,11 @@ onMounted(loadDetail)
           <span class="label">{{ $t('common.createdAt') }}</span>
           <span class="value">{{ formatDateTime(todo.createdAt) }}</span>
         </div>
+
+        <div class="info-item">
+          <span class="label">{{ $t('common.updatedAt') }}</span>
+          <span class="value">{{ formatDateTime(todo.updatedAt) }}</span>
+        </div>
       </div>
     </div>
   </div>

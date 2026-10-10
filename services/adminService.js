@@ -20,6 +20,7 @@ async function listUsers(query) {
         status: true,
         avatarOssId: true,
         createdAt: true,
+        lastLoginAt: true,
         // 列表里展示三类内容的数量:待办 / 反思 / 每日规划
         // 待办要排除回收站(软删除)里的,和列表口径一致;反思 / 规划没有软删除,直接计数
         _count: {

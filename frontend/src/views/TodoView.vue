@@ -29,8 +29,37 @@ const query = reactive({
   page: 1,
   pageSize: 10,
   keyword: '',
-  tagId: undefined as number | undefined
+  tagId: undefined as number | undefined,
+  /** 时间筛选:'' = 全部(不传给后端) */
+  dateRange: ''
 })
+
+// 时间筛选选项(前端维护);「过去 7 天 / 30 天」复用已有的公共文案
+const dateOptions = computed(() => [
+  { value: '', label: t('common.all') },
+  { value: 'today', label: t('common.today') },
+  { value: 'week', label: t('growth.last7') },
+  { value: 'month', label: t('growth.last30') }
+])
+
+/**
+ * 时间筛选 → 后端参数
+ * createdAt 是时间戳,这里按「用户本地时区」算出当天的起止时刻再转成 UTC ISO;
+ * 选「全部」或没选都返回空对象,后端就不加时间条件
+ */
+function dateRangeParams(): { from?: string; to?: string } {
+  if (!query.dateRange) return {}
+
+  const start = new Date()
+  start.setHours(0, 0, 0, 0)
+  if (query.dateRange === 'week') start.setDate(start.getDate() - 6)
+  if (query.dateRange === 'month') start.setDate(start.getDate() - 29)
+
+  const end = new Date()
+  end.setHours(23, 59, 59, 999)
+
+  return { from: start.toISOString(), to: end.toISOString() }
+}
 
 // 新增 / 编辑弹窗:editingTodoId 为 null 表示新增
 const dialogVisible = ref(false)
@@ -81,7 +110,8 @@ async function loadTodos(append = false): Promise<void> {
       page: query.page,
       pageSize: query.pageSize,
       keyword: query.keyword.trim() || undefined,
-      tagId: query.tagId
+      tagId: query.tagId,
+      ...dateRangeParams()
     })
     todos.value = append ? [...todos.value, ...result.list] : result.list
     total.value = result.total
@@ -160,6 +190,7 @@ function handleSearch(): void {
 function handleReset(): void {
   query.keyword = ''
   query.tagId = undefined
+  query.dateRange = ''
   query.page = 1
   loadTodos()
 }
@@ -246,6 +277,17 @@ onMounted(() => {
         </el-option>
       </el-select>
 
+      <el-select
+        v-model="query.dateRange"
+        class="date-select"
+        :placeholder="$t('todo.dateFilterPlaceholder')"
+        :value-on-clear="''"
+        clearable
+        @change="handleSearch"
+      >
+        <el-option v-for="option in dateOptions" :key="option.value" :label="option.label" :value="option.value" />
+      </el-select>
+
       <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
       <el-button class="reset-btn" @click="handleReset">{{ $t('common.reset') }}</el-button>
     </div>
@@ -303,13 +345,6 @@ onMounted(() => {
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('todo.colRemark')" min-width="200">
-        <template #default="{ row }">
-          <span v-if="row.remark" class="todo-remark-cell" :title="row.remark">{{ row.remark }}</span>
-          <span v-else class="todo-empty-cell">-</span>
-        </template>
-      </el-table-column>
-
       <el-table-column :label="$t('todo.colAttachment')" width="170" class-name="cell-attachment">
         <template #default="{ row }">
           <OssAttachmentPreview v-if="attachmentIds(row).length" :value="attachmentIds(row)" :size="36" :max="3" :radius="6" />
@@ -320,6 +355,12 @@ onMounted(() => {
       <el-table-column :label="$t('common.createdAt')" width="170">
         <template #default="{ row }">
           {{ formatDateTime(row.createdAt) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column :label="$t('common.updatedAt')" width="170">
+        <template #default="{ row }">
+          {{ formatDateTime(row.updatedAt) }}
         </template>
       </el-table-column>
 
@@ -426,6 +467,11 @@ onMounted(() => {
   width: 210px;
 }
 
+/* 时间筛选:和搜索 / 标签两个筛选框等宽 */
+.date-select {
+  width: 210px;
+}
+
 /* 表单里的多选标签:选中项换成各自颜色的标签,多选时自动换行 */
 .tag-multiselect :deep(.el-select__selection) {
   flex-wrap: wrap;
@@ -447,18 +493,6 @@ onMounted(() => {
 .todo-done {
   color: #909399;
   text-decoration: line-through;
-}
-
-/* 备注列:单独一列,超长省略,鼠标悬停看全文 */
-.todo-remark-cell {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  font-size: 14px;
-  line-height: 22px;
-  color: var(--color-text-2);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .todo-empty-cell {
@@ -487,7 +521,8 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .search-input,
-  .tag-select {
+  .tag-select,
+  .date-select {
     width: 100%;
   }
 }
