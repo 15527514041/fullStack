@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { CopyDocument } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { createPlan, getPlan, updatePlan } from '@/api/plan'
+import { createPlan, getPlan, getPlans, updatePlan } from '@/api/plan'
 import ActionIcon from '@/components/ActionIcon.vue'
 import BackButton from '@/components/BackButton.vue'
 import TimeRangePicker from '@/components/TimeRangePicker.vue'
-import { formatWeekdayLong, toDateString } from '@/utils/datetime'
+import { formatDate, formatWeekdayLong, toDateString } from '@/utils/datetime'
 import type { PlanPayload } from '@/types'
 
 /**
@@ -277,6 +277,22 @@ async function handleSubmit(): Promise<void> {
   submitting.value = true
   try {
     if (isNew.value) {
+      // 同一天只允许一份:这天已经有规划就提示一下,留在表单里换个日期再保存(不给跳转入口)
+      const existing = await getPlans({ page: 1, pageSize: 1, from: payload.date, to: payload.date })
+      if (existing.list.length) {
+        try {
+          await ElMessageBox.alert(t('plan.dateExists', { date: formatDate(payload.date) }), t('common.tip'), {
+            type: 'warning',
+            showClose: false,
+            confirmButtonText: t('common.gotIt')
+          })
+        } catch {
+          // 关掉提示(ESC 等)也一样:留在表单
+        }
+
+        return
+      }
+
       await createPlan(payload)
       ElMessage.success(t('plan.created'))
     } else {
@@ -299,6 +315,21 @@ function goBack(): void {
   }
   router.push(backTarget.value)
 }
+
+// 新建(plans/new)和编辑(plans/:id/edit)是同一个组件,路由之间跳转时 Vue 会复用实例、不会重新 mount,
+// 所以这里手动跟着 id 变化重新拉数据;回到新建页则把表单清空
+function resetForm(): void {
+  form.date = toDateString(new Date())
+  form.todos = [emptyRow()]
+  form.planned = [emptyRow()]
+  form.actual = [emptyRow()]
+  form.notes = [emptyRow()]
+}
+
+watch(editingId, (id) => {
+  if (id === null) resetForm()
+  else loadDetail()
+})
 
 onMounted(loadDetail)
 </script>

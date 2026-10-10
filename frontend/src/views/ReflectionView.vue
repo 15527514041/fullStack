@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowRight, Plus } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { createReflection, getReflections } from '@/api/reflection'
 import ReflectionFormDialog, { type ReflectionSubmitPayload } from '@/components/ReflectionFormDialog.vue'
@@ -45,14 +45,24 @@ function openEdit(row: DailyReflection): void {
   router.push({ name: 'reflection-detail', params: { id: row.id } })
 }
 
-// 保存:那天已经有记录就直接进详情页继续添加,否则新建当天的第一条
+// 保存:那天已经有记录就先二次确认,确认才去详情页继续添加(取消就留在列表页,弹窗和已填内容都保留)
 async function handleSubmit(payload: ReflectionSubmitPayload): Promise<void> {
   submitting.value = true
   try {
     const existing = await getReflections({ page: 1, pageSize: 1, from: payload.date, to: payload.date })
     if (existing.list.length) {
+      try {
+        await ElMessageBox.confirm(t('reflection.dateExists'), t('common.tip'), {
+          type: 'warning',
+          showClose: false,
+          confirmButtonText: t('common.confirm'),
+          cancelButtonText: t('common.cancel')
+        })
+      } catch {
+        return // 取消:不跳转,也不关创建弹窗
+      }
+
       dialogVisible.value = false
-      ElMessage.info(t('reflection.dateExists'))
       router.push({ name: 'reflection-detail', params: { id: existing.list[0].id } })
       return
     }

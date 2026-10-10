@@ -24,7 +24,7 @@ const DIAL_RADIUS = 108
 const DIAL_TICK_INNER = 102
 // 数字尽量贴着刻度,日月再贴着数字:三圈重心靠外,中间留白不显得空
 const LABEL_RADIUS = 90
-const ICON_RADIUS = 66
+const ICON_RADIUS = 73
 const RING_RADIUS = 127
 const RING_WIDTH = 26
 
@@ -51,12 +51,12 @@ const dialTicks = computed(() =>
   })
 )
 
-// 表盘数字:0,2,4…22
+// 表盘数字:0,2,4…22;0 / 6 / 12 / 18 四个整点数字颜色加深(下面用 is-major)
 const labels = computed(() =>
   Array.from({ length: 12 }, (_, index) => {
     const minutes = index * 120
     const point = polar(LABEL_RADIUS, minutes)
-    return { key: minutes, x: point.x, y: point.y, text: String(index * 2) }
+    return { key: minutes, x: point.x, y: point.y, text: String(index * 2), major: minutes % 360 === 0 }
   })
 )
 
@@ -174,6 +174,7 @@ function handleKeydown(which: 'start' | 'end', event: KeyboardEvent): void {
       v-for="label in labels"
       :key="label.key"
       class="time-ring__dial-label"
+      :class="{ 'is-major': label.major }"
       :x="label.x"
       :y="label.y"
     >
@@ -181,10 +182,10 @@ function handleKeydown(which: 'start' | 'end', event: KeyboardEvent): void {
     </text>
 
     <!-- 0 点月亮 / 12 点太阳:只做方向装饰,颜色和大小都压到最低 -->
-    <g class="time-ring__icon is-moon" :transform="`translate(${CENTER} ${CENTER - ICON_RADIUS}) scale(0.85) translate(-12 -12)`">
+    <g class="time-ring__icon is-moon" :transform="`translate(${CENTER} ${CENTER - ICON_RADIUS}) scale(0.72) translate(-12 -12)`">
       <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
     </g>
-    <g class="time-ring__icon is-sun" :transform="`translate(${CENTER} ${CENTER + ICON_RADIUS}) scale(0.85) translate(-12 -12)`">
+    <g class="time-ring__icon is-sun" :transform="`translate(${CENTER} ${CENTER + ICON_RADIUS}) scale(0.72) translate(-12 -12)`">
       <circle cx="12" cy="12" r="4" />
       <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
     </g>
@@ -275,6 +276,13 @@ function handleKeydown(which: 'start' | 'end', event: KeyboardEvent): void {
   font-size: 12px;
   text-anchor: middle;
   dominant-baseline: central;
+}
+
+/* 0 / 6 / 12 / 18:四个整点数字加深 + 加粗放大,当方位锚点用 */
+.time-ring__dial-label.is-major {
+  fill: var(--color-text-1);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .time-ring__icon {

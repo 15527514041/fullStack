@@ -12,6 +12,7 @@ export default {
     edit: 'Edit',
     delete: 'Delete',
     cancel: 'Cancel',
+    gotIt: 'Got it',
     export: 'Export',
     exported: 'Image exported',
     exportFailed: 'Failed to export image, please retry',
@@ -181,7 +182,7 @@ export default {
     addItem: 'Add one',
     experienceRequired: '"What happened" is required',
     dateRequired: 'Please pick a date',
-    dateExists: 'That day already has a reflection - opened it for you',
+    dateExists: 'That day already has a reflection. Open its detail to keep adding?',
     created: 'Reflection saved',
     itemAdded: 'Item added',
     itemUpdated: 'Saved',
@@ -239,7 +240,8 @@ export default {
     created: 'Plan saved',
     updated: 'Plan updated',
     deleted: 'Deleted',
-    deleteConfirm: 'Delete the plan of {date}? This cannot be undone.'
+    deleteConfirm: 'Delete the plan of {date}? This cannot be undone.',
+    dateExists: '{date} already has a plan — pick another date to save'
   },
   timeRange: {
     title: 'Select time range',

@@ -12,6 +12,7 @@ export default {
     edit: '编辑',
     delete: '删除',
     cancel: '取消',
+    gotIt: '知道了',
     export: '导出',
     exported: '已导出图片',
     exportFailed: '导出图片失败,请重试',
@@ -181,7 +182,7 @@ export default {
     addItem: '新增一条',
     experienceRequired: '请填写「描述经过」',
     dateRequired: '请选择日期',
-    dateExists: '该日期已有反思,已为你打开当天详情',
+    dateExists: '该日期已有反思,是否前往这天的详情继续添加?',
     created: '反思已保存',
     itemAdded: '已新增一条',
     itemUpdated: '已保存',
@@ -239,7 +240,8 @@ export default {
     created: '规划已保存',
     updated: '规划已更新',
     deleted: '已删除',
-    deleteConfirm: '确定删除 {date} 的规划吗?删除后不可恢复'
+    deleteConfirm: '确定删除 {date} 的规划吗?删除后不可恢复',
+    dateExists: '{date} 这天已经有规划了,换个日期再保存吧'
   },
   timeRange: {
     title: '选择时间范围',

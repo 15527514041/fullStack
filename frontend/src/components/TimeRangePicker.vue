@@ -230,7 +230,12 @@ const dialogWidth = computed(() => (isMobile.value ? 'calc(100vw - 32px)' : '420
 
 /* 环形选择器 */
 .time-range-picker__ring {
-  margin: 18px 0 6px;
+  /*
+   * 水平方向必须写 auto:.time-ring 自己写了 margin:0 auto,
+   * 但这条规则和它权重相同、在产物里更靠后,会把 auto 顶掉 ——
+   * 一旦变成 margin:0,300 宽的钟表就贴着左边,看着就是"偏左"
+   */
+  margin: 18px auto 6px;
 }
 
 /* 底部总时长 */
