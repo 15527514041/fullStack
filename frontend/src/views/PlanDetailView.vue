@@ -2,10 +2,12 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { MoreFilled } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { deletePlan, getPlan } from '@/api/plan'
 import ActionIcon from '@/components/ActionIcon.vue'
 import BackButton from '@/components/BackButton.vue'
+import FileIcon from '@/components/FileIcon.vue'
 import { useImageExport } from '@/composables/useImageExport'
 import { formatDate, formatDuration, formatWeekday } from '@/utils/datetime'
 import type { DailyPlan } from '@/types'
@@ -75,6 +77,12 @@ function handleExport(): void {
   })
 }
 
+// 「更多」菜单:导出图片 / 删除整条记录
+function handleMore(command: string): void {
+  if (command === 'export') handleExport()
+  else if (command === 'delete') handleDelete()
+}
+
 async function handleDelete(): Promise<void> {
   try {
     await ElMessageBox.confirm(t('plan.deleteConfirm', { date: formatDate(plan.value?.date) }), t('common.tip'), {
@@ -114,11 +122,25 @@ onMounted(loadDetail)
       </el-empty>
 
       <template v-else>
-        <!-- 操作行在卡片外侧、靠右:导出图片 / 编辑进表单 / 删除整条记录 -->
+        <!-- 操作行在卡片外侧、靠右:编辑 + 「更多」(导出图片 / 删除整条记录) -->
         <div class="card-action-row">
-          <el-button :loading="exporting" @click="handleExport">{{ $t('common.export') }}</el-button>
           <el-button @click="openEdit">{{ $t('common.edit') }}</el-button>
-          <el-button class="is-danger" @click="handleDelete">{{ $t('common.delete') }}</el-button>
+
+          <el-dropdown trigger="click" placement="bottom-end" @command="handleMore">
+            <el-button class="more-btn" :loading="exporting" :aria-label="$t('common.more')">
+              <el-icon><MoreFilled /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="export">
+                  <FileIcon name="download" :size="16" class="more-menu__icon" />{{ $t('common.export') }}
+                </el-dropdown-item>
+                <el-dropdown-item command="delete" class="is-danger">
+                  <FileIcon name="delete" :size="16" class="more-menu__icon" />{{ $t('common.delete') }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
 
         <!-- 「工」字型:上=待办事项,中=计划完成|实际完成(左右对比),下=随写备注 -->
@@ -237,11 +259,18 @@ onMounted(loadDetail)
   background: var(--el-color-primary-light-9);
 }
 
-/* 删除:红字浅红底,和列表里「删除」的语义色保持一处 */
-.card-action-row :deep(.el-button.is-danger),
-.card-action-row :deep(.el-button.is-danger:hover) {
-  color: var(--el-color-danger);
-  background: var(--color-danger-1);
+/* 「更多」按钮:只有图标,做成窄一点的胶囊 */
+.card-action-row :deep(.el-button.more-btn) {
+  padding: 0 10px;
+}
+
+/*
+ * 小面板(item 高度 / 24 圆角 / 阴影 / 危险色 .is-danger)统一在 theme.css 的
+ * .el-dropdown__popper.el-popper 里,这里不用重复;
+ * 只有 FileIcon 是自绘 svg,不受全局 .el-icon 的间距规则影响,补一下
+ */
+.more-menu__icon {
+  margin-right: 6px;
 }
 
 /* 分组分隔线:3px 实线 + 两头倒圆角(「工」字的两横) */

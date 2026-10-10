@@ -13,6 +13,7 @@ export default {
     delete: '删除',
     cancel: '取消',
     gotIt: '知道了',
+    more: '更多',
     export: '导出',
     exported: '已导出图片',
     exportFailed: '导出图片失败,请重试',

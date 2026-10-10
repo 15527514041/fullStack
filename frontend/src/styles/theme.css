@@ -193,6 +193,60 @@ body {
   justify-content: center;
 }
 
+/* ================= 下拉小面板(el-dropdown) ================= */
+
+/*
+ * 统一「白底 + 24 圆角 + 柔和阴影 + 无箭头」的小面板样式,和右上角语言切换 / 个人中心一致。
+ * 原来这套只写在 LangSelect 里(靠 popper-class 限定),抽到全局后所有 dropdown 共用,
+ * 新加弹层不用再抄一遍;危险项(.is-danger)也在这里统一。
+ */
+.el-dropdown__popper.el-popper {
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 24px;
+  background: var(--color-bg-card);
+  box-shadow: 0 0 8px 1px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.el-dropdown__popper.el-popper .el-popper__arrow {
+  display: none;
+}
+
+.el-dropdown__popper.el-popper .el-dropdown-menu {
+  padding: 0;
+  background: transparent;
+}
+
+.el-dropdown__popper.el-popper .el-dropdown-menu__item {
+  height: 50px;
+  padding: 0 20px;
+  font-size: 14px;
+  color: var(--color-text-2);
+}
+
+/* 菜单项里的图标和文字留点间距 */
+.el-dropdown__popper.el-popper .el-dropdown-menu__item .el-icon {
+  margin-right: 6px;
+}
+
+.el-dropdown__popper.el-popper .el-dropdown-menu__item:not(.is-disabled):hover,
+.el-dropdown__popper.el-popper .el-dropdown-menu__item:not(.is-disabled):focus {
+  background: var(--color-bg-bottom);
+  color: var(--color-text-1);
+}
+
+/* 危险项(删除等):红字,悬停浅红底 */
+.el-dropdown__popper.el-popper .el-dropdown-menu__item.is-danger {
+  color: var(--el-color-danger);
+}
+
+.el-dropdown__popper.el-popper .el-dropdown-menu__item.is-danger:not(.is-disabled):hover,
+.el-dropdown__popper.el-popper .el-dropdown-menu__item.is-danger:not(.is-disabled):focus {
+  color: var(--el-color-danger);
+  background: var(--color-danger-1);
+}
+
 .el-dialog {
   --el-dialog-border-radius: 30px;
   --el-dialog-title-font-size: 20px;

@@ -13,6 +13,7 @@ export default {
     delete: 'Delete',
     cancel: 'Cancel',
     gotIt: 'Got it',
+    more: 'More',
     export: 'Export',
     exported: 'Image exported',
     exportFailed: 'Failed to export image, please retry',
