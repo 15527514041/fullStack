@@ -13,7 +13,7 @@ import { formatDate, formatDuration, formatWeekday } from '@/utils/datetime'
 import type { DailyPlan } from '@/types'
 
 /**
- * 日程规划详情(只读):卡片外侧右上角放「编辑 / 删除」
+ * 每日规划详情(只读):卡片外侧右上角放「编辑 / 删除」
  * - 编辑:进整页表单(plan-edit),删除按钮只在详情页出现
  * - 分区顺序与编辑页一致:日期 → 待办事项 → 计划完成|实际完成 → 随写备注
  */

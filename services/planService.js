@@ -34,7 +34,7 @@ async function assertDateAvailable(userId, date, excludeId) {
   })
 
   if (existing) {
-    throw new AppError('该日期已有日程规划', 409)
+    throw new AppError('该日期已有每日规划', 409)
   }
 }
 
@@ -188,7 +188,7 @@ async function createPlan(data, userId) {
     return toPlanDetailDTO(record)
   } catch (error) {
     if (isUniqueViolation(error)) {
-      throw new AppError('该日期已有日程规划', 409)
+      throw new AppError('该日期已有每日规划', 409)
     }
     throw error
   }
@@ -200,7 +200,7 @@ async function updatePlan(id, userId, data) {
     select: { id: true }
   })
   if (!existing) {
-    throw new AppError('日程规划不存在', 404)
+    throw new AppError('每日规划不存在', 404)
   }
   if (data.date !== undefined) {
     await assertDateAvailable(userId, data.date, id)
@@ -227,7 +227,7 @@ async function updatePlan(id, userId, data) {
     return toPlanDetailDTO(record)
   } catch (error) {
     if (isUniqueViolation(error)) {
-      throw new AppError('该日期已有日程规划', 409)
+      throw new AppError('该日期已有每日规划', 409)
     }
     throw error
   }
@@ -239,7 +239,7 @@ async function deletePlan(id, userId) {
     select: { id: true }
   })
   if (!existing) {
-    throw new AppError('日程规划不存在', 404)
+    throw new AppError('每日规划不存在', 404)
   }
 
   await prisma.dailyPlan.delete({ where: { id } })

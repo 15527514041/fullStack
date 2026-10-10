@@ -31,7 +31,7 @@ const payload = {
   notes: [{ name: '今天状态不错,晚上早点睡' }, { name: '明天记得带伞' }]
 }
 
-test('创建日程规划:四类分类正确,序号即数组顺序,用时自动算', async () => {
+test('创建每日规划:四类分类正确,序号即数组顺序,用时自动算', async () => {
   const token = await registerAndLogin()
 
   const created = await request(app).post('/api/plans').set('Authorization', `Bearer ${token}`).send(payload)
@@ -114,7 +114,7 @@ test('同日重复创建返回 409', async () => {
   const again = await request(app).post('/api/plans').set('Authorization', `Bearer ${token}`).send(payload)
 
   assert.strictEqual(again.status, 409)
-  assert.strictEqual(again.body.message, '该日期已有日程规划')
+  assert.strictEqual(again.body.message, '该日期已有每日规划')
 })
 
 test('时间校验:起止都必填、格式必须是 HH:mm、起止不能相同(跨零点合法)', async () => {
@@ -305,7 +305,7 @@ test('只传计划的某一类时只替换该类,其它两类保持不动', asyn
   assert.strictEqual(cleared.body.todos.length, 2)
 })
 
-test('别人的日程规划看不到也改不了(404),未登录返回 401', async () => {
+test('别人的每日规划看不到也改不了(404),未登录返回 401', async () => {
   const aliceToken = await registerAndLogin('alice')
   const bobToken = await registerAndLogin('bob')
 
@@ -325,7 +325,7 @@ test('别人的日程规划看不到也改不了(404),未登录返回 401', asyn
   assert.strictEqual((await request(app).get('/api/plans')).status, 401)
 })
 
-test('删除日程规划返回 204,详情随后 404', async () => {
+test('删除每日规划返回 204,详情随后 404', async () => {
   const token = await registerAndLogin()
 
   const created = await request(app).post('/api/plans').set('Authorization', `Bearer ${token}`).send(payload)

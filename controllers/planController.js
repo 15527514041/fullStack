@@ -7,7 +7,7 @@ async function getPlans(req, res) {
 async function getPlan(req, res) {
   const record = await planService.getPlanById(req.validated.params.id, req.user.id)
   if (!record) {
-    return res.status(404).json({ message: '日程规划不存在' })
+    return res.status(404).json({ message: '每日规划不存在' })
   }
   res.json(record)
 }

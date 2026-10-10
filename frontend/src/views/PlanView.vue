@@ -10,7 +10,7 @@ import { formatDayLabel, toDateString } from '@/utils/datetime'
 import type { DailyPlanListItem } from '@/types'
 
 /**
- * 日程规划列表(样式参考 client 收款方管理):卡片流 + 日期区间 tab + 滑动分页,不用表格
+ * 每日规划列表(样式参考 client 收款方管理):卡片流 + 日期区间 tab + 滑动分页,不用表格
  * 列表接口只回四类计数,卡片展示前三个(待办 / 计划 / 实际);点卡片进详情页
  */
 const router = useRouter()

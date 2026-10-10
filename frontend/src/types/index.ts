@@ -111,7 +111,7 @@ export interface ReflectionPayload {
   items: ReflectionItem[]
 }
 
-// ===== 个人成长:日程规划 =====
+// ===== 个人成长:每日规划 =====
 /** 明细类型:待办 / 计划完成 / 实际完成 / 随写备注 */
 export type PlanItemKind = 'TODO' | 'PLANNED' | 'ACTUAL' | 'NOTE'
 
@@ -179,7 +179,7 @@ export interface AdminUser {
   status: UserStatus
   avatarOssId: string | null
   createdAt: string
-  _count: { todos: number }
+  _count: { todos: number; reflections: number; plans: number }
 }
 
 export interface AdminUserQuery {

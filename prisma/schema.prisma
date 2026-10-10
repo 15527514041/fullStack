@@ -32,7 +32,7 @@ enum TagType {
   danger
 }
 
-// 日程规划的列表项类型:待办清单 / 计划完成 / 实际完成 / 随写备注
+// 每日规划的列表项类型:待办清单 / 计划完成 / 实际完成 / 随写备注
 enum DailyPlanItemKind {
   TODO    // 待办事项:只有名称,序号即 sortOrder
   PLANNED // 计划完成:起止时间 + 事项(用时由起止时间算)
@@ -149,7 +149,7 @@ model ReflectionItem {
   @@index([reflectionId])
 }
 
-// ===== 个人成长:日程规划 =====
+// ===== 个人成长:每日规划 =====
 // 一天一条(date + userId 唯一),记录里挂四类列表项(待办 / 计划完成 / 实际完成 / 随写备注)
 model DailyPlan {
   id        Int             @id @default(autoincrement())

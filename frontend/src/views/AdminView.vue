@@ -158,6 +158,8 @@ onMounted(loadUsers)
 
         <div class="card-meta">
           <span>{{ $t('userAdmin.colTodoCount') }}:{{ row._count.todos }}</span>
+          <span>{{ $t('userAdmin.colReflectionCount') }}:{{ row._count.reflections }}</span>
+          <span>{{ $t('userAdmin.colPlanCount') }}:{{ row._count.plans }}</span>
           <span>{{ $t('userAdmin.colCreatedAt') }}:{{ formatDateTime(row.createdAt) }}</span>
         </div>
       </div>
@@ -199,6 +201,14 @@ onMounted(loadUsers)
 
       <el-table-column :label="$t('userAdmin.colTodoCount')" width="110" align="center">
         <template #default="{ row }">{{ row._count.todos }}</template>
+      </el-table-column>
+
+      <el-table-column :label="$t('userAdmin.colReflectionCount')" width="110" align="center">
+        <template #default="{ row }">{{ row._count.reflections }}</template>
+      </el-table-column>
+
+      <el-table-column :label="$t('userAdmin.colPlanCount')" width="110" align="center">
+        <template #default="{ row }">{{ row._count.plans }}</template>
       </el-table-column>
 
       <el-table-column :label="$t('userAdmin.colCreatedAt')" width="180">

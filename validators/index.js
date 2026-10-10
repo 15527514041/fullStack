@@ -77,7 +77,7 @@ const tagSchemas = {
     .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' })
 }
 
-// ====== 每日反思 / 日程规划 ======
+// ====== 每日反思 / 每日规划 ======
 
 // 只收日期(YYYY-MM-DD):库里是 DATE 类型,带上时分秒反而容易踩时区
 const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD')

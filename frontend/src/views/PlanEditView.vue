@@ -12,7 +12,7 @@ import { formatDate, formatWeekdayLong, toDateString } from '@/utils/datetime'
 import type { PlanPayload } from '@/types'
 
 /**
- * 日程规划的新增 / 编辑(整页表单,无菜单栏)
+ * 每日规划的新增 / 编辑(整页表单,无菜单栏)
  * 一份记录 = 某天 + 四类列表:待办事项 / 计划完成 / 实际完成 / 随写备注
  * 计划与实际每行是「起止时间 + 事项」,用时由后端按起止时间算,这里只读展示
  * 删除整条记录的操作只在详情页提供,这里不出现

@@ -151,6 +151,8 @@ export default {
     typeWarning: 'Warning',
     typeDanger: 'Danger',
     colTodoCount: 'TODOs',
+    colReflectionCount: 'Reflections',
+    colPlanCount: 'Plans',
     empty: 'No tags yet, click "New tag" to create one',
     dialogTitle: 'New tag',
     dialogEdit: 'Edit tag',
