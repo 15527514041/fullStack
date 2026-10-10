@@ -217,6 +217,7 @@ export default {
     actualSection: 'Actual',
     noteSection: 'Notes',
     itemPlaceholder: 'Item',
+    itemFromTodo: 'Pick a todo',
     startTime: 'Start',
     endTime: 'End',
     notePlaceholder: 'Write anything',
@@ -233,12 +234,23 @@ export default {
     copied: 'Copied {count} item(s) to actual',
     nameRequired: 'Item {index} of "{label}" is empty',
     timeRequired: 'Item {index} of "{label}" needs both start and end time',
-    timeOrder: 'Item {index} of "{label}": end time must be later than start time',
+    timeOrder: 'Item {index} of "{label}": start and end time cannot be the same',
     dateRequired: 'Please pick a date',
     created: 'Plan saved',
     updated: 'Plan updated',
     deleted: 'Deleted',
     deleteConfirm: 'Delete the plan of {date}? This cannot be undone.'
+  },
+  timeRange: {
+    title: 'Select time range',
+    placeholder: 'Select time',
+    start: 'Start',
+    end: 'End',
+    sameDay: 'Same day',
+    nextDay: 'Next day',
+    total: 'Duration',
+    hour: 'h',
+    minute: 'm'
   },
   userAdmin: {
     title: 'Users',

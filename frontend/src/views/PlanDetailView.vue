@@ -57,6 +57,13 @@ function openEdit(): void {
   router.push({ name: 'plan-edit', params: { id: planId.value }, query: { from: 'detail' } })
 }
 
+// 计划 / 实际的事项对应第几条待办(没有匹配就不显示序号)
+function todoIndexOf(name?: string): number {
+  const target = (name || '').trim()
+  if (!target) return 0
+  return (plan.value?.todos || []).findIndex((item) => (item.name || '').trim() === target) + 1
+}
+
 // 导出这张卡片:标题用页面标题,文件名带日期
 function handleExport(): void {
   const data = plan.value
@@ -165,7 +172,10 @@ onMounted(loadDetail)
                     :class="{ 'is-hidden': !item.important }"
                   />
                   <span class="plan-range">{{ item.startTime }} - {{ item.endTime }}</span>
-                  <span class="plan-name">{{ item.name }}</span>
+                  <!-- 序号胶囊就代表事项本身,所以只显示序号(悬停可看名称) -->
+                  <el-tooltip v-if="todoIndexOf(item.name)" :content="item.name" effect="light" placement="top">
+                    <span class="form-row-index">{{ todoIndexOf(item.name) }}</span>
+                  </el-tooltip>
                   <span class="plan-duration">{{ formatDuration(item.durationMinutes) }}</span>
                 </div>
 

@@ -217,6 +217,7 @@ export default {
     actualSection: '实际完成',
     noteSection: '随写备注',
     itemPlaceholder: '事项',
+    itemFromTodo: '选择待办事项',
     startTime: '开始时间',
     endTime: '结束时间',
     notePlaceholder: '想到什么写什么',
@@ -233,12 +234,23 @@ export default {
     copied: '已从计划复制 {count} 条到实际完成',
     nameRequired: '第 {index} 条「{label}」还没填内容',
     timeRequired: '第 {index} 条「{label}」的起止时间都要填',
-    timeOrder: '第 {index} 条「{label}」的结束时间要晚于开始时间',
+    timeOrder: '第 {index} 条「{label}」的开始时间和结束时间不能相同',
     dateRequired: '请选择日期',
     created: '规划已保存',
     updated: '规划已更新',
     deleted: '已删除',
     deleteConfirm: '确定删除 {date} 的规划吗?删除后不可恢复'
+  },
+  timeRange: {
+    title: '选择时间范围',
+    placeholder: '选择时间',
+    start: '起始',
+    end: '结束',
+    sameDay: '当天',
+    nextDay: '次日',
+    total: '总时长',
+    hour: '小时',
+    minute: '分'
   },
   userAdmin: {
     title: '用户管理',

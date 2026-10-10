@@ -123,8 +123,9 @@ const planScheduleItem = z
     // 点亮小三角 = 这件事比较重要
     important: z.boolean().optional()
   })
-  .refine((item) => item.endTime > item.startTime, {
-    message: '结束时间必须晚于开始时间',
+  // 结束时间小于开始时间 = 跨零点(23:00~06:00),合法;只有起止相同才拦
+  .refine((item) => item.endTime !== item.startTime, {
+    message: '开始时间和结束时间不能相同',
     path: ['endTime']
   })
 

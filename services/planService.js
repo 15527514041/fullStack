@@ -45,9 +45,11 @@ function toMinutes(time) {
 
 // 用时 = 起止时间差(分钟):不存库、不用前端填
 // TODO 类没有时间 → null;PLANNED / ACTUAL 起止都必填,一定算得出
+// 结束时间比开始时间小 = 跨零点(23:00~06:00),补一天
 function toDurationMinutes(item) {
   if (!item.startTime || !item.endTime) return null
-  return toMinutes(item.endTime) - toMinutes(item.startTime)
+  const diff = toMinutes(item.endTime) - toMinutes(item.startTime)
+  return diff >= 0 ? diff : diff + 1440
 }
 
 // 只有待办和随写备注没有时间范围

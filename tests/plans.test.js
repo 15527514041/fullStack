@@ -117,7 +117,7 @@ test('同日重复创建返回 409', async () => {
   assert.strictEqual(again.body.message, '该日期已有日程规划')
 })
 
-test('时间校验:起止都必填、格式必须是 HH:mm、结束要晚于开始', async () => {
+test('时间校验:起止都必填、格式必须是 HH:mm、起止不能相同(跨零点合法)', async () => {
   const token = await registerAndLogin()
   const post = (planned) =>
     request(app)
@@ -136,10 +136,15 @@ test('时间校验:起止都必填、格式必须是 HH:mm、结束要晚于开�
 
   const sameTime = await post([{ name: '时间相等', startTime: '09:00', endTime: '09:00' }])
   assert.strictEqual(sameTime.status, 400)
-  assert.deepStrictEqual(sameTime.body.errors, [{ field: 'planned.0.endTime', message: '结束时间必须晚于开始时间' }])
+  assert.deepStrictEqual(sameTime.body.errors, [{ field: 'planned.0.endTime', message: '开始时间和结束时间不能相同' }])
 
-  const reversed = await post([{ name: '顺序反了', startTime: '10:00', endTime: '09:00' }])
-  assert.strictEqual(reversed.status, 400)
+  // 结束早于开始 = 跨零点,合法;用时 = 结束 - 开始 + 一天
+  const cross = await request(app)
+    .post('/api/plans')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ date: '2026-10-04', planned: [{ name: '跨零点', startTime: '23:00', endTime: '06:00' }] })
+  assert.strictEqual(cross.status, 201)
+  assert.strictEqual(cross.body.planned[0].durationMinutes, 420)
 })
 
 test('单类最多 50 条', async () => {

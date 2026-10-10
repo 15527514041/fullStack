@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n'
 import { createPlan, getPlan, updatePlan } from '@/api/plan'
 import ActionIcon from '@/components/ActionIcon.vue'
 import BackButton from '@/components/BackButton.vue'
+import TimeRangePicker from '@/components/TimeRangePicker.vue'
 import { formatWeekdayLong, toDateString } from '@/utils/datetime'
 import type { PlanPayload } from '@/types'
 
@@ -89,6 +90,20 @@ const noteText = computed({
   }
 })
 
+// 计划 / 实际的事项从「待办事项」里选:选项带序号(空待办不进下拉)
+const todoOptions = computed(() =>
+  form.todos
+    .map((row, index) => ({ index: index + 1, value: (row.name || '').trim() }))
+    .filter((option) => option.value)
+)
+
+// 行首序号徽标:选中的事项对应第几条待办(没有匹配就不显示)
+function todoIndexOf(name?: string): number {
+  const target = (name || '').trim()
+  if (!target) return 0
+  return form.todos.findIndex((row) => (row.name || '').trim() === target) + 1
+}
+
 // 中间左右两栏:计划完成 / 实际完成,用同一套模板渲染,方便左右对比
 const scheduleSections = [
   { field: 'planned', titleKey: 'plan.plannedSection', addKey: 'plan.addPlanned' },
@@ -100,8 +115,25 @@ function addRow(list: PlanFormRow[]): void {
 }
 
 function removeRow(list: PlanFormRow[], index: number): void {
-  list.splice(index, 1)
+  const [removed] = list.splice(index, 1)
+  // 删的是待办:计划 / 实际里选了这条待办的明细一起清空,免得留下指向不存在待办的事项
+  if (list === form.todos && removed) clearScheduleByName(removed.name)
   if (!list.length) addRow(list)
+}
+
+function clearScheduleByName(name: string): void {
+  const target = (name || '').trim()
+  if (!target) return
+
+  for (const section of scheduleSections) {
+    form[section.field].forEach((row) => {
+      if ((row.name || '').trim() === target) {
+        row.name = ''
+        // 事项都没了,「重要」标记也跟着清掉
+        row.important = false
+      }
+    })
+  }
 }
 
 // 行尾「+」:在这一行后面插入一条(右上角不再有添加按钮)
@@ -155,7 +187,8 @@ function buildScheduleList(
       ElMessage.warning(t('plan.timeRequired', { label, index: index + 1 }))
       return null
     }
-    if (row.endTime <= row.startTime) {
+    // 允许跨零点(23:00~06:00),所以只要求起止不能相同
+    if (row.endTime === row.startTime) {
       ElMessage.warning(t('plan.timeOrder', { label, index: index + 1 }))
       return null
     }
@@ -285,7 +318,9 @@ onMounted(loadDetail)
         <!-- 顶部也是一个 section:标题「日期」,内容一行两项 —— 日期 + 星期(只读,选日期自动回填) -->
         <section class="plan-section plan-date">
           <div class="plan-section__head">
-            <h3 class="plan-section__title">{{ $t('plan.dateLabel') }}</h3>
+            <h3 class="plan-section__title">
+              <span class="required-mark" aria-hidden="true">*</span>{{ $t('plan.dateLabel') }}
+            </h3>
           </div>
           <div class="plan-date__row">
             <el-date-picker
@@ -383,18 +418,36 @@ onMounted(loadDetail)
                     <ActionIcon name="caret" :size="16" />
                   </el-button>
                 </el-tooltip>
-                <el-time-picker
-                  is-range
+                <TimeRangePicker
                   class="plan-range"
                   :model-value="timeRange(row)"
-                  format="HH:mm"
-                  value-format="HH:mm"
-                  range-separator="-"
-                  :start-placeholder="$t('plan.startTime')"
-                  :end-placeholder="$t('plan.endTime')"
+                  :placeholder="$t('timeRange.placeholder')"
                   @update:model-value="setTimeRange(row, $event)"
                 />
-                <el-input v-model="row.name" class="plan-name" :placeholder="$t('plan.itemPlaceholder')" maxlength="100" />
+                <!-- 事项:下拉的选项就是上面的待办事项;选中后框里只显示它的序号(带底色) -->
+                <el-select
+                  v-model="row.name"
+                  class="plan-name"
+                  :placeholder="$t('plan.itemFromTodo')"
+                  :value-on-clear="''"
+                  filterable
+                  clearable
+                >
+                  <template #label="{ value }">
+                    <span v-if="todoIndexOf(value)" class="form-row-index">{{ todoIndexOf(value) }}</span>
+                  </template>
+                  <el-option
+                    v-for="option in todoOptions"
+                    :key="option.value"
+                    :value="option.value"
+                    :label="option.value"
+                  >
+                    <span class="todo-option">
+                      <span class="form-row-index">{{ option.index }}</span>
+                      <span class="todo-option__name">{{ option.value }}</span>
+                    </span>
+                  </el-option>
+                </el-select>
                 <span class="row-actions">
                   <el-tooltip :content="$t('common.insert')" placement="top">
                     <el-button
@@ -492,6 +545,25 @@ onMounted(loadDetail)
   font-weight: 500;
   line-height: 22px;
   color: var(--color-text-1);
+}
+
+/* 必填项的红星:和 el-form-item 的必填标记一致(在标签前面) */
+.required-mark {
+  margin-right: 4px;
+  color: var(--el-color-danger);
+}
+
+/* 下拉里的选项:序号胶囊 + 名称 */
+.todo-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.todo-option__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .plan-section__actions {
@@ -594,21 +666,20 @@ onMounted(loadDetail)
 }
 
 /*
- * 注意:el-input / el-textarea / 时间范围选择器的根节点是子组件渲染出来的,
- * 不一定带得上本组件的 scoped 属性(范围选择器还被 el-tooltip 包了一层),
- * 所以这类跨组件选择器必须用 :deep()
+ * 注意:el-input / el-textarea / 时间范围选择器(TimeRangePicker)的根节点
+ * 是子组件渲染出来的,不一定带得上本组件的 scoped 属性,所以这类跨组件选择器必须用 :deep()
  */
 .form-row--compact :deep(.el-input),
-.form-row--compact :deep(.el-textarea) {
+.form-row--compact :deep(.el-textarea),
+.form-row--compact :deep(.el-select) {
   flex: 1;
   min-width: 0;
 }
 
-/* 时间范围选择器固定宽度(够显示 09:00 - 10:30),事项输入框占剩余空间 */
+/* 时间范围选择器和事项下拉等宽:两者都 flex:1,平分行内剩余空间 */
 .form-row--compact :deep(.plan-range) {
-  /* min-width:0 必须加:否则会被内容(两个时间输入框)的 min-content 顶宽,输入框就没空间了 */
-  flex: 0 0 200px;
-  width: 200px;
+  /* min-width:0 必须加:否则会被内容的 min-content 顶宽,同行其它控件就没空间了 */
+  flex: 1;
   min-width: 0;
 }
 
@@ -730,7 +801,8 @@ onMounted(loadDetail)
   }
 
   .form-row--compact :deep(.el-input),
-  .form-row--compact :deep(.el-textarea) {
+  .form-row--compact :deep(.el-textarea),
+  .form-row--compact :deep(.el-select) {
     order: 4;
     flex: 1 1 100%;
   }
