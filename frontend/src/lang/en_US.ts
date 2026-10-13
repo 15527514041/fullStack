@@ -279,17 +279,23 @@ export default {
   userAdmin: {
     title: 'Users',
     searchPlaceholder: 'Search username',
-    tip: 'Note: you cannot change your own role or status, to avoid locking yourself out.',
+    tip: 'Note: you cannot change or delete your own account, to avoid locking yourself out.',
     colId: 'ID',
     colUsername: 'Username',
     colRole: 'Role',
     colStatus: 'Status',
     colTodoCount: 'TODOs',
+    colReflectionCount: 'Reflections',
+    colPlanCount: 'Plans',
+    colLastLoginAt: 'Last sign-in',
     colCreatedAt: 'Registered at',
     empty: 'No users',
     roleUpdated: '{name} is now {role}',
     banned: '{name} has been disabled',
-    activated: '{name} has been enabled'
+    activated: '{name} has been enabled',
+    deleteConfirm:
+      'Delete user "{name}"? Their todos, tags, reflections and plans will be deleted as well, and this cannot be undone.',
+    deleted: 'Deleted "{name}" and {count} related records'
   },
   request: {
     failed: 'Request failed, please try again later',

@@ -276,7 +276,7 @@ export default {
   userAdmin: {
     title: '用户管理',
     searchPlaceholder: '搜索用户名',
-    tip: '提示:不能修改自己的角色和状态,避免把自己锁死。',
+    tip: '提示:不能修改或删除自己的账号,避免把自己锁死。',
     colId: 'ID',
     colUsername: '用户名',
     colRole: '角色',
@@ -289,7 +289,9 @@ export default {
     empty: '暂无用户',
     roleUpdated: '已将「{name}」设为{role}',
     banned: '已禁用「{name}」',
-    activated: '已启用「{name}」'
+    activated: '已启用「{name}」',
+    deleteConfirm: '确定删除用户「{name}」吗?TA 的 TODO、标签、反思、规划会一起删除,且无法恢复。',
+    deleted: '已删除用户「{name}」,并清理了 {count} 条关联数据'
   },
   request: {
     failed: '请求失败,请稍后重试',

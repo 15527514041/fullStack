@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import { getUsers, updateUserRole, updateUserStatus } from '@/api/admin'
+import { deleteUser, getUsers, updateUserRole, updateUserStatus } from '@/api/admin'
 import { useAuthStore } from '@/stores/auth'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
@@ -91,6 +91,38 @@ async function handleStatusChange(user: AdminUser): Promise<void> {
   }
 }
 
+// 删除用户:连同 TA 的 TODO / 标签 / 反思 / 规划一起删,所以要二次确认并说清后果
+async function handleDelete(user: AdminUser): Promise<void> {
+  try {
+    await ElMessageBox.confirm(t('userAdmin.deleteConfirm', { name: user.username }), t('common.tip'), {
+      type: 'warning',
+      showClose: false,
+      confirmButtonText: t('common.delete'),
+      cancelButtonText: t('common.cancel')
+    })
+  } catch {
+    return // 用户取消
+  }
+
+  try {
+    const result = await deleteUser(user.id)
+    const removed = result.removed
+    ElMessage.success(
+      t('userAdmin.deleted', {
+        name: result.username,
+        count: removed.todos + removed.tags + removed.reflections + removed.plans
+      })
+    )
+    // 删掉的正好是当前页最后一条时往前翻一页,不然会停在一个空页上
+    if (users.value.length === 1 && query.page > 1) {
+      query.page -= 1
+    }
+    await loadUsers()
+  } catch {
+    // 错误提示已在 axios 拦截器统一处理
+  }
+}
+
 onMounted(loadUsers)
 </script>
 
@@ -163,15 +195,22 @@ onMounted(loadUsers)
           <span>{{ $t('userAdmin.colLastLoginAt') }}:{{ row.lastLoginAt ? formatDateTime(row.lastLoginAt) : '-' }}</span>
           <span>{{ $t('userAdmin.colCreatedAt') }}:{{ formatDateTime(row.createdAt) }}</span>
         </div>
+
+        <!-- 自己那行不给删(后端也会挡),和上面角色/状态一致的规则 -->
+        <div class="card-actions">
+          <el-button link type="danger" :disabled="row.id === authStore.user?.id" @click="handleDelete(row)">
+            {{ $t('common.delete') }}
+          </el-button>
+        </div>
       </div>
     </div>
 
     <el-table v-else :data="users">
-      <el-table-column prop="id" :label="$t('userAdmin.colId')" width="70" />
+      <el-table-column prop="id" :label="$t('userAdmin.colId')" width="50" />
 
-      <el-table-column prop="username" :label="$t('userAdmin.colUsername')" min-width="140" />
+      <el-table-column prop="username" :label="$t('userAdmin.colUsername')" min-width="120" />
 
-      <el-table-column :label="$t('userAdmin.colRole')" width="150">
+      <el-table-column :label="$t('userAdmin.colRole')" width="110">
         <template #default="{ row }">
           <el-select
             v-model="row.role"
@@ -185,7 +224,7 @@ onMounted(loadUsers)
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('userAdmin.colStatus')" width="130" align="center">
+      <el-table-column :label="$t('userAdmin.colStatus')" width="100" align="center">
         <template #default="{ row }">
           <el-switch
             v-model="row.status"
@@ -200,27 +239,35 @@ onMounted(loadUsers)
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('userAdmin.colTodoCount')" width="110" align="center">
+      <el-table-column :label="$t('userAdmin.colTodoCount')" width="100" align="center">
         <template #default="{ row }">{{ row._count.todos }}</template>
       </el-table-column>
 
-      <el-table-column :label="$t('userAdmin.colReflectionCount')" width="110" align="center">
+      <el-table-column :label="$t('userAdmin.colReflectionCount')" width="85" align="center">
         <template #default="{ row }">{{ row._count.reflections }}</template>
       </el-table-column>
 
-      <el-table-column :label="$t('userAdmin.colPlanCount')" width="110" align="center">
+      <el-table-column :label="$t('userAdmin.colPlanCount')" width="85" align="center">
         <template #default="{ row }">{{ row._count.plans }}</template>
       </el-table-column>
 
-      <el-table-column :label="$t('userAdmin.colLastLoginAt')" width="180">
+      <el-table-column :label="$t('userAdmin.colLastLoginAt')" width="155">
         <template #default="{ row }">
           {{ row.lastLoginAt ? formatDateTime(row.lastLoginAt) : '-' }}
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('userAdmin.colCreatedAt')" width="180">
+      <el-table-column :label="$t('userAdmin.colCreatedAt')" width="155">
         <template #default="{ row }">
           {{ formatDateTime(row.createdAt) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column :label="$t('common.actions')" width="80" align="center" fixed="right">
+        <template #default="{ row }">
+          <el-button link type="danger" :disabled="row.id === authStore.user?.id" @click="handleDelete(row)">
+            {{ $t('common.delete') }}
+          </el-button>
         </template>
       </el-table-column>
 

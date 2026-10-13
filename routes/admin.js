@@ -22,5 +22,6 @@ router.patch(
   validate(adminSchemas.updateStatus),
   adminController.updateUserStatus
 )
+router.delete('/users/:id', validate(idParams, 'params'), adminController.deleteUser)
 
 module.exports = router

@@ -17,8 +17,15 @@ async function updateUserStatus(req, res) {
   res.json(user)
 }
 
+// 删除用户:账号和它的数据一起没了,前端必须二次确认
+async function deleteUser(req, res) {
+  const result = await adminService.deleteUser(req.user.id, req.validated.params.id)
+  res.json({ message: '用户已删除', ...result })
+}
+
 module.exports = {
   getUsers,
   updateUserRole,
-  updateUserStatus
+  updateUserStatus,
+  deleteUser
 }
