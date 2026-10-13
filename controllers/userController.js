@@ -33,4 +33,11 @@ async function updateAvatar(req, res) {
   res.json({ avatarOssId: result.ossId, avatarUrl: result.url })
 }
 
-module.exports = { updateAvatar }
+// 修改密码:成功后不签发新 token,前端引导用户用新密码重新登录
+// 只认 req.user.id(来自 token),所以不存在"改到别人密码"的可能
+async function changePassword(req, res) {
+  await userService.changePassword(req.user.id, req.validated.body.password)
+  res.json({ message: '密码修改成功' })
+}
+
+module.exports = { updateAvatar, changePassword }
