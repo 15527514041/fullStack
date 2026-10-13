@@ -317,6 +317,11 @@ body {
   border-radius: 16px;
 }
 
+/* 结果类弹窗(只有图标 + 文案,没有标题):EP 一定会渲染 header,这里去掉那条空的分隔线 */
+.result-dialog .el-dialog__header {
+  display: none;
+}
+
 /* ================= 列表页统一规范(参考 client「交易记录」页) ================= */
 
 /* 页面外壳:白底 + 18px 大圆角 + 30/32 内边距 */

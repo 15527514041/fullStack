@@ -7,6 +7,8 @@ import { useI18n } from 'vue-i18n'
 import MenuIcon from '@/components/MenuIcon.vue'
 import LogoMark from '@/components/LogoMark.vue'
 import LangSelect from '@/components/LangSelect.vue'
+import ChangePasswordDialog from '@/components/ChangePasswordDialog.vue'
+import PasswordChangedDialog from '@/components/PasswordChangedDialog.vue'
 import { useOssUrl } from '@/composables/useOssUrl'
 import { uploadAvatar } from '@/api/user'
 import { useAuthStore } from '@/stores/auth'
@@ -20,6 +22,8 @@ const collapsed = ref(false)
 const isMobile = ref(false)
 const mobileMenuVisible = ref(false)
 const userPanelVisible = ref(false)
+const changePasswordVisible = ref(false)
+const passwordChangedVisible = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const appMainRef = ref<HTMLElement | null>(null)
 
@@ -134,6 +138,16 @@ function handleChangeAvatar(): void {
   fileInputRef.value?.click()
 }
 
+function handleChangePassword(): void {
+  userPanelVisible.value = false
+  changePasswordVisible.value = true
+}
+
+// 密码已经改了:关掉表单弹窗,弹「修改成功」提示(5 秒后自动回登录页)
+function handlePasswordChanged(): void {
+  passwordChangedVisible.value = true
+}
+
 async function handleLogout(): Promise<void> {
   try {
     await ElMessageBox.confirm(t('navbar.logoutConfirm'), t('common.tip'), {
@@ -209,6 +223,10 @@ onUnmounted(() => {
                 <MenuIcon name="avatar" :size="16" />
                 <span>{{ $t('navbar.changeAvatar') }}</span>
               </div>
+              <div class="panel-item" @click="handleChangePassword">
+                <MenuIcon name="password" :size="16" />
+                <span>{{ $t('navbar.changePassword') }}</span>
+              </div>
               <div class="panel-item is-danger" @click="handleLogout">
                 <MenuIcon name="logout" :size="16" />
                 <span>{{ $t('navbar.logout') }}</span>
@@ -274,6 +292,9 @@ onUnmounted(() => {
         <router-view />
       </main>
     </div>
+
+    <ChangePasswordDialog v-model:visible="changePasswordVisible" @success="handlePasswordChanged" />
+    <PasswordChangedDialog v-model:visible="passwordChangedVisible" />
   </div>
 </template>
 

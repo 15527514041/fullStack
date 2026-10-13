@@ -36,12 +36,25 @@ export default {
     language: 'Language',
     menu: 'Menu',
     changeAvatar: 'Change avatar',
+    changePassword: 'Change password',
     logout: 'Sign out',
     logoutConfirm: 'Are you sure you want to sign out?',
     collapse: 'Collapse',
     avatarTypeError: 'Please choose an image file',
     avatarSizeError: 'Image must be smaller than 2MB',
     avatarUpdated: 'Avatar updated'
+  },
+  password: {
+    title: 'Change Password',
+    newPassword: 'New password',
+    newPasswordPlaceholder: '6-32 characters',
+    confirmPassword: 'Confirm password',
+    confirmPasswordPlaceholder: 'Enter the new password again',
+    submit: 'Confirm',
+    successTitle: 'Password changed',
+    successTip: 'To keep your account secure, please sign in again with your new password',
+    redirectTip: 'Redirecting to the sign-in page in {seconds} seconds...',
+    relogin: 'Sign in again'
   },
   lang: {
     zh: '中文',

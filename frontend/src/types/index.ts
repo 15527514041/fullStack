@@ -21,6 +21,12 @@ export interface UploadAvatarResult {
   avatarUrl: string
 }
 
+/** 修改密码:前端表单的两个字段原样提交,服务端还会再比一次 */
+export interface ChangePasswordPayload {
+  password: string
+  confirmPassword: string
+}
+
 // ===== 标签 =====
 /** 标签类型:与 Element Plus el-tag 的语义类型一一对应,直接透传不映射 */
 export type TagType = 'primary' | 'success' | 'info' | 'warning' | 'danger'

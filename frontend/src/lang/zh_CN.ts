@@ -36,12 +36,25 @@ export default {
     language: '语言',
     menu: '菜单',
     changeAvatar: '更换头像',
+    changePassword: '修改密码',
     logout: '退出登录',
     logoutConfirm: '确定要退出登录吗?',
     collapse: '折叠',
     avatarTypeError: '请选择图片文件',
     avatarSizeError: '图片不能超过 2MB',
     avatarUpdated: '头像已更新'
+  },
+  password: {
+    title: '修改密码',
+    newPassword: '新密码',
+    newPasswordPlaceholder: '6-32 个字符',
+    confirmPassword: '确认密码',
+    confirmPasswordPlaceholder: '请再次输入新密码',
+    submit: '确认修改',
+    successTitle: '密码修改成功',
+    successTip: '为保障您的账号安全,请使用新密码重新登录',
+    redirectTip: '{seconds} 秒后自动跳转登录页...',
+    relogin: '重新登录'
   },
   lang: {
     zh: '中文',
