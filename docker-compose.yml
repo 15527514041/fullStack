@@ -19,8 +19,12 @@ services:
     build: .
     image: fullstack-backend:test
     container_name: fullstack-api
+    # 异常退出(含被 OOM 杀掉)时自动拉起
+    # 注意:只是 healthcheck 变 unhealthy 不会触发重启——那需要 swarm/k8s 或外部探针
+    restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy # 等 db 的 healthcheck 通过再启动,避免"起来就连不上库"
     environment:
       DATABASE_URL: postgresql://fullstack:fullstack_pass@db:5432/fullstack
       JWT_SECRET: ${JWT_SECRET}
