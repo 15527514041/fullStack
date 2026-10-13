@@ -1,4 +1,4 @@
-const authService = require('../services/authService')
+const authService = require('../modules/auth/auth.service')
 const prisma = require('../utils/prisma')
 const AppError = require('../errors/AppError')
 

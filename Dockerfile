@@ -15,9 +15,7 @@ RUN npx prisma generate
 
 # 第 3 层:业务源码 → 改代码只影响这一层及之后
 COPY app.js server.js ./
-COPY routes ./routes
-COPY controllers ./controllers
-COPY services ./services
+COPY modules ./modules
 COPY middlewares ./middlewares
 COPY errors ./errors
 COPY validators ./validators
