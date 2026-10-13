@@ -10,7 +10,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'login',
-        component: () => import('@/views/LoginView.vue'),
+        component: () => import('@/views/auth/login.vue'),
         meta: { titleKey: 'route.login' }
       }
     ]
@@ -22,7 +22,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'register',
-        component: () => import('@/views/RegisterView.vue'),
+        component: () => import('@/views/auth/register.vue'),
         meta: { titleKey: 'route.register' }
       }
     ]
@@ -35,71 +35,71 @@ const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'todos',
-        component: () => import('@/views/TodoView.vue'),
+        component: () => import('@/views/todo/index.vue'),
         meta: { titleKey: 'route.todos', requiresAuth: true }
       },
       {
         path: 'trash',
         name: 'trash',
-        component: () => import('@/views/TrashView.vue'),
+        component: () => import('@/views/todo/trash.vue'),
         meta: { titleKey: 'route.trash', requiresAuth: true }
       },
       {
         // 详情页:复用主布局,靠 meta.noSidebar 隐藏侧栏(参考 client)
         path: 'todos/:id',
         name: 'todo-detail',
-        component: () => import('@/views/TodoDetailView.vue'),
+        component: () => import('@/views/todo/detail.vue'),
         meta: { titleKey: 'route.todoDetail', requiresAuth: true, noSidebar: true }
       },
       {
         path: 'tags',
         name: 'tags',
-        component: () => import('@/views/TagsView.vue'),
+        component: () => import('@/views/tag/index.vue'),
         meta: { titleKey: 'route.tags', requiresAuth: true }
       },
       {
         path: 'reflections',
         name: 'reflections',
-        component: () => import('@/views/ReflectionView.vue'),
+        component: () => import('@/views/reflection/index.vue'),
         meta: { titleKey: 'route.reflections', requiresAuth: true }
       },
       {
         path: 'plans',
         name: 'plans',
-        component: () => import('@/views/PlanView.vue'),
+        component: () => import('@/views/plan/index.vue'),
         meta: { titleKey: 'route.plans', requiresAuth: true }
       },
       {
         // 反思详情:展示某天的条目,新增/编辑走弹窗,靠 meta.noSidebar 隐藏菜单栏
         path: 'reflections/:id',
         name: 'reflection-detail',
-        component: () => import('@/views/ReflectionDetailView.vue'),
+        component: () => import('@/views/reflection/detail.vue'),
         meta: { titleKey: 'route.reflectionDetail', requiresAuth: true, noSidebar: true }
       },
       {
         path: 'plans/new',
         name: 'plan-new',
-        component: () => import('@/views/PlanEditView.vue'),
+        component: () => import('@/views/plan/edit.vue'),
         meta: { titleKey: 'route.planNew', requiresAuth: true, noSidebar: true }
       },
       {
         // 详情页:只读展示 + 卡片外侧的编辑/删除
         path: 'plans/:id',
         name: 'plan-detail',
-        component: () => import('@/views/PlanDetailView.vue'),
+        component: () => import('@/views/plan/detail.vue'),
         meta: { titleKey: 'route.planDetail', requiresAuth: true, noSidebar: true }
       },
       {
         // 编辑页:从详情页的「编辑」进入,整页表单
         path: 'plans/:id/edit',
         name: 'plan-edit',
-        component: () => import('@/views/PlanEditView.vue'),
+        component: () => import('@/views/plan/edit.vue'),
         meta: { titleKey: 'route.planEdit', requiresAuth: true, noSidebar: true }
       },
       {
         path: 'admin',
         name: 'admin',
-        component: () => import('@/views/AdminView.vue'),
+        component: () => import('@/views/admin/index.vue'),
         meta: { titleKey: 'route.users', requiresAuth: true, requiresAdmin: true }
       }
     ]
