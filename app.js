@@ -24,6 +24,7 @@ const reflectionsRouter = require('./modules/reflection/reflection.routes')
 const plansRouter = require('./modules/plan/plan.routes')
 const { notFound, errorHandler } = require('./middlewares/errorHandler')
 const requestLogger = require('./middlewares/requestLogger')
+const prisma = require('./utils/prisma')
 
 const app = express()
 
@@ -57,8 +58,17 @@ const authLimiter = rateLimit({
   message: { message: '请求过于频繁,请稍后再试' }
 })
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' })
+// 健康检查:deploy.sh 靠它判断"这次部署是否成功",负载均衡/监控也探它
+// 只回 status:ok 是不够的 —— 进程活着但连不上库时,服务其实什么也干不了,
+// 所以这里顺手探一次数据库;探不通返回 503,让调用方(CI/监控)知道要处理
+app.get('/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    res.json({ status: 'ok', db: 'ok' })
+  } catch (error) {
+    req.log?.error({ err: error }, 'health check: database unreachable')
+    res.status(503).json({ status: 'error', db: 'down' })
+  }
 })
 
 app.use('/api/auth', authLimiter, authRouter)
