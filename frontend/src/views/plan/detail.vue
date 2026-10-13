@@ -9,7 +9,7 @@ import ActionIcon from '@/components/ActionIcon.vue'
 import BackButton from '@/components/BackButton.vue'
 import FileIcon from '@/components/FileIcon.vue'
 import { useImageExport } from '@/composables/useImageExport'
-import { formatDate, formatDuration, formatWeekday } from '@/utils/datetime'
+import { formatDate, formatDateTime, formatDuration, formatWeekday } from '@/utils/datetime'
 import type { DailyPlan } from '@/types'
 
 /**
@@ -145,11 +145,16 @@ onMounted(loadDetail)
 
         <!-- 「工」字型:上=待办事项,中=计划完成|实际完成(左右对比),下=随写备注 -->
         <div ref="cardRef" class="info-card plan-view">
-          <!-- 顶部:日期一行纯文本 —— 日期 + 2026-10-10 + 周六(星期由日期算,后端不存) -->
-          <p class="plan-date-line">
-            <span class="plan-date-line__label">{{ $t('plan.dateLabel') }}</span>
-            <span>{{ plan.date }} {{ formatWeekday(plan.date) }}</span>
-          </p>
+          <!-- 顶部一行:左边「计划日期 + 日期 + 周几」,右边创建时间(卡片右上角) -->
+          <div class="plan-date-line">
+            <div class="plan-date-line__main">
+              <span class="plan-date-line__label">{{ $t('plan.dateLabel') }}</span>
+              <span>{{ plan.date }} {{ formatWeekday(plan.date) }}</span>
+            </div>
+            <span class="plan-date-line__created">
+              {{ $t('common.createdAt') }}:{{ formatDateTime(plan.createdAt) }}
+            </span>
+          </div>
 
           <div class="plan-divider" />
 
@@ -376,19 +381,35 @@ onMounted(loadDetail)
   visibility: hidden;
 }
 
-/* 日期:一行纯文本,标签淡一点,日期 + 周几跟在后面 */
+/* 顶部一行:左边计划日期,右边创建时间 */
 .plan-date-line {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 8px 12px;
   margin: 0;
   font-size: 14px;
   line-height: 22px;
   color: var(--color-text-1);
 }
 
+.plan-date-line__main {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+
 .plan-date-line__label {
   flex-shrink: 0;
+  color: var(--color-text-3);
+}
+
+/* 创建时间:卡片右上角的补充信息 */
+.plan-date-line__created {
+  flex-shrink: 0;
+  font-size: 12px;
   color: var(--color-text-3);
 }
 

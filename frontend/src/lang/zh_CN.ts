@@ -227,7 +227,7 @@ export default {
     emptySection: '暂无内容',
     todayBadge: '今日',
     tomorrowBadge: '明日',
-    dateLabel: '日期',
+    dateLabel: '计划日期',
     datePlaceholder: '选择日期',
     weekdayLabel: '周几',
     todoSection: '待办事项',

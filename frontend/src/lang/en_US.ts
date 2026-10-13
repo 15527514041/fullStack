@@ -230,7 +230,7 @@ export default {
     emptySection: 'No content',
     todayBadge: 'Today',
     tomorrowBadge: 'Tomorrow',
-    dateLabel: 'Date',
+    dateLabel: 'Plan date',
     datePlaceholder: 'Pick a date',
     weekdayLabel: 'Weekday',
     todoSection: 'Todo list',
