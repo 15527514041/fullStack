@@ -46,6 +46,9 @@ export default {
   },
   password: {
     title: '修改密码',
+    oldPassword: '原密码',
+    oldPasswordPlaceholder: '请输入原密码',
+    oldPasswordRequired: '请输入原密码',
     newPassword: '新密码',
     newPasswordPlaceholder: '6-32 个字符',
     confirmPassword: '确认密码',

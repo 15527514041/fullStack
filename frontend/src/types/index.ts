@@ -21,8 +21,9 @@ export interface UploadAvatarResult {
   avatarUrl: string
 }
 
-/** 修改密码:前端表单的两个字段原样提交,服务端还会再比一次 */
+/** 修改密码:原密码用来验身份,新密码两次输入必须一致(服务端会再验一遍) */
 export interface ChangePasswordPayload {
+  oldPassword: string
   password: string
   confirmPassword: string
 }

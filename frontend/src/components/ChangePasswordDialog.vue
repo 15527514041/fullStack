@@ -6,7 +6,7 @@ import { changePassword } from '@/api/user'
 
 /**
  * 修改密码弹窗(个人中心入口)
- * - 表单项 / 校验规则与注册页一套:6-32 位 + 两次输入一致
+ * - 原密码用来验身份(服务端 bcrypt 比对),新密码校验规则与注册页一套:6-32 位 + 两次输入一致
  * - 提交成功后关掉自己,抛 success 给父组件,由父组件弹「修改成功」的提示弹窗
  */
 const props = withDefaults(defineProps<{ visible: boolean }>(), { visible: false })
@@ -24,9 +24,10 @@ const dialogVisible = computed({
 
 const formRef = ref<FormInstance>()
 const loading = ref(false)
-const form = reactive({ password: '', confirmPassword: '' })
+const form = reactive({ oldPassword: '', password: '', confirmPassword: '' })
 
 const rules = computed<FormRules>(() => ({
+  oldPassword: [{ required: true, message: t('password.oldPasswordRequired'), trigger: 'blur' }],
   password: [
     { required: true, message: t('validation.passwordRequired'), trigger: 'blur' },
     { min: 6, max: 32, message: t('validation.passwordLength'), trigger: 'blur' }
@@ -51,6 +52,7 @@ watch(
   () => props.visible,
   (visible) => {
     if (!visible) return
+    form.oldPassword = ''
     form.password = ''
     form.confirmPassword = ''
     formRef.value?.clearValidate()
@@ -64,7 +66,11 @@ async function handleSubmit(): Promise<void> {
 
   loading.value = true
   try {
-    await changePassword({ password: form.password, confirmPassword: form.confirmPassword })
+    await changePassword({
+      oldPassword: form.oldPassword,
+      password: form.password,
+      confirmPassword: form.confirmPassword
+    })
     dialogVisible.value = false
     emit('success')
   } catch {
@@ -84,6 +90,16 @@ async function handleSubmit(): Promise<void> {
     :close-on-click-modal="false"
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @keyup.enter="handleSubmit">
+      <el-form-item :label="$t('password.oldPassword')" prop="oldPassword">
+        <el-input
+          v-model="form.oldPassword"
+          type="password"
+          :placeholder="$t('password.oldPasswordPlaceholder')"
+          show-password
+          autocomplete="current-password"
+        />
+      </el-form-item>
+
       <el-form-item :label="$t('password.newPassword')" prop="password">
         <el-input
           v-model="form.password"

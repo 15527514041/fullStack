@@ -46,6 +46,9 @@ export default {
   },
   password: {
     title: 'Change Password',
+    oldPassword: 'Current password',
+    oldPasswordPlaceholder: 'Enter your current password',
+    oldPasswordRequired: 'Please enter your current password',
     newPassword: 'New password',
     newPasswordPlaceholder: '6-32 characters',
     confirmPassword: 'Confirm password',

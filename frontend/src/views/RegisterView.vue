@@ -29,6 +29,8 @@ const rules = computed<FormRules>(() => ({
     { min: 6, max: 32, message: t('validation.passwordLength'), trigger: 'blur' }
   ],
   confirmPassword: [
+    // 必填规则不能省:EP 靠它决定要不要画红星(自定义 validator 不算)
+    { required: true, message: t('validation.confirmRequired'), trigger: 'blur' },
     {
       validator: (_rule, value, callback) => {
         if (!value) {
