@@ -45,7 +45,9 @@ const login = async (username, password) => {
   // 记录最近登录时间(后台用户列表展示用)
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
 
-  const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' })
+  // iatMs:签发时刻的毫秒时间戳。JWT 自带的 iat 只有秒级精度,
+  // 改密后要判断"这个 token 是不是改密之前签发的",秒级会差出一秒,所以自己再签一个毫秒值
+  const token = jwt.sign({ userId: user.id, iatMs: Date.now() }, JWT_SECRET, { expiresIn: '7d' })
   return {
     token,
     user: {

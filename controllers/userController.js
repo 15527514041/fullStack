@@ -34,9 +34,11 @@ async function updateAvatar(req, res) {
 }
 
 // 修改密码:成功后不签发新 token,前端引导用户用新密码重新登录
-// 只认 req.user.id(来自 token),所以不存在"改到别人密码"的可能
+// 只认 req.user.id(来自 token),所以不存在"改到别人密码"的可能;
+// 另外会更新 passwordChangedAt,老 token 随即失效
 async function changePassword(req, res) {
-  await userService.changePassword(req.user.id, req.validated.body.password)
+  const { oldPassword, password } = req.validated.body
+  await userService.changePassword(req.user.id, oldPassword, password)
   res.json({ message: '密码修改成功' })
 }
 

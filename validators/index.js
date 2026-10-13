@@ -36,11 +36,13 @@ const authSchemas = {
 
 // ====== user(个人中心) ======
 
-// 修改密码:前端表单是「新密码 + 确认密码」,两次必须一致
+// 修改密码:前端表单是「原密码 + 新密码 + 确认密码」,新密码两次必须一致
 // (前端已经比过一次,服务端再兜一层:接口是公开契约,不能只靠调用方守规矩)
 const userSchemas = {
   changePassword: z
     .object({
+      // 原密码只做非空校验:长度规则对新密码才有意义,老密码不该再被卡
+      oldPassword: z.string().min(1, '请输入原密码'),
       password,
       confirmPassword: z.string().min(6, '确认密码至少 6 个字符').max(32, '确认密码最多 32 个字符')
     })

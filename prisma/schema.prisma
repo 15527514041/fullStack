@@ -56,6 +56,8 @@ model User {
   createdAt   DateTime   @default(now())
   // 最近一次登录成功的时间(登录时更新),后台用户列表展示用
   lastLoginAt DateTime?
+  // 密码最后修改时间:签发时间早于它的 token 全部失效(改完密码即踢下线);null = 从没改过
+  passwordChangedAt DateTime?
 }
 
 model Upload {
