@@ -3,6 +3,7 @@ import { computed, reactive, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { toDateString } from '@/utils/datetime'
+import MarkdownInput from '@/components/MarkdownInput.vue'
 import type { ReflectionItem } from '@/types'
 
 /**
@@ -94,22 +95,20 @@ function handleSubmit(): void {
       </el-form-item>
 
       <el-form-item :label="$t('reflection.experience')" required>
-        <el-input
+        <MarkdownInput
           v-model="form.experience"
-          type="textarea"
           :rows="3"
-          maxlength="500"
-          show-word-limit
+          :maxlength="500"
           :placeholder="$t('reflection.experiencePlaceholder')"
         />
       </el-form-item>
 
       <el-form-item :label="$t('reflection.reason')">
-        <el-input v-model="form.reason" type="textarea" :rows="3" maxlength="500" show-word-limit />
+        <MarkdownInput v-model="form.reason" :rows="3" :maxlength="500" />
       </el-form-item>
 
       <el-form-item :label="$t('reflection.measure')">
-        <el-input v-model="form.measure" type="textarea" :rows="3" maxlength="500" show-word-limit />
+        <MarkdownInput v-model="form.measure" :rows="3" :maxlength="500" />
       </el-form-item>
     </el-form>
 

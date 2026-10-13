@@ -265,6 +265,19 @@ export default {
     deleteConfirm: 'Delete the plan of {date}? This cannot be undone.',
     dateExists: '{date} already has a plan — pick another date to save'
   },
+  markdown: {
+    bold: 'Bold',
+    italic: 'Italic',
+    list: 'Bullet list',
+    orderedList: 'Numbered list',
+    quote: 'Quote',
+    code: 'Inline code',
+    link: 'Link',
+    linkText: 'Link text',
+    preview: 'Preview',
+    edit: 'Keep editing',
+    empty: 'Nothing yet'
+  },
   timeRange: {
     title: 'Select time range',
     placeholder: 'Select time',

@@ -262,6 +262,19 @@ export default {
     deleteConfirm: '确定删除 {date} 的规划吗?删除后不可恢复',
     dateExists: '{date} 这天已经有规划了,换个日期再保存吧'
   },
+  markdown: {
+    bold: '加粗',
+    italic: '斜体',
+    list: '无序列表',
+    orderedList: '有序列表',
+    quote: '引用',
+    code: '行内代码',
+    link: '链接',
+    linkText: '链接文字',
+    preview: '预览',
+    edit: '继续编辑',
+    empty: '还没有内容'
+  },
   timeRange: {
     title: '选择时间范围',
     placeholder: '选择时间',

@@ -1430,9 +1430,10 @@ body {
 /* ================= 区块里的灰卡片(参考 client KYB 企业资料提交-相关人员) ================= */
 
 .detail-card {
-  border-radius: 24px;
-  background: var(--color-bg-bottom);
-  /* 一条记录一张灰卡片,内边距比整页表单收一点,多条并排时更耐看 */
+  /* 一条记录一张白卡片(和 .info-card 同款圆角与阴影);内容用 __body/__field 竖排 */
+  border-radius: 30px;
+  background: var(--color-bg-card-1);
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.08);
   padding: 20px 24px;
 }
 
@@ -1512,7 +1513,7 @@ body {
 .detail-card__label {
   display: block;
   margin-bottom: 4px;
-  color: var(--color-text-3);
+  color: var(--color-text-1);
   font-size: 12px;
   font-weight: 600;
   line-height: 18px;
@@ -1520,23 +1521,11 @@ body {
 
 .detail-card__value {
   display: block;
-  color: var(--color-text-1);
+  color: var(--color-text-2);
   font-size: 14px;
   line-height: 22px;
   word-break: break-word;
   white-space: pre-wrap;
-}
-
-/* 第一个字段是每条记录的主内容:字号和字重都重一档 */
-.detail-card__field.is-primary .detail-card__value {
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 24px;
-}
-
-/* 其余字段是补充信息:颜色浅一档 */
-.detail-card__field:not(.is-primary) .detail-card__value {
-  color: var(--color-text-2);
 }
 
 /* 没有标题行的明细卡片:内容在左,操作按钮靠右垂直居中 */
@@ -1563,8 +1552,7 @@ body {
   }
 
   .detail-card {
-    border-radius: 18px;
-    padding: 16px;
+    padding: 16px 20px;
   }
 
   .detail-card__head {
@@ -1585,8 +1573,98 @@ body {
   .detail-card__label {
     font-size: 12px;
   }
+}
 
-  .detail-card__field:not(.is-primary) .detail-card__value {
-    font-size: 13px;
-  }
+/* ================= Markdown 渲染(MarkdownInput 的预览与 MarkdownText 共用) ================= */
+
+.markdown-body {
+  color: var(--color-text-2);
+  font-size: 14px;
+  line-height: 22px;
+  word-break: break-word;
+  /* 渲染成块级结构后按正常空白处理,不被外层的 pre-wrap 带偏 */
+  white-space: normal;
+}
+
+.markdown-body > *:first-child {
+  margin-top: 0;
+}
+
+.markdown-body > *:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  margin: 12px 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--color-text-1);
+}
+
+.markdown-body p {
+  margin: 0 0 8px;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.markdown-body li {
+  margin-bottom: 2px;
+}
+
+.markdown-body blockquote {
+  margin: 0 0 8px;
+  padding: 2px 12px;
+  border-left: 3px solid var(--color-border);
+  color: var(--color-text-3);
+}
+
+.markdown-body code {
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: var(--color-bg-bottom);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+.markdown-body pre {
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--color-bg-bottom);
+  overflow-x: auto;
+}
+
+.markdown-body pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.markdown-body a {
+  color: var(--color-brand-6);
+  text-decoration: underline;
+}
+
+.markdown-body hr {
+  margin: 12px 0;
+  border: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.markdown-body table {
+  margin: 0 0 8px;
+  border-collapse: collapse;
+}
+
+.markdown-body th,
+.markdown-body td {
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
 }
