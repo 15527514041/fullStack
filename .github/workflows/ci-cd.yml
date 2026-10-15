@@ -2,7 +2,7 @@ name: CI/CD
 
 on:
   push:
-    branches: [master]
+    branches: [master, dev]        # ← 改动 1:dev 也触发
 
 # 同一分支的部署串行执行,后一次不会取消前一次
 concurrency:
@@ -14,7 +14,6 @@ jobs:
     name: 测试
     runs-on: ubuntu-latest
 
-    # GitHub 会给这个 job 起一个临时 PostgreSQL 容器
     services:
       postgres:
         image: postgres:16
@@ -36,35 +35,43 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-
       - uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
-
       - name: 安装依赖
         run: npm ci
-
       - name: 生成 Prisma Client
         run: npx prisma generate
-
       - name: 建表(应用迁移)
         run: npx prisma migrate deploy
-
       - name: 跑测试
         run: npm test
 
-  deploy:
-    name: 部署
-    needs: test                          # ← 测试不过,绝不部署
-    runs-on: ubuntu-latest
+  deploy-prod:                                # ← 改动 2:原 deploy 改名
+    name: 部署生产
+    needs: test
     if: github.ref == 'refs/heads/master'
-
+    runs-on: ubuntu-latest
     steps:
-      - name: SSH 部署到服务器
+      - name: SSH 部署到服务器(生产)
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: bash /root/fullStack/deploy.sh
+          script: bash /root/fullStack/deploy.sh prod      # ← 带上 prod
+
+  deploy-dev:                                 # ← 改动 3:新增
+    name: 部署开发
+    needs: test
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH 部署到服务器(开发)
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: bash /root/fullStack-dev/deploy.sh dev    # ← 开发目录 + dev
