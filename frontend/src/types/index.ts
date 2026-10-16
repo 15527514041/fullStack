@@ -191,6 +191,29 @@ export interface DateRangeQuery {
   to?: string
 }
 
+// ===== 记账:资产账户 =====
+/** 账户类型:先固定这几种,后端枚举同名 */
+export type AccountKind = 'WECHAT' | 'ALIPAY' | 'BANK' | 'CREDIT_CARD' | 'CASH' | 'OTHER'
+
+/**
+ * 资产账户
+ * 余额是「手动维护的快照」:账单流水不联动修改它,所以字段名特意叫 balanceUpdatedAt(上次对账时间)
+ */
+export interface LedgerAccount {
+  id: number
+  name: string
+  kind: AccountKind
+  note?: string | null
+  /** 单位:分;信用卡欠款是负数 */
+  balanceCents: number
+  balanceUpdatedAt: string
+  /** 启用开关:只是标记,余额照算 */
+  enabled: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
 // ===== 管理端 =====
 export interface AdminUser {
   id: number

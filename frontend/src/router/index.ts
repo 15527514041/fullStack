@@ -97,6 +97,12 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'route.planEdit', requiresAuth: true, noSidebar: true }
       },
       {
+        path: 'ledger/accounts',
+        name: 'ledger-accounts',
+        component: () => import('@/views/ledger/accounts.vue'),
+        meta: { titleKey: 'route.ledgerAccounts', requiresAuth: true }
+      },
+      {
         path: 'admin',
         name: 'admin',
         component: () => import('@/views/admin/index.vue'),

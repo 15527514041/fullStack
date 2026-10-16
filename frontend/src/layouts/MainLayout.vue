@@ -55,6 +55,14 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
       ]
     },
     {
+      title: t('menu.ledgerGroup'),
+      items: [
+        { path: '/ledger/accounts', title: t('menu.accounts'), icon: 'wallet' },
+        // 账单记录还没开发,先占个位置
+        { path: '/ledger/entries', title: t('menu.entries'), icon: 'bill', disabled: true }
+      ]
+    },
+    {
       // 标签是任务和记账共用的通用能力,所以不挂在任务管理下
       title: t('menu.commonGroup'),
       items: [
@@ -65,13 +73,6 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
     {
       title: t('menu.accountGroup'),
       items: authStore.isAdmin ? [{ path: '/admin', title: t('menu.users'), icon: 'users' }] : []
-    },
-    {
-      title: t('menu.ledgerGroup'),
-      items: [
-        { path: 'plan-transactions', title: t('menu.transactions'), icon: 'search', disabled: true },
-        { path: 'plan-funds', title: t('menu.funds'), icon: 'wallet', disabled: true }
-      ]
     }
   ]
 
