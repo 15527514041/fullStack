@@ -203,6 +203,48 @@ const planSchemas = {
   query: dateRange
 }
 
+// ====== 记账:资产账户 ======
+
+const accountName = z.string().trim().min(1, '账户名不能为空').max(20, '账户名最多 20 个字符')
+const accountKind = z.enum(['WECHAT', 'ALIPAY', 'BANK', 'CREDIT_CARD', 'CASH', 'OTHER'], {
+  errorMap: () => ({ message: '账户类型不合法' })
+})
+// 金额一律用「分」的整数:上限 ±999 万元(信用卡欠款是负数)
+const balanceCents = z
+  .number()
+  .int('金额必须是整数(单位:分)')
+  .min(-999999999, '金额超出范围')
+  .max(999999999, '金额超出范围')
+const accountNote = z.string().trim().max(50, '备注最多 50 个字符').nullable()
+
+const accountSchemas = {
+  create: z.object({
+    name: accountName,
+    kind: accountKind,
+    // 不传按 0 建:先把账户建起来,余额回头再补也是常见用法
+    balanceCents: balanceCents.default(0),
+    note: accountNote.optional(),
+    sortOrder: z.number().int().min(0).max(9999).optional()
+  }),
+  update: z
+    .object({
+      name: accountName.optional(),
+      kind: accountKind.optional(),
+      note: accountNote.optional(),
+      // 启用开关:停用的账户不再出现在录入选择里
+      enabled: z.boolean().optional(),
+      sortOrder: z.number().int().min(0).max(9999).optional()
+    })
+    .strict()
+    .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' }),
+  // 余额单独一个入口:这是「对账」动作,要刷新 balanceUpdatedAt
+  balance: z.object({ balanceCents }),
+  query: z.object({
+    // 不传返回全部;true/false 只看启用/停用的
+    enabled: boolQuery.optional()
+  })
+}
+
 // ====== admin ======
 
 const adminSchemas = {
@@ -225,6 +267,7 @@ module.exports = {
   tagSchemas,
   reflectionSchemas,
   planSchemas,
+  accountSchemas,
   adminSchemas,
   idParams
 }

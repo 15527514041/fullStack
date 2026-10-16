@@ -46,6 +46,16 @@ enum DailyPlanItemKind {
   NOTE    // 随写备注:只有内容
 }
 
+// 资产账户类型:先固定这几种,以后要支持自定义类型再改
+enum AccountKind {
+  WECHAT
+  ALIPAY
+  BANK
+  CREDIT_CARD
+  CASH
+  OTHER
+}
+
 model User {
   id          Int        @id @default(autoincrement())
   username    String     @unique
@@ -59,6 +69,7 @@ model User {
   uploads     Upload[]
   reflections DailyReflection[]
   plans       DailyPlan[]
+  ledgerAccounts LedgerAccount[]
   createdAt   DateTime   @default(now())
   // 最近一次登录成功的时间(登录时更新),后台用户列表展示用
   lastLoginAt DateTime?
@@ -197,4 +208,29 @@ model DailyPlanItem {
   createdAt DateTime          @default(now())
 
   @@index([planId, kind])
+}
+
+// ===== 记账:资产账户 =====
+// 余额是用户手动维护的「快照」:账单流水不联动修改余额,这是产品原则不是偷懒
+model LedgerAccount {
+  id               Int         @id @default(autoincrement())
+  userId           Int
+  name             String
+  kind             AccountKind
+  // 备注:放「尾号 1234」这类信息
+  note             String?
+  // 余额,单位分;信用卡欠款记负数
+  balanceCents     Int         @default(0)
+  // 上次手动改余额的时间:只在余额真的变了才刷新,用于「很久没对账」提醒
+  balanceUpdatedAt DateTime    @default(now())
+  // 启用开关:只是个标记 —— 停用的账户不再出现在录入选择里,但余额照算、数据保留
+  enabled          Boolean     @default(true)
+  sortOrder        Int         @default(0)
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  // 同一用户内账户不重名;唯一索引前缀也顺带覆盖「按用户取账户」的查询
+  @@unique([userId, name])
+  @@index([userId, enabled])
 }
