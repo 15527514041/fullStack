@@ -206,9 +206,12 @@ const planSchemas = {
 // ====== 记账:资产账户 ======
 
 const accountName = z.string().trim().min(1, '账户名不能为空').max(20, '账户名最多 20 个字符')
-const accountKind = z.enum(['WECHAT', 'ALIPAY', 'BANK', 'CREDIT_CARD', 'CASH', 'OTHER'], {
-  errorMap: () => ({ message: '账户类型不合法' })
-})
+const accountKind = z.enum(
+  ['CASH', 'WECHAT', 'ALIPAY', 'DEBIT_CARD', 'CREDIT_CARD', 'INVESTMENT', 'LIABILITY', 'OTHER'],
+  {
+    errorMap: () => ({ message: '账户类型不合法' })
+  }
+)
 // 金额一律用「分」的整数:上限 ±999 万元(信用卡欠款是负数)
 const balanceCents = z
   .number()

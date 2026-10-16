@@ -48,12 +48,14 @@ enum DailyPlanItemKind {
 
 // 资产账户类型:先固定这几种,以后要支持自定义类型再改
 enum AccountKind {
-  WECHAT
-  ALIPAY
-  BANK
-  CREDIT_CARD
-  CASH
-  OTHER
+  CASH          // 现金
+  WECHAT        // 微信零钱
+  ALIPAY        // 支付宝余额
+  DEBIT_CARD    // 储蓄卡
+  CREDIT_CARD   // 信用卡
+  INVESTMENT    // 理财账户
+  LIABILITY     // 负债账户
+  OTHER         // 其他
 }
 
 model User {

@@ -7,6 +7,20 @@ export function formatDateTime(value?: string | null): string {
   return new Date(value).toLocaleString(locale, { hour12: false })
 }
 
+// 不带秒的写法(2026/10/16 16:29):列表里的时间列用这个,省宽度也更好读
+export function formatDateTimeShort(value?: string | null): string {
+  if (!value) return '-'
+  const locale = i18n.global.locale.value === 'en_US' ? 'en-US' : 'zh-CN'
+  return new Date(value).toLocaleString(locale, {
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 // 本地日期 → YYYY-MM-DD(不走 toISOString,避免时区把日期挪一天)
 export function toDateString(date: Date): string {
   const year = date.getFullYear()

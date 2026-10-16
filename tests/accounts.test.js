@@ -56,6 +56,17 @@ test('创建账户成功:默认余额 0、默认启用;重名返回 409', async 
   assert.strictEqual(again.body.message, '账户名已存在')
 })
 
+test('八种账户类型都能建(校验器和库里的枚举不许对不上)', async () => {
+  const token = await registerAndLogin()
+  const kinds = ['CASH', 'WECHAT', 'ALIPAY', 'DEBIT_CARD', 'CREDIT_CARD', 'INVESTMENT', 'LIABILITY', 'OTHER']
+
+  for (const kind of kinds) {
+    const created = await createAccount(token, { name: `账户-${kind}`, kind })
+    assert.strictEqual(created.status, 201, `${kind} 应该能建`)
+    assert.strictEqual(created.body.kind, kind)
+  }
+})
+
 test('余额可以是负数(信用卡欠款)', async () => {
   const token = await registerAndLogin()
 
@@ -100,7 +111,7 @@ test('改余额刷新「上次更新时间」,金额没变则不刷新;改名/�
 test('启用开关:默认列表全都在,?enabled= 只看启用/停用的', async () => {
   const token = await registerAndLogin()
   await createAccount(token, { name: '在用账户' })
-  const disabled = await createAccount(token, { name: '停用账户', kind: 'BANK' })
+  const disabled = await createAccount(token, { name: '停用账户', kind: 'DEBIT_CARD' })
 
   const off = await request(app)
     .patch(`/api/ledger/accounts/${disabled.body.id}`)

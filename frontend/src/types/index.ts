@@ -193,7 +193,15 @@ export interface DateRangeQuery {
 
 // ===== 记账:资产账户 =====
 /** 账户类型:先固定这几种,后端枚举同名 */
-export type AccountKind = 'WECHAT' | 'ALIPAY' | 'BANK' | 'CREDIT_CARD' | 'CASH' | 'OTHER'
+export type AccountKind =
+  | 'CASH'
+  | 'WECHAT'
+  | 'ALIPAY'
+  | 'DEBIT_CARD'
+  | 'CREDIT_CARD'
+  | 'INVESTMENT'
+  | 'LIABILITY'
+  | 'OTHER'
 
 /**
  * 资产账户
