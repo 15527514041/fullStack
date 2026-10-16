@@ -10,6 +10,10 @@ const tagName = z.string().trim().min(1, '标签名不能为空').max(20, '标�
 const tagType = z.enum(['primary', 'success', 'info', 'warning', 'danger'], {
   errorMap: () => ({ message: '标签类型不合法' })
 })
+// 标签域:标签是通用能力,用域区分这套标签给哪个模块用(任务 / 记账)
+const tagScope = z.enum(['TODO', 'ACCOUNTING'], {
+  errorMap: () => ({ message: '标签域不合法' })
+})
 const remark = z.string().trim().max(500, '备注最多 500 个字符').nullable()
 // 附件传的是上传记录 id(uuid)数组;传空数组表示清空附件
 const attachmentOssIds = z.array(z.string().uuid('附件 ID 不合法')).max(9, '最多上传 9 个附件')
@@ -91,14 +95,25 @@ const tagSchemas = {
   create: z.object({
     name: tagName,
     // 不传则按 primary 落库(老客户端/老数据兼容)
-    type: tagType.default('primary')
+    type: tagType.default('primary'),
+    // 不传则落到任务域:老前端只会传 name/type,加分类前建的标签本来就都是任务的
+    scope: tagScope.default('TODO')
   }),
   update: z
     .object({
       name: tagName.optional(),
-      type: tagType.optional()
+      type: tagType.optional(),
+      // 域是标签的身份,建完不能改。这里显式接住 scope 再拦掉,
+      // 是为了回一句能看懂的中文报错,而不是让 zod 的 strict 回英文的 Unrecognized key
+      scope: tagScope.optional()
     })
-    .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' })
+    .strict()
+    .refine((data) => data.scope === undefined, { message: '标签域不支持修改', path: ['scope'] })
+    .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' }),
+  query: z.object({
+    // 不传则返回所有域的标签;管理页按分类切换时传具体域
+    scope: tagScope.optional()
+  })
 }
 
 // ====== 每日反思 / 每日规划 ======
@@ -188,6 +203,51 @@ const planSchemas = {
   query: dateRange
 }
 
+// ====== 记账:资产账户 ======
+
+const accountName = z.string().trim().min(1, '账户名不能为空').max(20, '账户名最多 20 个字符')
+const accountKind = z.enum(
+  ['CASH', 'WECHAT', 'ALIPAY', 'DEBIT_CARD', 'CREDIT_CARD', 'INVESTMENT', 'LIABILITY', 'OTHER'],
+  {
+    errorMap: () => ({ message: '账户类型不合法' })
+  }
+)
+// 金额一律用「分」的整数:上限 ±999 万元(信用卡欠款是负数)
+const balanceCents = z
+  .number()
+  .int('金额必须是整数(单位:分)')
+  .min(-999999999, '金额超出范围')
+  .max(999999999, '金额超出范围')
+const accountNote = z.string().trim().max(50, '备注最多 50 个字符').nullable()
+
+const accountSchemas = {
+  create: z.object({
+    name: accountName,
+    kind: accountKind,
+    // 不传按 0 建:先把账户建起来,余额回头再补也是常见用法
+    balanceCents: balanceCents.default(0),
+    note: accountNote.optional(),
+    sortOrder: z.number().int().min(0).max(9999).optional()
+  }),
+  update: z
+    .object({
+      name: accountName.optional(),
+      kind: accountKind.optional(),
+      note: accountNote.optional(),
+      // 启用开关:停用的账户不再出现在录入选择里
+      enabled: z.boolean().optional(),
+      sortOrder: z.number().int().min(0).max(9999).optional()
+    })
+    .strict()
+    .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' }),
+  // 余额单独一个入口:这是「对账」动作,要刷新 balanceUpdatedAt
+  balance: z.object({ balanceCents }),
+  query: z.object({
+    // 不传返回全部;true/false 只看启用/停用的
+    enabled: boolQuery.optional()
+  })
+}
+
 // ====== admin ======
 
 const adminSchemas = {
@@ -210,6 +270,7 @@ module.exports = {
   tagSchemas,
   reflectionSchemas,
   planSchemas,
+  accountSchemas,
   adminSchemas,
   idParams
 }

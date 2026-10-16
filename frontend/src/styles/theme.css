@@ -251,18 +251,29 @@ body {
   --el-dialog-border-radius: 30px;
   --el-dialog-title-font-size: 20px;
   --el-dialog-padding-primary: 30px;
+  /* 左右内边距抽成变量:标题那条分隔线要通到弹窗左右边界,靠负外边距把这俩值抵消掉 */
+  --dialog-pad-right: 34px;
+  --dialog-pad-left: 40px;
   margin: 0 auto !important;
-  padding: 30px 34px 30px 40px;
+  padding: 30px var(--dialog-pad-right) 30px var(--dialog-pad-left);
 }
 
-/* 标题:20px / 500 + 下划分隔线 */
+/* 标题:20px / 500 + 下划分隔线(线通到弹窗左右边界) */
 .el-dialog .el-dialog__header {
   box-sizing: border-box;
-  margin-right: 0;
+  margin-right: calc(-1 * var(--dialog-pad-right));
+  margin-left: calc(-1 * var(--dialog-pad-left));
+  padding-right: var(--dialog-pad-right);
   padding-bottom: 20px;
+  padding-left: var(--dialog-pad-left);
   font-size: 20px;
   font-weight: 500;
   border-bottom: 1px solid var(--color-border);
+}
+
+/* 右上角留着关闭按钮时,标题右边再让出按钮的位置,免得文字钻到按钮底下 */
+.el-dialog .el-dialog__header.show-close {
+  padding-right: calc(var(--dialog-pad-right) + 40px);
 }
 
 /*
@@ -320,6 +331,11 @@ body {
 /* 结果类弹窗(只有图标 + 文案,没有标题):EP 一定会渲染 header,这里去掉那条空的分隔线 */
 .result-dialog .el-dialog__header {
   display: none;
+}
+
+/* 更新余额弹窗:标题那条线保留,但线和下面内容要拉开距离(EP 的 body 默认没有上内边距) */
+.balance-dialog .el-dialog__body {
+  padding-top: 24px;
 }
 
 /* ================= 列表页统一规范(参考 client「交易记录」页) ================= */
@@ -490,6 +506,8 @@ body {
   /* 弹窗:小屏收紧内边距 */
   .el-dialog {
     --el-dialog-padding-primary: 18px;
+    --dialog-pad-right: 16px;
+    --dialog-pad-left: 16px;
     padding: 18px 16px;
   }
 
@@ -632,6 +650,11 @@ body {
 .el-input__wrapper {
   padding: 1px 14px !important;
   min-height: 50px;
+}
+
+/* 金额输入框(el-input-number):数字居左,和表单里其它输入框保持一致(EP 默认居中) */
+.amount-input .el-input__inner {
+  text-align: left;
 }
 
 /* 下拉框:高 50px、圆角 16px */
