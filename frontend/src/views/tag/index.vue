@@ -60,6 +60,10 @@ const rules = computed<FormRules>(() => ({
   name: [
     { required: true, message: t('validation.tagNameRequired'), trigger: 'blur' },
     { min: 1, max: 20, message: t('validation.tagNameLength'), trigger: 'blur' }
+  ],
+  // 归属模块必填:有 required 规则,表单项标题前就会带上红色星号
+  scope: [
+    { required: true, message: t('validation.tagScopeRequired'), trigger: 'change' }
   ]
 }))
 
@@ -242,6 +246,17 @@ onMounted(loadTags)
           <el-input v-model="form.name" :placeholder="$t('tag.namePlaceholder')" maxlength="20" show-word-limit @keyup.enter="handleSubmit" />
         </el-form-item>
 
+        <!-- 归属模块在标签类型前面:先定这个标签给哪个模块用,再挑颜色 -->
+        <el-form-item :label="$t('tag.colScope')" prop="scope">
+          <div class="scope-field">
+            <!-- 编辑时禁选:域是标签的身份,建完不能改(后端也会拒) -->
+            <el-select v-model="form.scope" :disabled="editingTagId !== null" style="width: 100%">
+              <el-option v-for="opt in scopeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+            </el-select>
+            <span v-if="editingTagId !== null" class="scope-locked">{{ $t('tag.scopeLocked') }}</span>
+          </div>
+        </el-form-item>
+
         <el-form-item :label="$t('tag.colType')" prop="type">
           <!-- label 用回显样式:选中态和下拉项都渲染成对应颜色的标签 -->
           <el-select v-model="form.type" style="width: 100%">
@@ -252,16 +267,6 @@ onMounted(loadTags)
               <el-tag :type="opt.value">{{ opt.label }}</el-tag>
             </el-option>
           </el-select>
-        </el-form-item>
-
-        <el-form-item :label="$t('tag.colScope')" prop="scope">
-          <div class="scope-field">
-            <!-- 编辑时禁选:域是标签的身份,建完不能改(后端也会拒) -->
-            <el-select v-model="form.scope" :disabled="editingTagId !== null" style="width: 100%">
-              <el-option v-for="opt in scopeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
-            </el-select>
-            <span v-if="editingTagId !== null" class="scope-locked">{{ $t('tag.scopeLocked') }}</span>
-          </div>
         </el-form-item>
       </el-form>
       <template #footer>

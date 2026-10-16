@@ -77,7 +77,7 @@ export default {
     ledgerGroup: 'Ledger (planned)',
     transactions: 'Transactions',
     funds: 'Funds',
-    commonGroup: 'General',
+    commonGroup: 'General settings',
     systemSettings: 'System settings'
   },
   login: {
@@ -114,7 +114,8 @@ export default {
     todoTitleRequired: 'Please enter TODO content',
     todoTitleLength: 'Cannot exceed 100 characters',
     tagNameRequired: 'Please enter a tag name',
-    tagNameLength: 'Tag name must be 1-20 characters'
+    tagNameLength: 'Tag name must be 1-20 characters',
+    tagScopeRequired: 'Please select a module'
   },
   todo: {
     title: 'TODO List',
@@ -162,11 +163,11 @@ export default {
     title: 'Tags',
     addButton: 'New tag',
     colName: 'Name',
-    colType: 'Type',
-    colScope: 'Category',
+    colType: 'Tag type',
+    colScope: 'Module',
     scopeTodo: 'Tasks',
     scopeAccounting: 'Accounting',
-    scopeLocked: 'Category cannot be changed after creation',
+    scopeLocked: 'Module cannot be changed after creation',
     typePrimary: 'Primary',
     typeSuccess: 'Success',
     typeInfo: 'Info',
@@ -179,7 +180,7 @@ export default {
     empty: 'No tags yet, click "New tag" to create one',
     dialogTitle: 'New tag',
     dialogEdit: 'Edit tag',
-    namePlaceholder: 'e.g. Work / Urgent',
+    namePlaceholder: 'e.g. Work, Reimbursement',
     created: 'Tag created',
     updated: 'Tag updated',
     deleted: 'Deleted',

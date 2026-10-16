@@ -77,7 +77,7 @@ export default {
     ledgerGroup: '记账(规划中)',
     transactions: '交易查询',
     funds: '资金操作',
-    commonGroup: '通用',
+    commonGroup: '通用配置',
     systemSettings: '系统设置'
   },
   login: {
@@ -114,7 +114,8 @@ export default {
     todoTitleRequired: '请输入 TODO 内容',
     todoTitleLength: '长度不能超过 100 个字符',
     tagNameRequired: '请输入标签名',
-    tagNameLength: '标签名长度为 1-20 个字符'
+    tagNameLength: '标签名长度为 1-20 个字符',
+    tagScopeRequired: '请选择归属模块'
   },
   todo: {
     title: 'TODO 列表',
@@ -162,11 +163,11 @@ export default {
     title: '标签管理',
     addButton: '新建标签',
     colName: '标签名',
-    colType: '类型',
-    colScope: '分类',
-    scopeTodo: '任务',
-    scopeAccounting: '记账',
-    scopeLocked: '分类创建后不能修改',
+    colType: '标签类型',
+    colScope: '归属模块',
+    scopeTodo: '任务管理',
+    scopeAccounting: '记账管理',
+    scopeLocked: '归属模块创建后不能修改',
     typePrimary: '主要',
     typeSuccess: '成功',
     typeInfo: '信息',
@@ -176,7 +177,7 @@ export default {
     empty: '还没有标签,点击「新建标签」创建',
     dialogTitle: '新建标签',
     dialogEdit: '编辑标签',
-    namePlaceholder: '例如:工作 / 紧急',
+    namePlaceholder: '例如:工作、报销',
     created: '标签已创建',
     updated: '标签已更新',
     deleted: '已删除',
