@@ -44,8 +44,7 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
       title: t('menu.tasksGroup'),
       items: [
         { path: '/', title: t('menu.todoList'), icon: 'tasks' },
-        { path: '/trash', title: t('menu.trash'), icon: 'trash' },
-        { path: '/tags', title: t('menu.tags'), icon: 'tag' }
+        { path: '/trash', title: t('menu.trash'), icon: 'trash' }
       ]
     },
     {
@@ -53,6 +52,14 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
       items: [
         { path: '/reflections', title: t('menu.reflections'), icon: 'reflect' },
         { path: '/plans', title: t('menu.plans'), icon: 'schedule' }
+      ]
+    },
+    {
+      // 标签是任务和记账共用的通用能力,所以不挂在任务管理下
+      title: t('menu.commonGroup'),
+      items: [
+        { path: '/tags', title: t('menu.tags'), icon: 'tag' },
+        { path: 'plan-settings', title: t('menu.systemSettings'), icon: 'settings', disabled: true }
       ]
     },
     {
@@ -65,10 +72,6 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
         { path: 'plan-transactions', title: t('menu.transactions'), icon: 'search', disabled: true },
         { path: 'plan-funds', title: t('menu.funds'), icon: 'wallet', disabled: true }
       ]
-    },
-    {
-      title: t('menu.settingsGroup'),
-      items: [{ path: 'plan-settings', title: t('menu.systemSettings'), icon: 'settings', disabled: true }]
     }
   ]
 

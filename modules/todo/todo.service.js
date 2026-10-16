@@ -1,6 +1,8 @@
 const AppError = require('../../errors/AppError')
 
 const prisma = require('../../utils/prisma')
+// 标签是通用能力,归属与域的校验统一放在标签模块里
+const { assertOwnedTagIds, TAG_SCOPE } = require('../tag/tag.service')
 
 const todoInclude = {
   tags: {
@@ -35,22 +37,6 @@ function toTodoDTO(todo) {
       visibility: item.upload?.visibility
     }))
   }
-}
-
-// 标签归属校验:只能关联自己的标签(传了别人的 id 直接 400)
-async function normalizeTagIds(userId, tagIds) {
-  if (!tagIds || tagIds.length === 0) return []
-
-  const owned = await prisma.tag.findMany({
-    where: { id: { in: tagIds }, userId },
-    select: { id: true }
-  })
-
-  if (owned.length !== new Set(tagIds).size) {
-    throw new AppError('标签不存在', 400)
-  }
-
-  return owned.map((tag) => tag.id)
 }
 
 // 附件归属校验:只能挂自己上传的文件(传了别人的 id 直接 400);去重并保持顺序
@@ -95,7 +81,8 @@ async function listTodos(userId, query) {
     where.completed = completed
   }
   if (tagId) {
-    where.tags = { some: { id: tagId } }
+    // 只能按任务域的标签筛选:传记账域标签的 id 会筛不出东西,不会拿错名单
+    where.tags = { some: { id: tagId, scope: TAG_SCOPE.TODO } }
   }
 
   const [list, total] = await Promise.all([
@@ -121,7 +108,7 @@ async function getTodoById(id, userId) {
 }
 
 async function createTodo(data, userId) {
-  const tagIds = await normalizeTagIds(userId, data.tagIds)
+  const tagIds = await assertOwnedTagIds(userId, data.tagIds, TAG_SCOPE.TODO)
   const attachmentIds = await normalizeAttachmentIds(userId, data.attachmentOssIds)
 
   const todo = await prisma.todo.create({
@@ -161,7 +148,7 @@ async function updateTodo(id, userId, data) {
   }
   if (data.completed !== undefined) payload.completed = data.completed
   if (data.tagIds !== undefined) {
-    const tagIds = await normalizeTagIds(userId, data.tagIds)
+    const tagIds = await assertOwnedTagIds(userId, data.tagIds, TAG_SCOPE.TODO)
     payload.tags = { set: tagIds.map((tagId) => ({ id: tagId })) }
   }
 

@@ -96,7 +96,8 @@ const rules = computed<FormRules>(() => ({
 
 async function loadTags(): Promise<void> {
   try {
-    tags.value = await getTags()
+    // 只要任务域的标签:记账分类的标签挂不到 TODO 上,不该出现在筛选和表单里
+    tags.value = await getTags({ scope: 'TODO' })
   } catch {
     // 错误提示已在 axios 拦截器统一处理
   }

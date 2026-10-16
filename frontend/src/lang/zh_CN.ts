@@ -77,7 +77,7 @@ export default {
     ledgerGroup: '记账(规划中)',
     transactions: '交易查询',
     funds: '资金操作',
-    settingsGroup: '通用配置(规划中)',
+    commonGroup: '通用',
     systemSettings: '系统设置'
   },
   login: {
@@ -163,6 +163,10 @@ export default {
     addButton: '新建标签',
     colName: '标签名',
     colType: '类型',
+    colScope: '分类',
+    scopeTodo: '任务',
+    scopeAccounting: '记账',
+    scopeLocked: '分类创建后不能修改',
     typePrimary: '主要',
     typeSuccess: '成功',
     typeInfo: '信息',
@@ -176,7 +180,7 @@ export default {
     created: '标签已创建',
     updated: '标签已更新',
     deleted: '已删除',
-    deleteConfirm: '确定删除标签「{name}」吗?删除后 TODO 上的该标签会一并移除'
+    deleteConfirm: '确定删除标签「{name}」吗?删除后引用该标签的记录会一并移除'
   },
   growth: {
     last7: '过去 7 天',

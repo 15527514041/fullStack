@@ -77,7 +77,7 @@ export default {
     ledgerGroup: 'Ledger (planned)',
     transactions: 'Transactions',
     funds: 'Funds',
-    settingsGroup: 'Settings (planned)',
+    commonGroup: 'General',
     systemSettings: 'System settings'
   },
   login: {
@@ -163,6 +163,10 @@ export default {
     addButton: 'New tag',
     colName: 'Name',
     colType: 'Type',
+    colScope: 'Category',
+    scopeTodo: 'Tasks',
+    scopeAccounting: 'Accounting',
+    scopeLocked: 'Category cannot be changed after creation',
     typePrimary: 'Primary',
     typeSuccess: 'Success',
     typeInfo: 'Info',
@@ -179,7 +183,7 @@ export default {
     created: 'Tag created',
     updated: 'Tag updated',
     deleted: 'Deleted',
-    deleteConfirm: 'Delete tag "{name}"? It will be removed from all TODOs.'
+    deleteConfirm: 'Delete tag "{name}"? It will be removed from the records that use it.'
   },
   growth: {
     last7: 'Last 7 days',

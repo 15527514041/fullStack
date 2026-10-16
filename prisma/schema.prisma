@@ -32,6 +32,12 @@ enum TagType {
   danger
 }
 
+// 标签域:标签管理是通用能力,各业务模块各用一套(任务 / 记账)
+enum TagScope {
+  TODO
+  ACCOUNTING
+}
+
 // 每日规划的列表项类型:待办清单 / 计划完成 / 实际完成 / 随写备注
 enum DailyPlanItemKind {
   TODO    // 待办事项:只有名称,序号即 sortOrder
@@ -98,12 +104,15 @@ model Tag {
   id        Int      @id @default(autoincrement())
   name      String
   type      TagType  @default(primary)
+  // 标签所属的域:任务域的标签只给 TODO 用,记账域的只给记账用
+  scope     TagScope @default(TODO)
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
   todos     Todo[]
   createdAt DateTime @default(now())
 
-  @@unique([userId, name])
+  // 同一个域内不允许重名,不同域可以有同名标签(唯一索引的前缀也顺带覆盖「按域取标签」的查询)
+  @@unique([userId, scope, name])
 }
 
 model Todo {
