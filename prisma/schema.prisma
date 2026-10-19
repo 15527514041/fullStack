@@ -32,12 +32,30 @@ enum TagType {
   danger
 }
 
+// 标签域:标签管理是通用能力,各业务模块各用一套(任务 / 记账)
+enum TagScope {
+  TODO
+  ACCOUNTING
+}
+
 // 每日规划的列表项类型:待办清单 / 计划完成 / 实际完成 / 随写备注
 enum DailyPlanItemKind {
   TODO    // 待办事项:只有名称,序号即 sortOrder
   PLANNED // 计划完成:起止时间 + 事项(用时由起止时间算)
   ACTUAL  // 实际完成:同上
   NOTE    // 随写备注:只有内容
+}
+
+// 资产账户类型:先固定这几种,以后要支持自定义类型再改
+enum AccountKind {
+  CASH          // 现金
+  WECHAT        // 微信零钱
+  ALIPAY        // 支付宝余额
+  DEBIT_CARD    // 储蓄卡
+  CREDIT_CARD   // 信用卡
+  INVESTMENT    // 理财账户
+  LIABILITY     // 负债账户
+  OTHER         // 其他
 }
 
 model User {
@@ -53,6 +71,7 @@ model User {
   uploads     Upload[]
   reflections DailyReflection[]
   plans       DailyPlan[]
+  ledgerAccounts LedgerAccount[]
   createdAt   DateTime   @default(now())
   // 最近一次登录成功的时间(登录时更新),后台用户列表展示用
   lastLoginAt DateTime?
@@ -98,12 +117,15 @@ model Tag {
   id        Int      @id @default(autoincrement())
   name      String
   type      TagType  @default(primary)
+  // 标签所属的域:任务域的标签只给 TODO 用,记账域的只给记账用
+  scope     TagScope @default(TODO)
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
   todos     Todo[]
   createdAt DateTime @default(now())
 
-  @@unique([userId, name])
+  // 同一个域内不允许重名,不同域可以有同名标签(唯一索引的前缀也顺带覆盖「按域取标签」的查询)
+  @@unique([userId, scope, name])
 }
 
 model Todo {
@@ -188,4 +210,29 @@ model DailyPlanItem {
   createdAt DateTime          @default(now())
 
   @@index([planId, kind])
+}
+
+// ===== 记账:资产账户 =====
+// 余额是用户手动维护的「快照」:账单流水不联动修改余额,这是产品原则不是偷懒
+model LedgerAccount {
+  id               Int         @id @default(autoincrement())
+  userId           Int
+  name             String
+  kind             AccountKind
+  // 备注:放「尾号 1234」这类信息
+  note             String?
+  // 余额,单位分;信用卡欠款记负数
+  balanceCents     Int         @default(0)
+  // 上次手动改余额的时间:只在余额真的变了才刷新,用于「很久没对账」提醒
+  balanceUpdatedAt DateTime    @default(now())
+  // 启用开关:只是个标记 —— 停用的账户不再出现在录入选择里,但余额照算、数据保留
+  enabled          Boolean     @default(true)
+  sortOrder        Int         @default(0)
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  // 同一用户内账户不重名;唯一索引前缀也顺带覆盖「按用户取账户」的查询
+  @@unique([userId, name])
+  @@index([userId, enabled])
 }

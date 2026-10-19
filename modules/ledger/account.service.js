@@ -1,0 +1,124 @@
+const AppError = require('../../errors/AppError')
+
+const prisma = require('../../utils/prisma')
+
+// 对外统一这组字段:前端只认它,库里怎么存是内部事
+const accountSelect = {
+  id: true,
+  name: true,
+  kind: true,
+  note: true,
+  balanceCents: true,
+  balanceUpdatedAt: true,
+  enabled: true,
+  sortOrder: true,
+  createdAt: true,
+  updatedAt: true
+}
+
+// 备注:空字符串统一存 null(和 todo 的 remark 一个处理)
+function normalizeNote(value) {
+  if (value === undefined) return undefined
+  const trimmed = typeof value === 'string' ? value.trim() : ''
+  return trimmed || null
+}
+
+// 不传 enabled 就是全部:停用的账户只是不出现在录入选择里,列表要能看到
+async function listAccounts(userId, { enabled } = {}) {
+  return prisma.ledgerAccount.findMany({
+    where: { userId, ...(enabled === undefined ? {} : { enabled }) },
+    select: accountSelect,
+    // 启用的在前,其次按用户自定义顺序,最后按创建顺序
+    orderBy: [{ enabled: 'desc' }, { sortOrder: 'asc' }, { id: 'asc' }]
+  })
+}
+
+async function createAccount(userId, data) {
+  const existing = await prisma.ledgerAccount.findFirst({ where: { userId, name: data.name } })
+  if (existing) {
+    throw new AppError('账户名已存在', 409)
+  }
+
+  return prisma.ledgerAccount.create({
+    data: {
+      userId,
+      name: data.name,
+      kind: data.kind,
+      note: normalizeNote(data.note) ?? null,
+      balanceCents: data.balanceCents ?? 0,
+      sortOrder: data.sortOrder ?? 0
+    },
+    select: accountSelect
+  })
+}
+
+async function updateAccount(userId, accountId, data) {
+  const account = await prisma.ledgerAccount.findFirst({ where: { id: accountId, userId } })
+  if (!account) {
+    throw new AppError('账户不存在', 404)
+  }
+
+  // 改名时校验重名,排除自己
+  if (data.name !== undefined && data.name !== account.name) {
+    const existing = await prisma.ledgerAccount.findFirst({
+      where: { userId, name: data.name, id: { not: accountId } }
+    })
+    if (existing) {
+      throw new AppError('账户名已存在', 409)
+    }
+  }
+
+  const payload = {}
+  if (data.name !== undefined) payload.name = data.name
+  if (data.kind !== undefined) payload.kind = data.kind
+  if (data.note !== undefined) payload.note = normalizeNote(data.note)
+  if (data.enabled !== undefined) payload.enabled = data.enabled
+  if (data.sortOrder !== undefined) payload.sortOrder = data.sortOrder
+
+  return prisma.ledgerAccount.update({
+    where: { id: accountId },
+    data: payload,
+    select: accountSelect
+  })
+}
+
+// 余额是「手动维护的快照」:只有用户明确改余额才动它,且要刷新 balanceUpdatedAt
+async function updateBalance(userId, accountId, balanceCents) {
+  const account = await prisma.ledgerAccount.findFirst({
+    where: { id: accountId, userId },
+    select: { id: true, balanceCents: true }
+  })
+  if (!account) {
+    throw new AppError('账户不存在', 404)
+  }
+
+  // 金额没变就原样返回:不刷新「上次更新时间」,否则对账提醒会失真
+  if (account.balanceCents === balanceCents) {
+    return prisma.ledgerAccount.findUnique({ where: { id: accountId }, select: accountSelect })
+  }
+
+  return prisma.ledgerAccount.update({
+    where: { id: accountId },
+    data: { balanceCents, balanceUpdatedAt: new Date() },
+    select: accountSelect
+  })
+}
+
+async function deleteAccount(userId, accountId) {
+  const account = await prisma.ledgerAccount.findFirst({ where: { id: accountId, userId } })
+  if (!account) {
+    throw new AppError('账户不存在', 404)
+  }
+
+  // 账单模块落地后,这里要先拦一道「账户下还有流水,请改为停用」
+  await prisma.ledgerAccount.delete({ where: { id: accountId } })
+  return { id: accountId }
+}
+
+module.exports = {
+  listAccounts,
+  createAccount,
+  updateAccount,
+  updateBalance,
+  deleteAccount
+}
