@@ -103,6 +103,84 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'route.ledgerAccounts', requiresAuth: true }
       },
       {
+        path: 'ledger/entries',
+        name: 'ledger-entries',
+        // 入口直达日维度列表,不再有颗粒度选择页
+        redirect: { name: 'ledger-entries-day' }
+      },
+      {
+        path: 'ledger/entries/day',
+        name: 'ledger-entries-day',
+        component: () => import('@/views/ledger/entries/day/index.vue'),
+        meta: { titleKey: 'route.ledgerEntriesDay', requiresAuth: true }
+      },
+      {
+        path: 'ledger/entries/day/new',
+        name: 'ledger-entry-day-new',
+        component: () => import('@/views/ledger/entries/day/edit.vue'),
+        meta: { titleKey: 'route.ledgerEntryDayNew', requiresAuth: true, noSidebar: true }
+      },
+      {
+        path: 'ledger/entries/day/:id/edit',
+        name: 'ledger-entry-day-edit',
+        component: () => import('@/views/ledger/entries/day/edit.vue'),
+        meta: { titleKey: 'route.ledgerEntryDayEdit', requiresAuth: true, noSidebar: true }
+      },
+      {
+        path: 'ledger/entries/day/:id',
+        name: 'ledger-entry-day-detail',
+        component: () => import('@/views/ledger/entries/day/detail.vue'),
+        meta: { titleKey: 'route.ledgerEntryDayDetail', requiresAuth: true, noSidebar: true }
+      },
+      {
+        path: 'ledger/entries/week',
+        name: 'ledger-entries-week',
+        component: () => import('@/views/ledger/entries/week/index.vue'),
+        meta: { titleKey: 'route.ledgerEntriesWeek', requiresAuth: true }
+      },
+      {
+        path: 'ledger/entries/week/new',
+        name: 'ledger-entry-week-new',
+        component: () => import('@/views/ledger/entries/week/edit.vue'),
+        meta: { titleKey: 'route.ledgerEntryWeekNew', requiresAuth: true, noSidebar: true }
+      },
+      {
+        path: 'ledger/entries/week/:id/edit',
+        name: 'ledger-entry-week-edit',
+        component: () => import('@/views/ledger/entries/week/edit.vue'),
+        meta: { titleKey: 'route.ledgerEntryWeekEdit', requiresAuth: true, noSidebar: true }
+      },
+      {
+        path: 'ledger/entries/week/:id',
+        name: 'ledger-entry-week-detail',
+        component: () => import('@/views/ledger/entries/week/detail.vue'),
+        meta: { titleKey: 'route.ledgerEntryWeekDetail', requiresAuth: true, noSidebar: true }
+      },
+      {
+        path: 'ledger/entries/month',
+        name: 'ledger-entries-month',
+        component: () => import('@/views/ledger/entries/month/index.vue'),
+        meta: { titleKey: 'route.ledgerEntriesMonth', requiresAuth: true }
+      },
+      {
+        path: 'ledger/entries/month/new',
+        name: 'ledger-entry-month-new',
+        component: () => import('@/views/ledger/entries/month/edit.vue'),
+        meta: { titleKey: 'route.ledgerEntryMonthNew', requiresAuth: true, noSidebar: true }
+      },
+      {
+        path: 'ledger/entries/month/:id/edit',
+        name: 'ledger-entry-month-edit',
+        component: () => import('@/views/ledger/entries/month/edit.vue'),
+        meta: { titleKey: 'route.ledgerEntryMonthEdit', requiresAuth: true, noSidebar: true }
+      },
+      {
+        path: 'ledger/entries/month/:id',
+        name: 'ledger-entry-month-detail',
+        component: () => import('@/views/ledger/entries/month/detail.vue'),
+        meta: { titleKey: 'route.ledgerEntryMonthDetail', requiresAuth: true, noSidebar: true }
+      },
+      {
         path: 'admin',
         name: 'admin',
         component: () => import('@/views/admin/index.vue'),

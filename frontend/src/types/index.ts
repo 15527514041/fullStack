@@ -222,6 +222,100 @@ export interface LedgerAccount {
   updatedAt: string
 }
 
+// ===== 记账:周期账单 =====
+/** 日 / 周 / 月三种账本来源 */
+export type LedgerRecordSource = 'manual_day' | 'manual_week' | 'manual_month'
+export type LedgerItemType = 'INCOME' | 'EXPENSE'
+
+/** 固定分类代码:后端枚举同名,展示文案走 i18n */
+export type LedgerCategory =
+  | 'SALARY'
+  | 'PART_TIME'
+  | 'INVESTMENT'
+  | 'RENT'
+  | 'GIFT'
+  | 'SUBSIDY'
+  | 'OTHER_INCOME'
+  | 'FOOD'
+  | 'TRANSPORT'
+  | 'HOUSING'
+  | 'SHOPPING'
+  | 'MEDICAL'
+  | 'ENTERTAINMENT'
+  | 'SOCIAL'
+  | 'EDUCATION'
+  | 'COMMUNICATION'
+  | 'INSURANCE'
+  | 'REPAYMENT'
+  | 'OTHER_EXPENSE'
+
+/** 明细里带出的账户快照字段 */
+export interface LedgerItemAccount {
+  id: number
+  name: string
+  kind: AccountKind
+  enabled: boolean
+}
+
+export interface LedgerItem {
+  id?: number
+  type: LedgerItemType
+  amountCents: number
+  category: LedgerCategory
+  accountId: number
+  remark?: string | null
+  sortOrder?: number
+  account?: LedgerItemAccount
+  tags?: Tag[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+/** 列表摘要:一条周期记录只回合计和条目数,不回明细 */
+export interface LedgerRecordSummary {
+  id: number
+  source: LedgerRecordSource
+  periodStart: string
+  periodEnd: string
+  incomeCents: number
+  expenseCents: number
+  netCents: number
+  itemCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface LedgerRecordDetail extends LedgerRecordSummary {
+  items: LedgerItem[]
+}
+
+export interface LedgerRecordQuery {
+  source: LedgerRecordSource
+  page?: number
+  pageSize?: number
+  from?: string
+  to?: string
+}
+
+export interface LedgerItemPayload {
+  type: LedgerItemType
+  category: LedgerCategory
+  accountId: number
+  amountCents: number
+  tagIds?: number[]
+  remark?: string | null
+}
+
+export interface CreateLedgerRecordPayload {
+  source: LedgerRecordSource
+  periodStart: string
+  items: LedgerItemPayload[]
+}
+
+export interface UpdateLedgerRecordPayload {
+  items: LedgerItemPayload[]
+}
+
 // ===== 管理端 =====
 export interface AdminUser {
   id: number

@@ -58,8 +58,7 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
       title: t('menu.ledgerGroup'),
       items: [
         { path: '/ledger/accounts', title: t('menu.accounts'), icon: 'wallet' },
-        // 账单记录还没开发,先占个位置
-        { path: '/ledger/entries', title: t('menu.entries'), icon: 'bill', disabled: true }
+        { path: '/ledger/entries', title: t('menu.entries'), icon: 'bill' }
       ]
     },
     {
@@ -79,7 +78,11 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
   return groups.filter((group) => group.items.length > 0)
 })
 
-const activeMenu = computed(() => (route.path === '' ? '/' : route.path))
+const activeMenu = computed(() => {
+  // 账单记录有选择页、列表、详情、编辑等多个子路由,统一高亮侧栏入口
+  if (route.path.startsWith('/ledger/entries')) return '/ledger/entries'
+  return route.path === '' ? '/' : route.path
+})
 const sidebarWidth = computed(() => (collapsed.value ? collapsedWidth : expandedWidth))
 
 // 详情页等通过路由 meta.noSidebar 隐藏菜单栏(参考 client):
