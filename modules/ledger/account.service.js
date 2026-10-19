@@ -110,7 +110,12 @@ async function deleteAccount(userId, accountId) {
     throw new AppError('账户不存在', 404)
   }
 
-  // 账单模块落地后,这里要先拦一道「账户下还有流水,请改为停用」
+  // 账户被账单引用时不能删:财务记录保留,账户改为停用
+  const itemCount = await prisma.ledgerItem.count({ where: { accountId } })
+  if (itemCount > 0) {
+    throw new AppError('该账户下已有账单,请改为停用', 409)
+  }
+
   await prisma.ledgerAccount.delete({ where: { id: accountId } })
   return { id: accountId }
 }

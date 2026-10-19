@@ -58,6 +58,43 @@ enum AccountKind {
   OTHER         // 其他
 }
 
+// 记账周期:同一个用户在同一种周期下,一个周期只能有一条记录
+enum LedgerRecordSource {
+  manual_day
+  manual_week
+  manual_month
+}
+
+// 每一条明细的收支方向
+enum LedgerItemType {
+  INCOME
+  EXPENSE
+}
+
+// 固定分类:接口层还会校验分类必须和收支方向匹配
+enum LedgerCategory {
+  SALARY // 工资薪金
+  PART_TIME // 兼职劳务
+  INVESTMENT // 投资收益
+  RENT // 租金收入
+  GIFT // 红包礼金
+  SUBSIDY // 补贴返还
+  OTHER_INCOME // 其他收入
+
+  FOOD // 餐饮
+  TRANSPORT // 交通
+  HOUSING // 住房
+  SHOPPING // 购物
+  MEDICAL // 医疗
+  ENTERTAINMENT // 娱乐
+  SOCIAL // 人情
+  EDUCATION // 教育
+  COMMUNICATION // 通讯
+  INSURANCE // 保险
+  REPAYMENT // 还款
+  OTHER_EXPENSE // 其他支出
+}
+
 model User {
   id          Int        @id @default(autoincrement())
   username    String     @unique
@@ -72,6 +109,7 @@ model User {
   reflections DailyReflection[]
   plans       DailyPlan[]
   ledgerAccounts LedgerAccount[]
+  ledgerRecords  LedgerRecord[]
   createdAt   DateTime   @default(now())
   // 最近一次登录成功的时间(登录时更新),后台用户列表展示用
   lastLoginAt DateTime?
@@ -122,6 +160,7 @@ model Tag {
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
   todos     Todo[]
+  ledgerItems LedgerItem[]
   createdAt DateTime @default(now())
 
   // 同一个域内不允许重名,不同域可以有同名标签(唯一索引的前缀也顺带覆盖「按域取标签」的查询)
@@ -229,10 +268,52 @@ model LedgerAccount {
   enabled          Boolean     @default(true)
   sortOrder        Int         @default(0)
   user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ledgerItems      LedgerItem[]
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
   // 同一用户内账户不重名;唯一索引前缀也顺带覆盖「按用户取账户」的查询
   @@unique([userId, name])
   @@index([userId, enabled])
+}
+
+// ===== 记账:周期账单 =====
+// 一天/一周/一月最多一条记录;记录本身只描述周期,具体收支都放在 items 里。
+// 这跟每日规划的结构一致:父记录唯一,子项可以有多条。
+model LedgerRecord {
+  id          Int                @id @default(autoincrement())
+  userId      Int
+  source      LedgerRecordSource
+  // 日记录两者相同;周记录从周一到周日;月记录从 1 日到月末
+  periodStart DateTime           @db.Date
+  periodEnd   DateTime           @db.Date
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       LedgerItem[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  // 同一用户、同一来源、同一周期只能有一条记录;唯一索引前缀也覆盖列表按周期查询
+  @@unique([userId, source, periodStart])
+}
+
+// 账单明细:一笔收入/支出;金额始终为正数,方向由 type 决定
+model LedgerItem {
+  id          Int            @id @default(autoincrement())
+  recordId    Int
+  type        LedgerItemType
+  amountCents Int
+  category    LedgerCategory
+  accountId   Int
+  remark      String?
+  sortOrder   Int            @default(0)
+  record      LedgerRecord   @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  // 直接删账户由 service 层拦成 409;数据库用 CASCADE 是为了删用户时
+  // LedgerAccount / LedgerRecord 两条级联路径不会因顺序问题互相阻塞
+  account     LedgerAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  tags        Tag[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([recordId, sortOrder])
+  @@index([accountId])
 }

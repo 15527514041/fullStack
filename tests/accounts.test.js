@@ -26,6 +26,7 @@ function createAccount(token, body = {}) {
 
 // 账户对 User 是 CASCADE,但先清干净更省心(脏库上不留历史数据)
 beforeEach(async () => {
+  await prisma.ledgerRecord.deleteMany()
   await prisma.ledgerAccount.deleteMany()
   await prisma.todo.deleteMany()
   await prisma.tag.deleteMany()

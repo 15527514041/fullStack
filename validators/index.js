@@ -248,6 +248,122 @@ const accountSchemas = {
   })
 }
 
+// ====== 记账:周期账单 ======
+
+const ledgerSource = z.enum(['manual_day', 'manual_week', 'manual_month'], {
+  errorMap: () => ({ message: '记账周期不合法' })
+})
+const ledgerItemType = z.enum(['INCOME', 'EXPENSE'], {
+  errorMap: () => ({ message: '收支类型不合法' })
+})
+
+const ledgerIncomeCategories = [
+  'SALARY',
+  'PART_TIME',
+  'INVESTMENT',
+  'RENT',
+  'GIFT',
+  'SUBSIDY',
+  'OTHER_INCOME'
+]
+const ledgerExpenseCategories = [
+  'FOOD',
+  'TRANSPORT',
+  'HOUSING',
+  'SHOPPING',
+  'MEDICAL',
+  'ENTERTAINMENT',
+  'SOCIAL',
+  'EDUCATION',
+  'COMMUNICATION',
+  'INSURANCE',
+  'REPAYMENT',
+  'OTHER_EXPENSE'
+]
+const ledgerCategory = z.enum([...ledgerIncomeCategories, ...ledgerExpenseCategories], {
+  errorMap: () => ({ message: '分类不合法' })
+})
+
+// 账单金额不允许为 0;上限与账户余额保持一致
+const ledgerAmountCents = z
+  .number()
+  .int('金额必须是整数(单位:分)')
+  .min(1, '金额必须大于 0')
+  .max(999999999, '金额超出范围')
+
+// DATE 字段只收 YYYY-MM-DD,并检查是真实存在的日期(挡住 2026-02-31 这种)
+const ledgerPeriodStart = dateOnly.refine((value) => {
+  const date = new Date(`${value}T00:00:00.000Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+}, '日期不合法')
+
+function checkLedgerCategoryPair(item, ctx) {
+  const allowed = item.type === 'INCOME' ? ledgerIncomeCategories : ledgerExpenseCategories
+  if (!allowed.includes(item.category)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: '分类与收支类型不匹配',
+      path: ['category']
+    })
+  }
+}
+
+// periodStart 的粒度必须和 source 对上:
+// 周账单必须是周一,月账单必须是 1 号;日账单任意日期都可以
+function checkLedgerPeriod(source, periodStart, ctx) {
+  const date = new Date(`${periodStart}T00:00:00.000Z`)
+  if (source === 'manual_week' && date.getUTCDay() !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: '周账单的起始日期必须是周一',
+      path: ['periodStart']
+    })
+  }
+  if (source === 'manual_month' && date.getUTCDate() !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: '月账单的起始日期必须是当月 1 日',
+      path: ['periodStart']
+    })
+  }
+}
+
+const ledgerItem = z
+  .object({
+    type: ledgerItemType,
+    category: ledgerCategory,
+    accountId: z.number().int().positive('账户 ID 不合法'),
+    amountCents: ledgerAmountCents,
+    tagIds: z.array(z.number().int().positive()).optional(),
+    remark: z.string().trim().max(500, '备注最多 500 个字符').nullable().optional()
+  })
+  .superRefine(checkLedgerCategoryPair)
+
+const ledgerItems = z.array(ledgerItem).min(1, '至少需要一条账单明细').max(50, '最多 50 条账单明细')
+
+const recordSchemas = {
+  create: z
+    .object({
+      source: ledgerSource,
+      periodStart: ledgerPeriodStart,
+      items: ledgerItems
+    })
+    .superRefine((data, ctx) => checkLedgerPeriod(data.source, data.periodStart, ctx)),
+  // 编辑时周期和来源不可修改,只允许整体替换明细
+  update: z.object({ items: ledgerItems }).strict(),
+  query: z
+    .object({
+      source: ledgerSource,
+      ...pageParams,
+      from: ledgerPeriodStart.optional(),
+      to: ledgerPeriodStart.optional()
+    })
+    .refine((data) => !data.from || !data.to || data.from <= data.to, {
+      message: '开始日期不能晚于结束日期',
+      path: ['to']
+    })
+}
+
 // ====== admin ======
 
 const adminSchemas = {
@@ -271,6 +387,7 @@ module.exports = {
   reflectionSchemas,
   planSchemas,
   accountSchemas,
+  recordSchemas,
   adminSchemas,
   idParams
 }
