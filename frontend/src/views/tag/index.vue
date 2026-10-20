@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { ArrowDown, Plus } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { createTag, deleteTag, getTags, updateTag } from '@/api/tags'
@@ -353,7 +353,7 @@ watch(
       </div>
 
       <el-table v-else :data="rows" :row-class-name="rowClassName">
-        <el-table-column :label="$t('dictionary.name')" min-width="200">
+        <el-table-column :label="$t('dictionary.name')" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="dict-name">
               <ColorDot :color="row.color" :size="9" />
@@ -362,15 +362,11 @@ watch(
           </template>
         </el-table-column>
 
-        <el-table-column :label="$t('dictionary.sortOrder')" width="90" align="center">
-          <template #default="{ row }">{{ row.sortOrder }}</template>
-        </el-table-column>
-
-        <el-table-column :label="usageColumnLabel" width="120" align="center">
+        <el-table-column :label="usageColumnLabel" min-width="150" align="center">
           <template #default="{ row }">{{ rowUsage(row) }}</template>
         </el-table-column>
 
-        <el-table-column :label="$t('dictionary.status')" width="110" align="center">
+        <el-table-column :label="$t('dictionary.status')" min-width="150" align="center">
           <template #default="{ row }">
             <el-switch
               v-model="row.enabled"
@@ -379,11 +375,11 @@ watch(
           </template>
         </el-table-column>
 
-        <el-table-column :label="$t('common.createdAt')" width="180">
+        <el-table-column :label="$t('common.createdAt')" min-width="150" align="center">
           <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
         </el-table-column>
 
-        <el-table-column :label="$t('common.actions')" width="160" align="center" fixed="right">
+        <el-table-column :label="$t('common.actions')" min-width="150" align="center">
           <template #default="{ row }">
             <el-button link type="primary" @click="openEditDialog(row)">{{ $t('common.edit') }}</el-button>
             <el-button link type="danger" @click="handleDelete(row)">{{ $t('common.delete') }}</el-button>
@@ -419,9 +415,15 @@ watch(
 
           <el-form-item :label="$t('dictionary.color')">
             <div class="color-field">
-              <el-color-picker v-model="form.color" :predefine="colorOptions" />
-              <ColorDot :color="form.color" :size="10" />
-              <span>{{ form.color }}</span>
+              <span class="color-field__preview" :style="{ backgroundColor: form.color }" />
+              <span class="color-field__value">{{ form.color }}</span>
+              <el-icon class="color-field__arrow"><ArrowDown /></el-icon>
+              <el-color-picker
+                v-model="form.color"
+                class="color-field__picker"
+                :predefine="colorOptions"
+                :aria-label="$t('dictionary.color')"
+              />
             </div>
           </el-form-item>
         </el-form>
@@ -503,11 +505,72 @@ watch(
   min-height: 0;
 }
 
-.dict-name,
-.color-field {
+.dict-name {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.color-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 50px;
+  padding: 0 14px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 16px;
+  background: var(--el-fill-color-blank);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.color-field:hover {
+  border-color: var(--el-color-primary-light-5);
+}
+
+.color-field:focus-within {
+  border-color: var(--el-color-primary);
+  box-shadow: 0 0 0 1px var(--el-color-primary-light-7);
+}
+
+.color-field__preview {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.08);
+}
+
+.color-field__value {
+  color: var(--color-text-1);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.color-field__arrow {
+  margin-left: auto;
+  color: var(--color-text-3);
+  pointer-events: none;
+}
+
+/* 透明覆盖整行:点到颜色项任意位置都能打开取色面板 */
+.color-field :deep(.color-field__picker) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.color-field :deep(.color-field__picker .el-color-picker__trigger) {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
 }
 
 .sort-order-input {

@@ -297,13 +297,13 @@ onMounted(async () => {
 
     <el-table v-else :data="accounts" :row-class-name="rowClassName">
       <!-- 名字是主标识,给最大的一块;超长省略号 + hover 显示全名 -->
-      <el-table-column :label="$t('ledger.accounts.colName')" min-width="168" show-overflow-tooltip>
+      <el-table-column :label="$t('ledger.accounts.colName')" min-width="120" show-overflow-tooltip>
         <template #default="{ row }">
           <span class="account-name">{{ row.name }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('ledger.accounts.colKind')" width="128">
+      <el-table-column :label="$t('ledger.accounts.colKind')" min-width="120">
         <template #default="{ row }">
           <span class="kind-cell">
             <ColorDot :color="row.kind.color" />
@@ -312,7 +312,7 @@ onMounted(async () => {
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('ledger.accounts.colBalance')" width="112">
+      <el-table-column :label="$t('ledger.accounts.colBalance')" min-width="120" align="left">
         <template #default="{ row }">
           <span class="account-balance" :class="{ 'is-negative': row.balanceCents < 0 }">
             {{ formatCents(row.balanceCents) }}
@@ -320,17 +320,17 @@ onMounted(async () => {
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('ledger.accounts.colNote')" min-width="100" show-overflow-tooltip>
+      <el-table-column :label="$t('ledger.accounts.colNote')" min-width="120" show-overflow-tooltip>
         <template #default="{ row }">
           <span class="note-cell">{{ row.note || '—' }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('ledger.accounts.colUpdatedAt')" width="142">
+      <el-table-column :label="$t('ledger.accounts.colUpdatedAt')" min-width="120" align="center">
         <template #default="{ row }">{{ formatDateTimeShort(row.balanceUpdatedAt) }}</template>
       </el-table-column>
 
-      <el-table-column :label="$t('ledger.accounts.colEnabled')" width="90">
+      <el-table-column :label="$t('ledger.accounts.colEnabled')" min-width="120" align="center">
         <template #header>
           <span class="th-tip">
             <el-tooltip :content="$t('ledger.accounts.enabledTip')" placement="top">
@@ -350,7 +350,13 @@ onMounted(async () => {
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('common.actions')" width="184" fixed="right">
+      <el-table-column
+        :label="$t('common.actions')"
+        width="184"
+        align="center"
+        fixed="right"
+        class-name="table-actions"
+      >
         <template #default="{ row }">
           <el-button link type="primary" @click="openBalanceDialog(row)">
             {{ $t('ledger.accounts.editBalance') }}

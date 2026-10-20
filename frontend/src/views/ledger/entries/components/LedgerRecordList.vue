@@ -11,7 +11,7 @@ import { formatCents } from '@/utils/money'
 import type { LedgerRecordSource, LedgerRecordSummary } from '@/types'
 import { getModeMeta } from '../constants'
 import { useLedgerRecordList } from '../composables/useLedgerRecordList'
-import { formatPeriodLabel } from '../utils'
+import { formatPeriodLabel, type LedgerListPreset } from '../utils'
 import LedgerModeSwitch from './LedgerModeSwitch.vue'
 import LedgerPeriodLabel from './LedgerPeriodLabel.vue'
 import LedgerRecordMobileCard from './LedgerRecordMobileCard.vue'
@@ -39,6 +39,20 @@ const {
 
 const paginationLayout = computed(() =>
   isMobile.value ? 'prev, pager, next' : 'total, sizes, prev, pager, next, jumper'
+)
+const presetLabelKeys: Record<LedgerListPreset, string> = {
+  all: 'common.all',
+  current_week: 'ledger.entries.presetCurrentWeek',
+  current_month: 'ledger.entries.presetCurrentMonth',
+  last_month: 'ledger.entries.presetLastMonth',
+  last_3_months: 'ledger.entries.presetLast3Months',
+  last_6_months: 'ledger.entries.presetLast6Months',
+  last_year: 'ledger.entries.presetLastYear'
+}
+const filterPresets = computed<LedgerListPreset[]>(() =>
+  props.source === 'manual_week'
+    ? ['all', 'current_week', 'current_month', 'last_month', 'last_3_months', 'last_6_months']
+    : ['all', 'current_month', 'last_month', 'last_3_months', 'last_6_months', 'last_year']
 )
 
 function netClass(value: number): string {
@@ -103,7 +117,7 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
       </div>
 
       <div class="filter-bar">
-        <div class="range-field">
+        <div v-if="meta.source === 'manual_day'" class="range-field">
           <el-date-picker
             v-model="filters.range"
             type="daterange"
@@ -114,7 +128,16 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
             @change="applyFilters"
           />
         </div>
-        <el-button @click="resetFilters">{{ t('common.reset') }}</el-button>
+        <el-select v-else v-model="filters.preset" class="period-select" @change="applyFilters">
+          <el-option
+            v-for="preset in filterPresets"
+            :key="preset"
+            :label="t(presetLabelKeys[preset])"
+            :value="preset"
+          />
+        </el-select>
+        <el-button type="primary" @click="applyFilters">{{ t('common.search') }}</el-button>
+        <el-button class="reset-btn" @click="resetFilters">{{ t('common.reset') }}</el-button>
       </div>
 
       <el-skeleton v-if="loading && list.length === 0" :rows="6" animated class="list-skeleton" />
@@ -134,7 +157,7 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
         </div>
 
         <el-table v-else :data="list" class="ledger-record-table" @row-click="openDetail">
-          <el-table-column :label="t(meta.periodColumnKey)" :min-width="meta.periodColumnWidth">
+          <el-table-column :label="t(meta.periodColumnKey)" min-width="120">
             <template #default="{ row }">
               <LedgerPeriodLabel
                 :source="meta.source"
@@ -143,32 +166,38 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
               />
             </template>
           </el-table-column>
-          <el-table-column :label="t('ledger.entries.colExpense')" width="130" align="right">
+          <el-table-column :label="t('ledger.entries.colExpense')" min-width="120" align="left">
             <template #default="{ row }">
               <span class="ledger-total is-expense">{{ formatCents(row.expenseCents) }}</span>
             </template>
           </el-table-column>
-          <el-table-column :label="t('ledger.entries.colIncome')" width="130" align="right">
+          <el-table-column :label="t('ledger.entries.colIncome')" min-width="120" align="left">
             <template #default="{ row }">
               <span class="ledger-total is-income">{{ formatCents(row.incomeCents) }}</span>
             </template>
           </el-table-column>
-          <el-table-column :label="t('ledger.entries.colNet')" width="130" align="right">
+          <el-table-column :label="t('ledger.entries.colNet')" min-width="120" align="left">
             <template #default="{ row }">
               <span class="ledger-total" :class="netClass(row.netCents)">
                 {{ formatCents(row.netCents) }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column :label="t('ledger.entries.colItemCount')" width="100" align="center">
+          <el-table-column :label="t('ledger.entries.colItemCount')" min-width="120" align="center">
             <template #default="{ row }">
               {{ t('ledger.entries.itemCount', { count: row.itemCount }) }}
             </template>
           </el-table-column>
-          <el-table-column :label="t('ledger.entries.colUpdatedAt')" width="170">
+          <el-table-column :label="t('ledger.entries.colUpdatedAt')" min-width="120" align="center">
             <template #default="{ row }">{{ formatDateTimeShort(row.updatedAt) }}</template>
           </el-table-column>
-          <el-table-column :label="t('ledger.entries.colActions')" width="180" align="right">
+          <el-table-column
+            :label="t('ledger.entries.colActions')"
+            width="170"
+            align="center"
+            fixed="right"
+            class-name="table-actions"
+          >
             <template #default="{ row }">
               <el-button link type="primary" @click.stop="openDetail(row)">
                 {{ t('ledger.entries.view') }}
@@ -230,6 +259,10 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
   width: 100%;
 }
 
+.period-select {
+  width: 180px;
+}
+
 .ledger-total {
   font-weight: 600;
   color: var(--color-text-1);
@@ -260,11 +293,11 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
   }
 
   .filter-bar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
   }
 
-  .range-field {
+  .range-field,
+  .period-select {
     width: 100%;
   }
 }

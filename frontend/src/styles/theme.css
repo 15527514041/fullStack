@@ -434,6 +434,24 @@ body {
   padding: 14px 0;
 }
 
+.el-table .table-actions .cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: normal;
+}
+
+.el-table .table-actions .el-button {
+  padding: 0;
+  font-size: 14px;
+}
+
+.el-table .table-actions .el-button + .el-button {
+  margin-left: 0;
+}
+
 /* 去掉 el-table 底部那条多余的分隔线 */
 .el-table .el-table__inner-wrapper::before {
   display: none;
@@ -661,9 +679,9 @@ body {
   min-height: 50px;
 }
 
-/* 金额输入框(el-input-number):数字居左,和表单里其它输入框保持一致(EP 默认居中) */
-.amount-input .el-input__inner {
-  text-align: left;
+/* 数字/金额输入框(el-input-number):统一居左,和表单里其它输入框保持一致 */
+.el-input-number .el-input__inner {
+  text-align: left !important;
 }
 
 /* 下拉框:高 50px、圆角 16px */

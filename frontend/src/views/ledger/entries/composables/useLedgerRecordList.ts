@@ -1,6 +1,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { getLedgerRecords } from '@/api/ledger'
 import type { LedgerRecordSource, LedgerRecordSummary } from '@/types'
+import { periodRangeForPreset, type LedgerListPreset } from '../utils'
 
 export function useLedgerRecordList(source: LedgerRecordSource) {
   const list = ref<LedgerRecordSummary[]>([])
@@ -8,7 +9,10 @@ export function useLedgerRecordList(source: LedgerRecordSource) {
   const page = ref(1)
   const pageSize = ref(10)
   const loading = ref(false)
-  const filters = reactive<{ range: [string, string] | null }>({ range: null })
+  const filters = reactive<{ range: [string, string] | null; preset: LedgerListPreset }>({
+    range: null,
+    preset: 'all'
+  })
 
   async function load(): Promise<void> {
     loading.value = true
@@ -35,12 +39,16 @@ export function useLedgerRecordList(source: LedgerRecordSource) {
   }
 
   function applyFilters(): void {
+    if (source !== 'manual_day') {
+      filters.range = periodRangeForPreset(source, filters.preset)
+    }
     page.value = 1
     void load()
   }
 
   function resetFilters(): void {
     filters.range = null
+    filters.preset = 'all'
     applyFilters()
   }
 

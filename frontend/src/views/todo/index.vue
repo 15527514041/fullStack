@@ -349,44 +349,50 @@ onMounted(() => {
     </div>
 
     <el-table v-else :data="todos">
-      <el-table-column :label="$t('todo.colDone')" width="80" align="center">
+      <el-table-column :label="$t('todo.colDone')" min-width="120" align="center">
         <template #default="{ row }">
           <el-switch v-model="row.completed" @change="handleToggle(row)" />
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('todo.colTitle')" min-width="220">
+      <el-table-column :label="$t('todo.colTitle')" min-width="120" show-overflow-tooltip>
         <template #default="{ row }">
           <span :class="{ 'todo-done': row.completed }">{{ row.title }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('todo.colTags')" min-width="140">
+      <el-table-column :label="$t('todo.colTags')" min-width="120">
         <template #default="{ row }">
           <ColorTag v-for="tag in row.tags" :key="tag.id" :name="tag.name" :color="tag.color" class="tag-item" />
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('todo.colAttachment')" width="170" class-name="cell-attachment">
+      <el-table-column :label="$t('todo.colAttachment')" min-width="120" align="center" class-name="cell-attachment">
         <template #default="{ row }">
           <OssAttachmentPreview v-if="attachmentIds(row).length" :value="attachmentIds(row)" :size="36" :max="3" :radius="6" />
           <span v-else class="todo-empty-cell">-</span>
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('common.createdAt')" width="170">
+      <el-table-column :label="$t('common.createdAt')" min-width="120" align="center">
         <template #default="{ row }">
           {{ formatDateTime(row.createdAt) }}
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('common.updatedAt')" width="170">
+      <el-table-column :label="$t('common.updatedAt')" min-width="120" align="center">
         <template #default="{ row }">
           {{ formatDateTime(row.updatedAt) }}
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('common.actions')" width="160" align="center" fixed="right">
+      <el-table-column
+        :label="$t('common.actions')"
+        width="170"
+        align="center"
+        fixed="right"
+        class-name="table-actions"
+      >
         <template #default="{ row }">
           <el-button link type="primary" @click="openDetail(row)">{{ $t('common.detail') }}</el-button>
           <el-button link type="primary" @click="openEditDialog(row)">{{ $t('common.edit') }}</el-button>

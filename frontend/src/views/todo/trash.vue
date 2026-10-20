@@ -91,7 +91,7 @@ onMounted(loadTrash)
     </div>
 
     <el-table v-else :data="todos">
-      <el-table-column :label="$t('trash.colTitle')" min-width="240">
+      <el-table-column :label="$t('trash.colTitle')" min-width="140" show-overflow-tooltip>
         <template #default="{ row }">
           <span class="title">{{ row.title }}</span>
         </template>
@@ -103,13 +103,19 @@ onMounted(loadTrash)
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('trash.colDeletedAt')" width="180">
+      <el-table-column :label="$t('trash.colDeletedAt')" min-width="140" align="center">
         <template #default="{ row }">
           {{ formatDateTime(row.deletedAt) }}
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('common.actions')" width="100" align="center" fixed="right">
+      <el-table-column
+        :label="$t('common.actions')"
+        width="110"
+        align="center"
+        fixed="right"
+        class-name="table-actions"
+      >
         <template #default="{ row }">
           <el-button link type="primary" @click="handleRestore(row)">{{ $t('common.restore') }}</el-button>
         </template>

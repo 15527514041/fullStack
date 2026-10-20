@@ -1340,10 +1340,6 @@ onMounted(load)
   min-width: 0;
 }
 
-.row-amount :deep(.el-input__inner) {
-  text-align: right;
-}
-
 .account-option {
   display: inline-flex;
   align-items: center;
