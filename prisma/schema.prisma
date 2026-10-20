@@ -23,15 +23,6 @@ enum UploadVisibility {
   PRIVATE
 }
 
-// 标签类型:取值直接对应 Element Plus el-tag 的语义类型,前端不用再做映射
-enum TagType {
-  primary
-  success
-  info
-  warning
-  danger
-}
-
 // 标签域:标签管理是通用能力,各业务模块各用一套(任务 / 记账)
 enum TagScope {
   TODO
@@ -40,57 +31,88 @@ enum TagScope {
 
 // 每日规划的列表项类型:待办清单 / 计划完成 / 实际完成 / 随写备注
 enum DailyPlanItemKind {
-  TODO    // 待办事项:只有名称,序号即 sortOrder
+  TODO // 待办事项:只有名称,序号即 sortOrder
   PLANNED // 计划完成:起止时间 + 事项(用时由起止时间算)
-  ACTUAL  // 实际完成:同上
-  NOTE    // 随写备注:只有内容
+  ACTUAL // 实际完成:同上
+  NOTE // 随写备注:只有内容
 }
 
-// 资产账户类型:先固定这几种,以后要支持自定义类型再改
-enum AccountKind {
-  CASH          // 现金
-  WECHAT        // 微信零钱
-  ALIPAY        // 支付宝余额
-  DEBIT_CARD    // 储蓄卡
-  CREDIT_CARD   // 信用卡
-  INVESTMENT    // 理财账户
-  LIABILITY     // 负债账户
-  OTHER         // 其他
+// 用户级字典:账户类型、支出分类、收入分类都由用户自己维护
+enum DictionaryKind {
+  ACCOUNT_KIND
+  INCOME_CATEGORY
+  EXPENSE_CATEGORY
+}
+
+// 记账周期:同一个用户在同一种周期下,一个周期只能有一条记录
+enum LedgerRecordSource {
+  manual_day
+  manual_week
+  manual_month
+}
+
+// 每一条明细的收支方向
+enum LedgerItemType {
+  INCOME
+  EXPENSE
 }
 
 model User {
-  id          Int        @id @default(autoincrement())
-  username    String     @unique
-  password    String
+  id                Int               @id @default(autoincrement())
+  username          String            @unique
+  password          String
   // 只存上传记录的 ossId,不存 URL:换域名/CDN/签名策略都不用改库
-  avatarOssId String?
-  role        Role       @default(USER)
-  status      UserStatus @default(ACTIVE)
-  todos       Todo[]
-  tags        Tag[]
-  uploads     Upload[]
-  reflections DailyReflection[]
-  plans       DailyPlan[]
-  ledgerAccounts LedgerAccount[]
-  createdAt   DateTime   @default(now())
+  avatarOssId       String?
+  role              Role              @default(USER)
+  status            UserStatus        @default(ACTIVE)
+  todos             Todo[]
+  tags              Tag[]
+  dictionaryItems   DictionaryItem[]
+  uploads           Upload[]
+  reflections       DailyReflection[]
+  plans             DailyPlan[]
+  ledgerAccounts    LedgerAccount[]
+  ledgerRecords     LedgerRecord[]
+  createdAt         DateTime          @default(now())
   // 最近一次登录成功的时间(登录时更新),后台用户列表展示用
-  lastLoginAt DateTime?
+  lastLoginAt       DateTime?
   // 密码最后修改时间:签发时间早于它的 token 全部失效(改完密码即踢下线);null = 从没改过
   passwordChangedAt DateTime?
 }
 
+// 账户类型 / 收支分类:预设项带 code(迁移和默认值识别用),用户新建的自定义项 code 为空
+model DictionaryItem {
+  id          Int             @id @default(autoincrement())
+  userId      Int
+  kind        DictionaryKind
+  code        String?
+  name        String
+  color       String          @default("#0bb06d")
+  enabled     Boolean         @default(true)
+  sortOrder   Int             @default(0)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accounts    LedgerAccount[]
+  ledgerItems LedgerItem[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([userId, kind, name])
+  @@unique([userId, kind, code])
+  @@index([userId, kind, sortOrder])
+}
+
 model Upload {
   // id 对外就是 ossId
-  id           String           @id @default(uuid())
-  key          String           @unique
-  visibility   UploadVisibility @default(PRIVATE)
+  id              String           @id @default(uuid())
+  key             String           @unique
+  visibility      UploadVisibility @default(PRIVATE)
   // 原始文件名(带扩展名):文件类附件展示用,key 里只有随机名
-  originalName String?
-  mime         String
-  size         Int
-  uploader     User?            @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
-  uploaderId   Int?
-  createdAt    DateTime         @default(now())
+  originalName    String?
+  mime            String
+  size            Int
+  uploader        User?            @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
+  uploaderId      Int?
+  createdAt       DateTime         @default(now())
   // 被哪些 todo 附件引用
   todoAttachments TodoAttachment[]
 
@@ -114,15 +136,18 @@ model TodoAttachment {
 }
 
 model Tag {
-  id        Int      @id @default(autoincrement())
-  name      String
-  type      TagType  @default(primary)
+  id          Int          @id @default(autoincrement())
+  name        String
+  color       String       @default("#0bb06d")
+  enabled     Boolean      @default(true)
+  sortOrder   Int          @default(0)
   // 标签所属的域:任务域的标签只给 TODO 用,记账域的只给记账用
-  scope     TagScope @default(TODO)
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  todos     Todo[]
-  createdAt DateTime @default(now())
+  scope       TagScope     @default(TODO)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int
+  todos       Todo[]
+  ledgerItems LedgerItem[]
+  createdAt   DateTime     @default(now())
 
   // 同一个域内不允许重名,不同域可以有同名标签(唯一索引的前缀也顺带覆盖「按域取标签」的查询)
   @@unique([userId, scope, name])
@@ -215,24 +240,69 @@ model DailyPlanItem {
 // ===== 记账:资产账户 =====
 // 余额是用户手动维护的「快照」:账单流水不联动修改余额,这是产品原则不是偷懒
 model LedgerAccount {
-  id               Int         @id @default(autoincrement())
+  id               Int            @id @default(autoincrement())
   userId           Int
   name             String
-  kind             AccountKind
+  kindId           Int
   // 备注:放「尾号 1234」这类信息
   note             String?
   // 余额,单位分;信用卡欠款记负数
-  balanceCents     Int         @default(0)
+  balanceCents     Int            @default(0)
   // 上次手动改余额的时间:只在余额真的变了才刷新,用于「很久没对账」提醒
-  balanceUpdatedAt DateTime    @default(now())
+  balanceUpdatedAt DateTime       @default(now())
   // 启用开关:只是个标记 —— 停用的账户不再出现在录入选择里,但余额照算、数据保留
-  enabled          Boolean     @default(true)
-  sortOrder        Int         @default(0)
-  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  enabled          Boolean        @default(true)
+  sortOrder        Int            @default(0)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind             DictionaryItem @relation(fields: [kindId], references: [id], onDelete: Cascade)
+  ledgerItems      LedgerItem[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
   // 同一用户内账户不重名;唯一索引前缀也顺带覆盖「按用户取账户」的查询
   @@unique([userId, name])
   @@index([userId, enabled])
+}
+
+// ===== 记账:周期账单 =====
+// 一天/一周/一月最多一条记录;记录本身只描述周期,具体收支都放在 items 里。
+// 这跟每日规划的结构一致:父记录唯一,子项可以有多条。
+model LedgerRecord {
+  id          Int                @id @default(autoincrement())
+  userId      Int
+  source      LedgerRecordSource
+  // 日记录两者相同;周记录从周一到周日;月记录从 1 日到月末
+  periodStart DateTime           @db.Date
+  periodEnd   DateTime           @db.Date
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       LedgerItem[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  // 同一用户、同一来源、同一周期只能有一条记录;唯一索引前缀也覆盖列表按周期查询
+  @@unique([userId, source, periodStart])
+}
+
+// 账单明细:一笔收入/支出;金额始终为正数,方向由 type 决定
+model LedgerItem {
+  id          Int            @id @default(autoincrement())
+  recordId    Int
+  type        LedgerItemType
+  amountCents Int
+  categoryId  Int
+  accountId   Int
+  remark      String?
+  sortOrder   Int            @default(0)
+  record      LedgerRecord   @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  // 直接删账户由 service 层拦成 409;数据库用 CASCADE 是为了删用户时
+  // LedgerAccount / LedgerRecord 两条级联路径不会因顺序问题互相阻塞
+  account     LedgerAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category    DictionaryItem @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  tags        Tag[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([recordId, sortOrder])
+  @@index([accountId])
+  @@index([categoryId])
 }

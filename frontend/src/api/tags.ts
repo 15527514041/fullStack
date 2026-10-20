@@ -1,5 +1,5 @@
 import { request } from './request'
-import type { TagItem, TagScope, TagType } from '@/types'
+import type { TagItem, TagScope } from '@/types'
 
 /** 不传 scope 返回所有分类的标签;按分类取的时候传具体值 */
 export function getTags(params?: { scope?: TagScope }): Promise<TagItem[]> {
@@ -8,14 +8,18 @@ export function getTags(params?: { scope?: TagScope }): Promise<TagItem[]> {
 
 export interface CreateTagPayload {
   name: string
-  type: TagType
+  color: string
   scope: TagScope
+  enabled?: boolean
+  sortOrder?: number
 }
 
 /** 分类是标签的身份,建完不能改,所以更新只动名字和颜色 */
 export interface UpdateTagPayload {
   name?: string
-  type?: TagType
+  color?: string
+  enabled?: boolean
+  sortOrder?: number
 }
 
 export function createTag(data: CreateTagPayload): Promise<TagItem> {

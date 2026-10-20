@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const loading = ref(false)
 const formRef = ref<FormInstance>()
@@ -53,7 +53,11 @@ async function handleSubmit(): Promise<void> {
 
   loading.value = true
   try {
-    await authStore.register({ username: form.username, password: form.password })
+    await authStore.register({
+      username: form.username,
+      password: form.password,
+      locale: locale.value === 'en_US' ? 'en_US' : 'zh_CN'
+    })
     ElMessage.success(t('register.success'))
     await router.replace({ name: 'login', query: { username: form.username } })
   } catch {

@@ -3,33 +3,24 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import { createAccount, deleteAccount, getAccounts, updateAccount, updateAccountBalance } from '@/api/ledger'
-import AccountIcon from '@/components/AccountIcon.vue'
+import { getDictionaries } from '@/api/dictionaries'
+import ColorDot from '@/components/ColorDot.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTimeShort } from '@/utils/datetime'
+import { DICTIONARY_CREATE_VALUE, dictionaryTabRoute } from '@/utils/dictionary'
 import { centsToYuan, formatCents, yuanToCents } from '@/utils/money'
-import type { AccountKind, LedgerAccount } from '@/types'
+import type { DictionaryItem, LedgerAccount } from '@/types'
 
 const { t } = useI18n()
 const { isMobile } = useIsMobile()
+const route = useRoute()
+const router = useRouter()
 
 const accounts = ref<LedgerAccount[]>([])
+const accountKinds = ref<DictionaryItem[]>([])
 const loading = ref(false)
-
-const kindOptions = computed<Array<{ value: AccountKind; label: string }>>(() => [
-  { value: 'CASH', label: t('ledger.accounts.kindCash') },
-  { value: 'WECHAT', label: t('ledger.accounts.kindWechat') },
-  { value: 'ALIPAY', label: t('ledger.accounts.kindAlipay') },
-  { value: 'DEBIT_CARD', label: t('ledger.accounts.kindDebitCard') },
-  { value: 'CREDIT_CARD', label: t('ledger.accounts.kindCreditCard') },
-  { value: 'INVESTMENT', label: t('ledger.accounts.kindInvestment') },
-  { value: 'LIABILITY', label: t('ledger.accounts.kindLiability') },
-  { value: 'OTHER', label: t('ledger.accounts.kindOther') }
-])
-
-function kindLabel(kind: AccountKind): string {
-  return kindOptions.value.find((item) => item.value === kind)?.label || kind
-}
 
 // 停用的账户整体淡化(表格版),它不参与资产汇总,数据还在
 function rowClassName(data: { row: LedgerAccount }): string {
@@ -63,7 +54,12 @@ const staleCount = computed(() => {
 async function loadAccounts(): Promise<void> {
   loading.value = true
   try {
-    accounts.value = await getAccounts()
+    const [accountList, kindList] = await Promise.all([
+      getAccounts(),
+      getDictionaries('ACCOUNT_KIND')
+    ])
+    accounts.value = accountList
+    accountKinds.value = kindList
   } catch {
     // 错误提示已在 axios 拦截器统一处理
   } finally {
@@ -76,12 +72,18 @@ const dialogVisible = ref(false)
 const editingAccountId = ref<number | null>(null)
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
-const form = reactive<{ name: string; kind: AccountKind; balanceYuan: number | undefined; note: string }>({
+const form = reactive<{ name: string; kindId: number | undefined; balanceYuan: number | undefined; note: string }>({
   name: '',
-  kind: 'CASH',
+  kindId: undefined,
   balanceYuan: undefined,
   note: ''
 })
+
+const kindOptions = computed(() =>
+  accountKinds.value
+    .filter((item) => item.enabled || item.id === form.kindId)
+    .map((item) => ({ value: item.id, label: item.name, color: item.color }))
+)
 
 const dialogTitle = computed(() =>
   editingAccountId.value === null ? t('ledger.accounts.dialogAdd') : t('ledger.accounts.dialogEdit')
@@ -92,23 +94,30 @@ const rules = computed<FormRules>(() => ({
   name: [
     { required: true, message: t('validation.accountNameRequired'), trigger: 'blur' },
     { min: 1, max: 20, message: t('validation.accountNameLength'), trigger: 'blur' }
-  ]
+  ],
+  kindId: [{ required: true, message: t('validation.accountKindRequired'), trigger: 'change' }]
 }))
 
 function openAddDialog(): void {
   editingAccountId.value = null
   form.name = ''
-  form.kind = 'CASH'
+  form.kindId = (accountKinds.value.find((item) => item.enabled) || accountKinds.value[0])?.id
   form.balanceYuan = undefined
   form.note = ''
   formRef.value?.clearValidate()
   dialogVisible.value = true
 }
 
+function handleKindChange(value: string | number): void {
+  if (value !== DICTIONARY_CREATE_VALUE) return
+  form.kindId = (accountKinds.value.find((item) => item.enabled) || accountKinds.value[0])?.id
+  router.push(dictionaryTabRoute('ACCOUNT_KIND'))
+}
+
 function openEditDialog(account: LedgerAccount): void {
   editingAccountId.value = account.id
   form.name = account.name
-  form.kind = account.kind
+  form.kindId = account.kindId
   form.balanceYuan = centsToYuan(account.balanceCents)
   form.note = account.note || ''
   formRef.value?.clearValidate()
@@ -126,14 +135,14 @@ async function handleSubmit(): Promise<void> {
     if (editingAccountId.value === null) {
       await createAccount({
         name: form.name.trim(),
-        kind: form.kind,
+        kindId: form.kindId as number,
         balanceCents: yuanToCents(form.balanceYuan ?? 0),
         note
       })
       ElMessage.success(t('ledger.accounts.created'))
     } else {
       // 余额不在这个接口里改:它有自己的入口(要刷新「上次对账」时间)
-      await updateAccount(editingAccountId.value, { name: form.name.trim(), kind: form.kind, note })
+      await updateAccount(editingAccountId.value, { name: form.name.trim(), kindId: form.kindId as number, note })
       ElMessage.success(t('ledger.accounts.updated'))
     }
     dialogVisible.value = false
@@ -204,7 +213,12 @@ async function handleDelete(account: LedgerAccount): Promise<void> {
   }
 }
 
-onMounted(loadAccounts)
+onMounted(async () => {
+  await loadAccounts()
+  if (route.query.create !== '1') return
+  openAddDialog()
+  router.replace({ query: { ...route.query, create: undefined } })
+})
 </script>
 
 <template>
@@ -264,8 +278,8 @@ onMounted(loadAccounts)
 
         <div class="card-meta">
           <span class="kind-cell">
-            <AccountIcon :kind="row.kind" :size="20" />
-            {{ kindLabel(row.kind) }}
+            <ColorDot :color="row.kind.color" />
+            {{ row.kind.name }}
           </span>
           <span v-if="row.note">{{ row.note }}</span>
           <span>{{ $t('ledger.accounts.colUpdatedAt') }}:{{ formatDateTimeShort(row.balanceUpdatedAt) }}</span>
@@ -283,22 +297,22 @@ onMounted(loadAccounts)
 
     <el-table v-else :data="accounts" :row-class-name="rowClassName">
       <!-- 名字是主标识,给最大的一块;超长省略号 + hover 显示全名 -->
-      <el-table-column :label="$t('ledger.accounts.colName')" min-width="168" show-overflow-tooltip>
+      <el-table-column :label="$t('ledger.accounts.colName')" min-width="120" show-overflow-tooltip>
         <template #default="{ row }">
           <span class="account-name">{{ row.name }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('ledger.accounts.colKind')" width="128">
+      <el-table-column :label="$t('ledger.accounts.colKind')" min-width="120">
         <template #default="{ row }">
           <span class="kind-cell">
-            <AccountIcon :kind="row.kind" :size="24" />
-            {{ kindLabel(row.kind) }}
+            <ColorDot :color="row.kind.color" />
+            {{ row.kind.name }}
           </span>
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('ledger.accounts.colBalance')" width="112">
+      <el-table-column :label="$t('ledger.accounts.colBalance')" min-width="120" align="left">
         <template #default="{ row }">
           <span class="account-balance" :class="{ 'is-negative': row.balanceCents < 0 }">
             {{ formatCents(row.balanceCents) }}
@@ -306,17 +320,17 @@ onMounted(loadAccounts)
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('ledger.accounts.colNote')" min-width="100" show-overflow-tooltip>
+      <el-table-column :label="$t('ledger.accounts.colNote')" min-width="120" show-overflow-tooltip>
         <template #default="{ row }">
           <span class="note-cell">{{ row.note || '—' }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('ledger.accounts.colUpdatedAt')" width="142">
+      <el-table-column :label="$t('ledger.accounts.colUpdatedAt')" min-width="120" align="center">
         <template #default="{ row }">{{ formatDateTimeShort(row.balanceUpdatedAt) }}</template>
       </el-table-column>
 
-      <el-table-column :label="$t('ledger.accounts.colEnabled')" width="90">
+      <el-table-column :label="$t('ledger.accounts.colEnabled')" min-width="120" align="center">
         <template #header>
           <span class="th-tip">
             <el-tooltip :content="$t('ledger.accounts.enabledTip')" placement="top">
@@ -336,7 +350,13 @@ onMounted(loadAccounts)
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('common.actions')" width="184" fixed="right">
+      <el-table-column
+        :label="$t('common.actions')"
+        width="184"
+        align="center"
+        fixed="right"
+        class-name="table-actions"
+      >
         <template #default="{ row }">
           <el-button link type="primary" @click="openBalanceDialog(row)">
             {{ $t('ledger.accounts.editBalance') }}
@@ -364,19 +384,18 @@ onMounted(loadAccounts)
           />
         </el-form-item>
 
-        <el-form-item :label="$t('ledger.accounts.colKind')" prop="kind">
-          <el-select v-model="form.kind" style="width: 100%">
-            <!-- 选中态和下拉项都带上该类型的固定图标 -->
-            <template #label="{ label, value }">
-              <span class="kind-cell">
-                <AccountIcon :kind="value" :size="20" />
-                {{ label }}
-              </span>
-            </template>
+        <el-form-item :label="$t('ledger.accounts.colKind')" prop="kindId">
+          <el-select v-model="form.kindId" style="width: 100%" @change="handleKindChange">
             <el-option v-for="opt in kindOptions" :key="opt.value" :label="opt.label" :value="opt.value">
-              <span class="kind-cell">
-                <AccountIcon :kind="opt.value" :size="20" />
-                {{ opt.label }}
+              <span class="kind-cell"><ColorDot :color="opt.color" />{{ opt.label }}</span>
+            </el-option>
+            <el-option
+              :value="DICTIONARY_CREATE_VALUE"
+              :label="$t('dictionary.addButton', { type: $t('dictionary.accountKind') })"
+            >
+              <span class="dictionary-add-option">
+                <el-icon><Plus /></el-icon>
+                {{ $t('dictionary.addButton', { type: $t('dictionary.accountKind') }) }}
               </span>
             </el-option>
           </el-select>

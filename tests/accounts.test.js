@@ -16,16 +16,24 @@ function auth(token) {
   return { Authorization: `Bearer ${token}` }
 }
 
+async function getAccountKinds(token) {
+  const res = await request(app).get('/api/dictionaries?kind=ACCOUNT_KIND').set(auth(token))
+  return res.body
+}
+
 // 账户名/类型/余额都合法的最小入参,想测异常场景就传字段覆盖
-function createAccount(token, body = {}) {
+async function createAccount(token, body = {}) {
+  const { kind = 'WECHAT', ...rest } = body
+  const kindItem = (await getAccountKinds(token)).find((item) => item.code === kind)
   return request(app)
     .post('/api/ledger/accounts')
     .set(auth(token))
-    .send({ name: '微信零钱', kind: 'WECHAT', ...body })
+    .send({ name: '微信零钱', kindId: kindItem?.id, ...rest })
 }
 
 // 账户对 User 是 CASCADE,但先清干净更省心(脏库上不留历史数据)
 beforeEach(async () => {
+  await prisma.ledgerRecord.deleteMany()
   await prisma.ledgerAccount.deleteMany()
   await prisma.todo.deleteMany()
   await prisma.tag.deleteMany()
@@ -42,7 +50,7 @@ test('创建账户成功:默认余额 0、默认启用;重名返回 409', async 
   const created = await createAccount(token, { name: '微信零钱', balanceCents: 23580, note: '常用' })
   assert.strictEqual(created.status, 201)
   assert.strictEqual(created.body.name, '微信零钱')
-  assert.strictEqual(created.body.kind, 'WECHAT')
+  assert.strictEqual(created.body.kind.name, '微信零钱')
   assert.strictEqual(created.body.balanceCents, 23580)
   assert.strictEqual(created.body.note, '常用')
   assert.strictEqual(created.body.enabled, true)
@@ -59,11 +67,12 @@ test('创建账户成功:默认余额 0、默认启用;重名返回 409', async 
 test('八种账户类型都能建(校验器和库里的枚举不许对不上)', async () => {
   const token = await registerAndLogin()
   const kinds = ['CASH', 'WECHAT', 'ALIPAY', 'DEBIT_CARD', 'CREDIT_CARD', 'INVESTMENT', 'LIABILITY', 'OTHER']
+  const kindItems = await getAccountKinds(token)
 
   for (const kind of kinds) {
     const created = await createAccount(token, { name: `账户-${kind}`, kind })
     assert.strictEqual(created.status, 201, `${kind} 应该能建`)
-    assert.strictEqual(created.body.kind, kind)
+    assert.strictEqual(created.body.kind.id, kindItems.find((item) => item.code === kind).id)
   }
 })
 
@@ -228,7 +237,7 @@ test('未登录一律 401', async () => {
   const list = await request(app).get('/api/ledger/accounts')
   assert.strictEqual(list.status, 401)
 
-  const created = await request(app).post('/api/ledger/accounts').send({ name: 'x', kind: 'CASH' })
+  const created = await request(app).post('/api/ledger/accounts').send({ name: 'x', kindId: 1 })
   assert.strictEqual(created.status, 401)
 })
 

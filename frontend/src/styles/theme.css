@@ -407,6 +407,15 @@ body {
   margin-bottom: 16px;
 }
 
+/* 字典选择框末尾的“新增”入口:和普通选项区分开 */
+.dictionary-add-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--el-color-primary);
+  font-weight: 500;
+}
+
 /* 表格:表头不铺底色(参考 client),行分隔线 + hover 反馈 */
 .el-table {
   --el-table-border-color: var(--color-border);
@@ -423,6 +432,24 @@ body {
 
 .el-table td.el-table__cell {
   padding: 14px 0;
+}
+
+.el-table .table-actions .cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: normal;
+}
+
+.el-table .table-actions .el-button {
+  padding: 0;
+  font-size: 14px;
+}
+
+.el-table .table-actions .el-button + .el-button {
+  margin-left: 0;
 }
 
 /* 去掉 el-table 底部那条多余的分隔线 */
@@ -652,9 +679,9 @@ body {
   min-height: 50px;
 }
 
-/* 金额输入框(el-input-number):数字居左,和表单里其它输入框保持一致(EP 默认居中) */
-.amount-input .el-input__inner {
-  text-align: left;
+/* 数字/金额输入框(el-input-number):统一居左,和表单里其它输入框保持一致 */
+.el-input-number .el-input__inner {
+  text-align: left !important;
 }
 
 /* 下拉框:高 50px、圆角 16px */

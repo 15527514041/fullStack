@@ -30,8 +30,6 @@ export interface ChangePasswordPayload {
 
 // ===== 标签 =====
 /** 标签类型:与 Element Plus el-tag 的语义类型一一对应,直接透传不映射 */
-export type TagType = 'primary' | 'success' | 'info' | 'warning' | 'danger'
-
 /**
  * 标签分类(后端字段叫 scope):标签是通用能力,用分类区分这套标签给哪个模块用
  * TODO = 任务域,ACCOUNTING = 记账域
@@ -41,14 +39,16 @@ export type TagScope = 'TODO' | 'ACCOUNTING'
 export interface Tag {
   id: number
   name: string
-  type: TagType
+  color: string
+  enabled: boolean
+  sortOrder: number
   /** TODO 接口里带出来的标签不带这个字段(那里的标签必然是任务域的) */
   scope?: TagScope
 }
 
 export interface TagItem extends Tag {
   createdAt?: string
-  _count?: { todos: number }
+  _count?: { todos: number; ledgerItems?: number }
 }
 
 // ===== TODO =====
@@ -192,16 +192,26 @@ export interface DateRangeQuery {
 }
 
 // ===== 记账:资产账户 =====
-/** 账户类型:先固定这几种,后端枚举同名 */
-export type AccountKind =
-  | 'CASH'
-  | 'WECHAT'
-  | 'ALIPAY'
-  | 'DEBIT_CARD'
-  | 'CREDIT_CARD'
-  | 'INVESTMENT'
-  | 'LIABILITY'
-  | 'OTHER'
+export type DictionaryKind = 'ACCOUNT_KIND' | 'INCOME_CATEGORY' | 'EXPENSE_CATEGORY'
+
+/** 字典项在账户/账单接口里的精简引用 */
+export interface DictionaryRef {
+  id: number
+  name: string
+  color: string
+}
+
+export interface DictionaryItem extends DictionaryRef {
+  kind: DictionaryKind
+  code?: string | null
+  enabled: boolean
+  sortOrder: number
+  createdAt?: string
+  _count?: {
+    accounts: number
+    ledgerItems: number
+  }
+}
 
 /**
  * 资产账户
@@ -210,7 +220,8 @@ export type AccountKind =
 export interface LedgerAccount {
   id: number
   name: string
-  kind: AccountKind
+  kindId: number
+  kind: DictionaryRef
   note?: string | null
   /** 单位:分;信用卡欠款是负数 */
   balanceCents: number
@@ -220,6 +231,79 @@ export interface LedgerAccount {
   sortOrder: number
   createdAt: string
   updatedAt: string
+}
+
+// ===== 记账:周期账单 =====
+/** 日 / 周 / 月三种账本来源 */
+export type LedgerRecordSource = 'manual_day' | 'manual_week' | 'manual_month'
+export type LedgerItemType = 'INCOME' | 'EXPENSE'
+
+/** 明细里带出的账户快照字段 */
+export interface LedgerItemAccount {
+  id: number
+  name: string
+  kind: DictionaryRef
+  enabled: boolean
+}
+
+export interface LedgerItem {
+  id?: number
+  type: LedgerItemType
+  amountCents: number
+  categoryId: number
+  category: DictionaryRef
+  accountId: number
+  remark?: string | null
+  sortOrder?: number
+  account?: LedgerItemAccount
+  tags?: Tag[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+/** 列表摘要:一条周期记录只回合计和条目数,不回明细 */
+export interface LedgerRecordSummary {
+  id: number
+  source: LedgerRecordSource
+  periodStart: string
+  periodEnd: string
+  incomeCents: number
+  expenseCents: number
+  netCents: number
+  itemCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface LedgerRecordDetail extends LedgerRecordSummary {
+  items: LedgerItem[]
+}
+
+export interface LedgerRecordQuery {
+  source: LedgerRecordSource
+  page?: number
+  pageSize?: number
+  from?: string
+  to?: string
+}
+
+export interface LedgerItemPayload {
+  type: LedgerItemType
+  categoryId: number
+  accountId: number
+  amountCents: number
+  tagIds?: number[]
+  remark?: string | null
+}
+
+export interface CreateLedgerRecordPayload {
+  source: LedgerRecordSource
+  periodStart: string
+  items: LedgerItemPayload[]
+}
+
+export interface UpdateLedgerRecordPayload {
+  items: LedgerItemPayload[]
 }
 
 // ===== 管理端 =====

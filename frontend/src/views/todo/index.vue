@@ -9,9 +9,12 @@ import { getTags } from '@/api/tags'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import { formatDateTime } from '@/utils/datetime'
+import { DICTIONARY_CREATE_VALUE, dictionaryTabRoute } from '@/utils/dictionary'
 import OssUploader from '@/components/OssUploader.vue'
 import OssAttachmentPreview from '@/components/OssAttachmentPreview.vue'
-import type { TagItem, TagType, Todo } from '@/types'
+import ColorDot from '@/components/ColorDot.vue'
+import ColorTag from '@/components/ColorTag.vue'
+import type { TagItem, Todo } from '@/types'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -196,14 +199,32 @@ function handleReset(): void {
   loadTodos()
 }
 
+function handleTagFormChange(values: Array<string | number>): void {
+  if (!values.includes(DICTIONARY_CREATE_VALUE)) return
+  form.tagIds = values.filter((value): value is number => typeof value === 'number')
+  router.push(dictionaryTabRoute('TODO'))
+}
+
 // 附件列的 ossId 列表(后端已按 sortOrder 排好)
 function attachmentIds(todo: Todo): string[] {
   return (todo.attachments || []).map((item) => item.ossId)
 }
 
-// 多选标签按类型着色:老数据没有 type 时按 primary 兜底
-function tagTypeOf(tagId: number): TagType {
-  return tags.value.find((item) => item.id === tagId)?.type || 'primary'
+const tagOptions = computed(() =>
+  tags.value.filter((tag) => tag.enabled || form.tagIds.includes(tag.id))
+)
+
+function tagColorOf(tagId: number): string {
+  return tags.value.find((item) => item.id === tagId)?.color || '#0bb06d'
+}
+
+function tagChipStyle(tagId: number) {
+  const color = tagColorOf(tagId)
+  return {
+    color,
+    backgroundColor: `${color}14`,
+    borderColor: `${color}33`
+  }
 }
 
 // 详情单独一个页面(样式参考 client 的详情页)
@@ -274,7 +295,7 @@ onMounted(() => {
         @change="handleSearch"
       >
         <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id">
-          <el-tag :type="tag.type || 'primary'">{{ tag.name }}</el-tag>
+          <span class="tag-option"><ColorDot :color="tag.color" />{{ tag.name }}</span>
         </el-option>
       </el-select>
 
@@ -308,7 +329,7 @@ onMounted(() => {
         <div v-if="row.remark" class="card-remark">{{ row.remark }}</div>
 
         <div v-if="row.tags && row.tags.length" class="card-tags">
-          <el-tag v-for="tag in row.tags" :key="tag.id" :type="tag.type || 'primary'">{{ tag.name }}</el-tag>
+          <ColorTag v-for="tag in row.tags" :key="tag.id" :name="tag.name" :color="tag.color" />
         </div>
 
         <div v-if="attachmentIds(row).length" class="card-attachment">
@@ -328,44 +349,50 @@ onMounted(() => {
     </div>
 
     <el-table v-else :data="todos">
-      <el-table-column :label="$t('todo.colDone')" width="80" align="center">
+      <el-table-column :label="$t('todo.colDone')" min-width="120" align="center">
         <template #default="{ row }">
           <el-switch v-model="row.completed" @change="handleToggle(row)" />
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('todo.colTitle')" min-width="220">
+      <el-table-column :label="$t('todo.colTitle')" min-width="120" show-overflow-tooltip>
         <template #default="{ row }">
           <span :class="{ 'todo-done': row.completed }">{{ row.title }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('todo.colTags')" min-width="140">
+      <el-table-column :label="$t('todo.colTags')" min-width="120">
         <template #default="{ row }">
-          <el-tag v-for="tag in row.tags" :key="tag.id" class="tag-item" :type="tag.type || 'primary'">{{ tag.name }}</el-tag>
+          <ColorTag v-for="tag in row.tags" :key="tag.id" :name="tag.name" :color="tag.color" class="tag-item" />
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('todo.colAttachment')" width="170" class-name="cell-attachment">
+      <el-table-column :label="$t('todo.colAttachment')" min-width="120" align="center" class-name="cell-attachment">
         <template #default="{ row }">
           <OssAttachmentPreview v-if="attachmentIds(row).length" :value="attachmentIds(row)" :size="36" :max="3" :radius="6" />
           <span v-else class="todo-empty-cell">-</span>
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('common.createdAt')" width="170">
+      <el-table-column :label="$t('common.createdAt')" min-width="120" align="center">
         <template #default="{ row }">
           {{ formatDateTime(row.createdAt) }}
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('common.updatedAt')" width="170">
+      <el-table-column :label="$t('common.updatedAt')" min-width="120" align="center">
         <template #default="{ row }">
           {{ formatDateTime(row.updatedAt) }}
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('common.actions')" width="160" align="center" fixed="right">
+      <el-table-column
+        :label="$t('common.actions')"
+        width="170"
+        align="center"
+        fixed="right"
+        class-name="table-actions"
+      >
         <template #default="{ row }">
           <el-button link type="primary" @click="openDetail(row)">{{ $t('common.detail') }}</el-button>
           <el-button link type="primary" @click="openEditDialog(row)">{{ $t('common.edit') }}</el-button>
@@ -410,21 +437,37 @@ onMounted(() => {
 
         <el-form-item :label="$t('todo.formTags')">
           <!-- 选中的标签用各自的类型颜色回显(EP 默认是一律中性灰) -->
-          <el-select v-model="form.tagIds" multiple class="tag-multiselect" :placeholder="$t('common.optional')" style="width: 100%">
+          <el-select
+            v-model="form.tagIds"
+            multiple
+            class="tag-multiselect"
+            :placeholder="$t('common.optional')"
+            style="width: 100%"
+            @change="handleTagFormChange"
+          >
             <template #tag="{ data, deleteTag, selectDisabled }">
               <el-tag
                 v-for="item in data"
                 :key="item.value"
                 class="tag-multiselect__chip"
-                :type="tagTypeOf(item.value)"
+                :style="tagChipStyle(item.value)"
                 :closable="!selectDisabled && !item.isDisabled"
                 @close="deleteTag($event, item)"
               >
                 {{ item.currentLabel }}
               </el-tag>
             </template>
-            <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id">
-              <el-tag :type="tag.type || 'primary'">{{ tag.name }}</el-tag>
+            <el-option v-for="tag in tagOptions" :key="tag.id" :label="tag.name" :value="tag.id">
+              <span class="tag-option"><ColorDot :color="tag.color" />{{ tag.name }}</span>
+            </el-option>
+            <el-option
+              :value="DICTIONARY_CREATE_VALUE"
+              :label="$t('dictionary.addButton', { type: $t('tag.tabTodo') })"
+            >
+              <span class="dictionary-add-option">
+                <el-icon><Plus /></el-icon>
+                {{ $t('dictionary.addButton', { type: $t('tag.tabTodo') }) }}
+              </span>
             </el-option>
           </el-select>
         </el-form-item>
@@ -518,6 +561,12 @@ onMounted(() => {
 
 .card-attachment {
   margin-top: 10px;
+}
+
+.tag-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 @media (max-width: 768px) {

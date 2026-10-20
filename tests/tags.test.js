@@ -9,6 +9,9 @@ const prisma = new PrismaClient()
 async function registerAndLogin(username = 'alice') {
   await request(app).post('/api/auth/register').send({ username, password: '123456' })
   const res = await request(app).post('/api/auth/login').send({ username, password: '123456' })
+  // 这些用例关注增删改查,先清掉注册自带的预设标签
+  const user = await prisma.user.findUnique({ where: { username } })
+  await prisma.tag.deleteMany({ where: { userId: user.id } })
   return res.body.token
 }
 
@@ -33,12 +36,29 @@ test('创建标签成功(默认任务域),重复创建返回 409', async () => {
   assert.strictEqual(created.body.name, '工作')
   // 不传 scope 的老请求一律落到任务域
   assert.strictEqual(created.body.scope, 'TODO')
+  assert.strictEqual(created.body.color, '#0bb06d')
+  assert.strictEqual(created.body.enabled, true)
+  assert.strictEqual(created.body.sortOrder, 0)
 
   const again = await request(app)
     .post('/api/tags')
     .set('Authorization', `Bearer ${token}`)
     .send({ name: '工作' })
   assert.strictEqual(again.status, 409)
+})
+
+test('新用户注册后自带任务标签和记账标签', async () => {
+  await request(app).post('/api/auth/register').send({ username: 'preset-user', password: '123456' })
+  const login = await request(app).post('/api/auth/login').send({ username: 'preset-user', password: '123456' })
+  const token = login.body.token
+
+  const todo = await request(app).get('/api/tags?scope=TODO').set('Authorization', `Bearer ${token}`)
+  const ledger = await request(app).get('/api/tags?scope=ACCOUNTING').set('Authorization', `Bearer ${token}`)
+
+  assert.deepStrictEqual(todo.body.map((item) => item.name), ['工作', '学习', '生活', '健康', '紧急'])
+  assert.deepStrictEqual(ledger.body.map((item) => item.name), ['固定支出', '可报销', '大额', '待核对'])
+  assert.deepStrictEqual(todo.body.map((item) => item.sortOrder), [0, 1, 2, 3, 4])
+  assert.ok(todo.body.every((item) => item.enabled && /^#[0-9a-f]{6}$/i.test(item.color)))
 })
 
 test('不同域可以有同名标签,只有同域才算重名', async () => {
@@ -91,6 +111,21 @@ test('按域查标签:?scope=TODO 只看得到任务域的标签', async () => {
   assert.strictEqual(bad.status, 400)
 })
 
+test('标签按序号升序返回', async () => {
+  const token = await registerAndLogin()
+  await request(app)
+    .post('/api/tags')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ name: '后排', sortOrder: 5 })
+  await request(app)
+    .post('/api/tags')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ name: '前排', sortOrder: 1 })
+
+  const list = await request(app).get('/api/tags?scope=TODO').set('Authorization', `Bearer ${token}`)
+  assert.deepStrictEqual(list.body.map((item) => item.name), ['前排', '后排'])
+})
+
 test('TODO 挂不上记账域的标签', async () => {
   const token = await registerAndLogin()
 
@@ -124,17 +159,18 @@ test('标签域不支持修改', async () => {
   const unknownField = await request(app)
     .patch(`/api/tags/${tag.body.id}`)
     .set('Authorization', `Bearer ${token}`)
-    .send({ color: 'red' })
+    .send({ icon: 'STAR' })
   assert.strictEqual(unknownField.status, 400)
 
-  // 改名/改颜色照常,域保持不变
+  // 改名/改颜色/改序号照常,域保持不变
   const renamed = await request(app)
     .patch(`/api/tags/${tag.body.id}`)
     .set('Authorization', `Bearer ${token}`)
-    .send({ name: '生活开销', type: 'success' })
+    .send({ name: '生活开销', color: '#9254de', sortOrder: 3 })
   assert.strictEqual(renamed.status, 200)
   assert.strictEqual(renamed.body.name, '生活开销')
-  assert.strictEqual(renamed.body.type, 'success')
+  assert.strictEqual(renamed.body.color, '#9254de')
+  assert.strictEqual(renamed.body.sortOrder, 3)
   assert.strictEqual(renamed.body.scope, 'ACCOUNTING')
 })
 
@@ -231,7 +267,7 @@ test('删除的 TODO 进回收站,恢复后回到列表', async () => {
   assert.strictEqual(after.body.total, 1)
 })
 
-test('删除标签后,TODO 上的关联自动消失', async () => {
+test('有关联的标签不能删除,可以改为禁用', async () => {
   const token = await registerAndLogin()
 
   const tag = await request(app)
@@ -246,10 +282,31 @@ test('删除标签后,TODO 上的关联自动消失', async () => {
   const del = await request(app)
     .delete(`/api/tags/${tag.body.id}`)
     .set('Authorization', `Bearer ${token}`)
-  assert.strictEqual(del.status, 204)
+  assert.strictEqual(del.status, 409)
+  assert.match(del.body.message, /已关联 1 条数据/)
+
+  const disabled = await request(app)
+    .patch(`/api/tags/${tag.body.id}`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ enabled: false })
+  assert.strictEqual(disabled.status, 200)
+  assert.strictEqual(disabled.body.enabled, false)
 
   const detail = await request(app)
     .get(`/api/todos/${todo.body.id}`)
     .set('Authorization', `Bearer ${token}`)
-  assert.strictEqual(detail.body.tags.length, 0)
+  assert.strictEqual(detail.body.tags.length, 1)
+})
+
+test('没有关联的标签可以正常删除', async () => {
+  const token = await registerAndLogin()
+  const tag = await request(app)
+    .post('/api/tags')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ name: '临时' })
+
+  const removed = await request(app)
+    .delete(`/api/tags/${tag.body.id}`)
+    .set('Authorization', `Bearer ${token}`)
+  assert.strictEqual(removed.status, 204)
 })

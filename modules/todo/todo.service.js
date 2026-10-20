@@ -6,8 +6,7 @@ const { assertOwnedTagIds, TAG_SCOPE } = require('../tag/tag.service')
 
 const todoInclude = {
   tags: {
-    // type 要带上:前端标签按类型着色(漏了就会全部回落到默认色)
-    select: { id: true, name: true, type: true }
+    select: { id: true, name: true, color: true, enabled: true }
   },
   // 附件走关联表,按 sortOrder 排序;只回传元信息,地址由前端按 ossId 换
   attachments: {

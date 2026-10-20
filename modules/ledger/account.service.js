@@ -1,12 +1,17 @@
 const AppError = require('../../errors/AppError')
 
 const prisma = require('../../utils/prisma')
+const {
+  DICTIONARY_KIND,
+  assertOwnedDictionaryItem
+} = require('../dictionary/dictionary.service')
 
 // 对外统一这组字段:前端只认它,库里怎么存是内部事
 const accountSelect = {
   id: true,
   name: true,
-  kind: true,
+  kindId: true,
+  kind: { select: { id: true, name: true, color: true } },
   note: true,
   balanceCents: true,
   balanceUpdatedAt: true,
@@ -34,6 +39,8 @@ async function listAccounts(userId, { enabled } = {}) {
 }
 
 async function createAccount(userId, data) {
+  await assertOwnedDictionaryItem(userId, data.kindId, DICTIONARY_KIND.ACCOUNT_KIND)
+
   const existing = await prisma.ledgerAccount.findFirst({ where: { userId, name: data.name } })
   if (existing) {
     throw new AppError('账户名已存在', 409)
@@ -43,7 +50,7 @@ async function createAccount(userId, data) {
     data: {
       userId,
       name: data.name,
-      kind: data.kind,
+      kindId: data.kindId,
       note: normalizeNote(data.note) ?? null,
       balanceCents: data.balanceCents ?? 0,
       sortOrder: data.sortOrder ?? 0
@@ -58,6 +65,10 @@ async function updateAccount(userId, accountId, data) {
     throw new AppError('账户不存在', 404)
   }
 
+  if (data.kindId !== undefined) {
+    await assertOwnedDictionaryItem(userId, data.kindId, DICTIONARY_KIND.ACCOUNT_KIND)
+  }
+
   // 改名时校验重名,排除自己
   if (data.name !== undefined && data.name !== account.name) {
     const existing = await prisma.ledgerAccount.findFirst({
@@ -70,7 +81,7 @@ async function updateAccount(userId, accountId, data) {
 
   const payload = {}
   if (data.name !== undefined) payload.name = data.name
-  if (data.kind !== undefined) payload.kind = data.kind
+  if (data.kindId !== undefined) payload.kindId = data.kindId
   if (data.note !== undefined) payload.note = normalizeNote(data.note)
   if (data.enabled !== undefined) payload.enabled = data.enabled
   if (data.sortOrder !== undefined) payload.sortOrder = data.sortOrder
@@ -110,7 +121,12 @@ async function deleteAccount(userId, accountId) {
     throw new AppError('账户不存在', 404)
   }
 
-  // 账单模块落地后,这里要先拦一道「账户下还有流水,请改为停用」
+  // 账户被账单引用时不能删:财务记录保留,账户改为停用
+  const itemCount = await prisma.ledgerItem.count({ where: { accountId } })
+  if (itemCount > 0) {
+    throw new AppError('该账户下已有账单,请改为停用', 409)
+  }
+
   await prisma.ledgerAccount.delete({ where: { id: accountId } })
   return { id: accountId }
 }

@@ -6,10 +6,8 @@ const username = z.string().trim().min(2, '用户至少 2 个字符').max(20, '�
 const password = z.string().min(6, '密码至少 6 个字符').max(32, '密码最多 32 个字符')
 const title = z.string().trim().min(1, '内容不能为空').max(100, '内容最多 100 个字符')
 const tagName = z.string().trim().min(1, '标签名不能为空').max(20, '标签名最多 20 个字符')
-// 标签类型:取值直接对应 Element Plus el-tag 的语义类型
-const tagType = z.enum(['primary', 'success', 'info', 'warning', 'danger'], {
-  errorMap: () => ({ message: '标签类型不合法' })
-})
+const dictionaryColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, '颜色必须是 #RRGGBB 格式')
+const dictionarySortOrder = z.number().int().min(0).max(9999)
 // 标签域:标签是通用能力,用域区分这套标签给哪个模块用(任务 / 记账)
 const tagScope = z.enum(['TODO', 'ACCOUNTING'], {
   errorMap: () => ({ message: '标签域不合法' })
@@ -34,7 +32,12 @@ const boolQuery = z
 // ====== auth ======
 
 const authSchemas = {
-  register: z.object({ username, password }),
+  register: z.object({
+    username,
+    password,
+    // 预设标签/字典按注册时界面语言写入;老客户端不传时默认中文
+    locale: z.enum(['zh_CN', 'en_US']).optional()
+  }),
   login: z.object({ username, password })
 }
 
@@ -94,15 +97,18 @@ const todoSchemas = {
 const tagSchemas = {
   create: z.object({
     name: tagName,
-    // 不传则按 primary 落库(老客户端/老数据兼容)
-    type: tagType.default('primary'),
+    color: dictionaryColor.default('#0bb06d'),
+    enabled: z.boolean().optional(),
+    sortOrder: dictionarySortOrder.optional(),
     // 不传则落到任务域:老前端只会传 name/type,加分类前建的标签本来就都是任务的
     scope: tagScope.default('TODO')
   }),
   update: z
     .object({
       name: tagName.optional(),
-      type: tagType.optional(),
+      color: dictionaryColor.optional(),
+      enabled: z.boolean().optional(),
+      sortOrder: dictionarySortOrder.optional(),
       // 域是标签的身份,建完不能改。这里显式接住 scope 再拦掉,
       // 是为了回一句能看懂的中文报错,而不是让 zod 的 strict 回英文的 Unrecognized key
       scope: tagScope.optional()
@@ -206,12 +212,7 @@ const planSchemas = {
 // ====== 记账:资产账户 ======
 
 const accountName = z.string().trim().min(1, '账户名不能为空').max(20, '账户名最多 20 个字符')
-const accountKind = z.enum(
-  ['CASH', 'WECHAT', 'ALIPAY', 'DEBIT_CARD', 'CREDIT_CARD', 'INVESTMENT', 'LIABILITY', 'OTHER'],
-  {
-    errorMap: () => ({ message: '账户类型不合法' })
-  }
-)
+const accountKindId = z.number().int().positive('账户类型不合法')
 // 金额一律用「分」的整数:上限 ±999 万元(信用卡欠款是负数)
 const balanceCents = z
   .number()
@@ -223,7 +224,7 @@ const accountNote = z.string().trim().max(50, '备注最多 50 个字符').nulla
 const accountSchemas = {
   create: z.object({
     name: accountName,
-    kind: accountKind,
+    kindId: accountKindId,
     // 不传按 0 建:先把账户建起来,余额回头再补也是常见用法
     balanceCents: balanceCents.default(0),
     note: accountNote.optional(),
@@ -232,7 +233,7 @@ const accountSchemas = {
   update: z
     .object({
       name: accountName.optional(),
-      kind: accountKind.optional(),
+      kindId: accountKindId.optional(),
       note: accountNote.optional(),
       // 启用开关:停用的账户不再出现在录入选择里
       enabled: z.boolean().optional(),
@@ -246,6 +247,84 @@ const accountSchemas = {
     // 不传返回全部;true/false 只看启用/停用的
     enabled: boolQuery.optional()
   })
+}
+
+// ====== 记账:周期账单 ======
+
+const ledgerSource = z.enum(['manual_day', 'manual_week', 'manual_month'], {
+  errorMap: () => ({ message: '记账周期不合法' })
+})
+const ledgerItemType = z.enum(['INCOME', 'EXPENSE'], {
+  errorMap: () => ({ message: '收支类型不合法' })
+})
+
+const ledgerCategoryId = z.number().int().positive('分类不合法')
+
+// 账单金额不允许为 0;上限与账户余额保持一致
+const ledgerAmountCents = z
+  .number()
+  .int('金额必须是整数(单位:分)')
+  .min(1, '金额必须大于 0')
+  .max(999999999, '金额超出范围')
+
+// DATE 字段只收 YYYY-MM-DD,并检查是真实存在的日期(挡住 2026-02-31 这种)
+const ledgerPeriodStart = dateOnly.refine((value) => {
+  const date = new Date(`${value}T00:00:00.000Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+}, '日期不合法')
+
+// periodStart 的粒度必须和 source 对上:
+// 周账单必须是周一,月账单必须是 1 号;日账单任意日期都可以
+function checkLedgerPeriod(source, periodStart, ctx) {
+  const date = new Date(`${periodStart}T00:00:00.000Z`)
+  if (source === 'manual_week' && date.getUTCDay() !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: '周账单的起始日期必须是周一',
+      path: ['periodStart']
+    })
+  }
+  if (source === 'manual_month' && date.getUTCDate() !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: '月账单的起始日期必须是当月 1 日',
+      path: ['periodStart']
+    })
+  }
+}
+
+const ledgerItem = z.object({
+  type: ledgerItemType,
+  categoryId: ledgerCategoryId,
+  accountId: z.number().int().positive('账户 ID 不合法'),
+  amountCents: ledgerAmountCents,
+  tagIds: z.array(z.number().int().positive()).optional(),
+  remark: z.string().trim().max(500, '备注最多 500 个字符').nullable().optional()
+})
+
+const ledgerItems = z.array(ledgerItem).min(1, '至少需要一条账单明细').max(50, '最多 50 条账单明细')
+
+const recordSchemas = {
+  create: z
+    .object({
+      source: ledgerSource,
+      periodStart: ledgerPeriodStart,
+      items: ledgerItems
+    })
+    .superRefine((data, ctx) => checkLedgerPeriod(data.source, data.periodStart, ctx)),
+  // 编辑时周期和来源不可修改,只允许整体替换明细
+  update: z.object({ items: ledgerItems }).strict(),
+  query: z
+    .object({
+      source: ledgerSource,
+      ...pageParams,
+      from: ledgerPeriodStart.optional(),
+      to: ledgerPeriodStart.optional()
+    })
+    .refine((data) => !data.from || !data.to || data.from <= data.to, {
+      message: '开始日期不能晚于结束日期',
+      path: ['to']
+    })
 }
 
 // ====== admin ======
@@ -263,6 +342,33 @@ const adminSchemas = {
   })
 }
 
+// ====== 用户字典(账户类型 / 收支分类) ======
+
+const dictionaryKind = z.enum(['ACCOUNT_KIND', 'INCOME_CATEGORY', 'EXPENSE_CATEGORY'], {
+  errorMap: () => ({ message: '字典类型不合法' })
+})
+const dictionaryName = z.string().trim().min(1, '名称不能为空').max(20, '名称最多 20 个字符')
+
+const dictionarySchemas = {
+  query: z.object({ kind: dictionaryKind }),
+  create: z.object({
+    kind: dictionaryKind,
+    name: dictionaryName,
+    color: dictionaryColor.default('#0bb06d'),
+    enabled: z.boolean().optional(),
+    sortOrder: dictionarySortOrder.optional()
+  }),
+  update: z
+    .object({
+      name: dictionaryName.optional(),
+      color: dictionaryColor.optional(),
+      enabled: z.boolean().optional(),
+      sortOrder: dictionarySortOrder.optional()
+    })
+    .strict()
+    .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' })
+}
+
 module.exports = {
   authSchemas,
   userSchemas,
@@ -271,6 +377,8 @@ module.exports = {
   reflectionSchemas,
   planSchemas,
   accountSchemas,
+  recordSchemas,
+  dictionarySchemas,
   adminSchemas,
   idParams
 }

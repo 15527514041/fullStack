@@ -16,31 +16,49 @@ async function listTags(userId, { scope } = {}) {
     select: {
       id: true,
       name: true,
-      type: true,
+      color: true,
+      enabled: true,
+      sortOrder: true,
       scope: true,
       createdAt: true,
-      // 目前只有任务域有关联表,记账域的计数等记账模块建表后再补
-      _count: { select: { todos: true } }
+      _count: { select: { todos: true, ledgerItems: true } }
     },
-    // 按域分组展示,域内保持创建顺序
-    orderBy: [{ scope: 'asc' }, { id: 'asc' }]
+    orderBy: [{ scope: 'asc' }, { sortOrder: 'asc' }, { id: 'asc' }]
   })
 }
 
-async function createTag(userId, { name, type, scope }) {
+async function nextSortOrder(userId, scope) {
+  const last = await prisma.tag.findFirst({
+    where: { userId, scope },
+    select: { sortOrder: true },
+    orderBy: { sortOrder: 'desc' }
+  })
+  return (last?.sortOrder ?? -1) + 1
+}
+
+async function createTag(userId, { name, color, scope, enabled, sortOrder }) {
   // 重名只在同一个域里算重名:不同域可以有同名标签
   const existing = await prisma.tag.findFirst({ where: { userId, scope, name } })
   if (existing) {
     throw new AppError('该分类下已存在同名标签', 409)
   }
 
+  const order = sortOrder === undefined ? await nextSortOrder(userId, scope) : sortOrder
   return prisma.tag.create({
-    data: { name, type, scope, userId },
-    select: { id: true, name: true, type: true, scope: true, createdAt: true }
+    data: { name, color, enabled: enabled ?? true, scope, sortOrder: order, userId },
+    select: {
+      id: true,
+      name: true,
+      color: true,
+      enabled: true,
+      sortOrder: true,
+      scope: true,
+      createdAt: true
+    }
   })
 }
 
-async function updateTag(userId, tagId, { name, type }) {
+async function updateTag(userId, tagId, { name, color, enabled, sortOrder }) {
   const tag = await prisma.tag.findFirst({ where: { id: tagId, userId } })
   if (!tag) {
     throw new AppError('标签不存在', 404)
@@ -60,17 +78,38 @@ async function updateTag(userId, tagId, { name, type }) {
     where: { id: tagId },
     data: {
       ...(name === undefined ? {} : { name }),
-      ...(type === undefined ? {} : { type })
+      ...(color === undefined ? {} : { color }),
+      ...(enabled === undefined ? {} : { enabled }),
+      ...(sortOrder === undefined ? {} : { sortOrder })
       // scope 故意不在这里:域是标签的身份,建完不能改(接口层也会拦)
     },
-    select: { id: true, name: true, type: true, scope: true, createdAt: true }
+    select: {
+      id: true,
+      name: true,
+      color: true,
+      enabled: true,
+      sortOrder: true,
+      scope: true,
+      createdAt: true
+    }
   })
 }
 
 async function deleteTag(userId, tagId) {
-  const tag = await prisma.tag.findFirst({ where: { id: tagId, userId } })
+  const tag = await prisma.tag.findFirst({
+    where: { id: tagId, userId },
+    select: {
+      id: true,
+      _count: { select: { todos: true, ledgerItems: true } }
+    }
+  })
   if (!tag) {
     throw new AppError('标签不存在', 404)
+  }
+
+  const related = tag._count.todos + tag._count.ledgerItems
+  if (related > 0) {
+    throw new AppError(`该字典已关联 ${related} 条数据，无法删除，可选择禁用`, 409)
   }
 
   await prisma.tag.delete({ where: { id: tagId } })
