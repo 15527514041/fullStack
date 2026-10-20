@@ -347,22 +347,16 @@ const dictionaryKind = z.enum(['ACCOUNT_KIND', 'INCOME_CATEGORY', 'EXPENSE_CATEG
   errorMap: () => ({ message: '字典类型不合法' })
 })
 const dictionaryName = z.string().trim().min(1, '名称不能为空').max(20, '名称最多 20 个字符')
-const dictionaryIcon = z.enum(
-  ['CASH', 'WECHAT', 'ALIPAY', 'DEBIT_CARD', 'CREDIT_CARD', 'INVESTMENT', 'LIABILITY', 'OTHER'],
-  { errorMap: () => ({ message: '账户图标不合法' }) }
-)
 
 const dictionarySchemas = {
   query: z.object({ kind: dictionaryKind }),
   create: z.object({
     kind: dictionaryKind,
-    name: dictionaryName,
-    icon: dictionaryIcon.optional()
+    name: dictionaryName
   }),
   update: z
     .object({
-      name: dictionaryName.optional(),
-      icon: dictionaryIcon.optional()
+      name: dictionaryName.optional()
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' })

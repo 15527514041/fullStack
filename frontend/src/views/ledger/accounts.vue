@@ -5,7 +5,6 @@ import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { createAccount, deleteAccount, getAccounts, updateAccount, updateAccountBalance } from '@/api/ledger'
 import { getDictionaries } from '@/api/dictionaries'
-import AccountIcon from '@/components/AccountIcon.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTimeShort } from '@/utils/datetime'
 import { centsToYuan, formatCents, yuanToCents } from '@/utils/money'
@@ -19,12 +18,8 @@ const accountKinds = ref<DictionaryItem[]>([])
 const loading = ref(false)
 
 const kindOptions = computed(() =>
-  accountKinds.value.map((item) => ({ value: item.id, label: item.name, icon: item.icon }))
+  accountKinds.value.map((item) => ({ value: item.id, label: item.name }))
 )
-
-function kindIcon(kindId: number): string {
-  return accountKinds.value.find((item) => item.id === kindId)?.icon || 'OTHER'
-}
 
 // 停用的账户整体淡化(表格版),它不参与资产汇总,数据还在
 function rowClassName(data: { row: LedgerAccount }): string {
@@ -265,7 +260,6 @@ onMounted(loadAccounts)
 
         <div class="card-meta">
           <span class="kind-cell">
-            <AccountIcon :icon="row.kind.icon" :size="20" />
             {{ row.kind.name }}
           </span>
           <span v-if="row.note">{{ row.note }}</span>
@@ -293,7 +287,6 @@ onMounted(loadAccounts)
       <el-table-column :label="$t('ledger.accounts.colKind')" width="128">
         <template #default="{ row }">
           <span class="kind-cell">
-            <AccountIcon :icon="row.kind.icon" :size="24" />
             {{ row.kind.name }}
           </span>
         </template>
@@ -367,18 +360,8 @@ onMounted(loadAccounts)
 
         <el-form-item :label="$t('ledger.accounts.colKind')" prop="kindId">
           <el-select v-model="form.kindId" style="width: 100%">
-            <!-- 选中态和下拉项都带上该类型的固定图标 -->
-            <template #label="{ label, value }">
-              <span class="kind-cell">
-                <AccountIcon :icon="kindIcon(value)" :size="20" />
-                {{ label }}
-              </span>
-            </template>
             <el-option v-for="opt in kindOptions" :key="opt.value" :label="opt.label" :value="opt.value">
-              <span class="kind-cell">
-                <AccountIcon :icon="opt.icon" :size="20" />
-                {{ opt.label }}
-              </span>
+              {{ opt.label }}
             </el-option>
           </el-select>
         </el-form-item>

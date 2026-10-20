@@ -10,7 +10,6 @@ import {
   getDictionaries,
   updateDictionary
 } from '@/api/dictionaries'
-import AccountIcon from '@/components/AccountIcon.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTime } from '@/utils/datetime'
 import type {
@@ -93,12 +92,6 @@ function rowUsage(row: DictionaryRow): number {
   }
   const count = (row as DictionaryItem)._count
   return activeTab.value === 'ACCOUNT_KIND' ? count?.accounts || 0 : count?.ledgerItems || 0
-}
-
-function rowIcon(row: DictionaryRow): string {
-  return !isTagTab.value && activeTab.value === 'ACCOUNT_KIND'
-    ? (row as DictionaryItem).icon || 'OTHER'
-    : 'OTHER'
 }
 
 function rowTagType(row: DictionaryRow): TagType {
@@ -188,11 +181,9 @@ const editingDictionaryId = ref<number | null>(null)
 const dictionaryForm = reactive<{
   kind: DictionaryKind
   name: string
-  icon: string
 }>({
   kind: 'ACCOUNT_KIND',
-  name: '',
-  icon: 'OTHER'
+  name: ''
 })
 
 const dictionaryRules = computed<FormRules>(() => ({
@@ -206,16 +197,6 @@ const dictionaryKindOptions = computed<Array<{ value: DictionaryKind; label: str
   { value: 'EXPENSE_CATEGORY', label: t('dictionary.expenseCategory') },
   { value: 'INCOME_CATEGORY', label: t('dictionary.incomeCategory') }
 ])
-const accountIconOptions = [
-  { value: 'CASH', labelKey: 'ledger.accounts.kindCash' },
-  { value: 'WECHAT', labelKey: 'ledger.accounts.kindWechat' },
-  { value: 'ALIPAY', labelKey: 'ledger.accounts.kindAlipay' },
-  { value: 'DEBIT_CARD', labelKey: 'ledger.accounts.kindDebitCard' },
-  { value: 'CREDIT_CARD', labelKey: 'ledger.accounts.kindCreditCard' },
-  { value: 'INVESTMENT', labelKey: 'ledger.accounts.kindInvestment' },
-  { value: 'LIABILITY', labelKey: 'ledger.accounts.kindLiability' },
-  { value: 'OTHER', labelKey: 'ledger.accounts.kindOther' }
-]
 const dictionaryDialogTitle = computed(() => {
   const kindLabel = dictionaryKindOptions.value.find((item) => item.value === dictionaryForm.kind)?.label || ''
   return t(editingDictionaryId.value === null ? 'dictionary.dialogAdd' : 'dictionary.dialogEdit', {
@@ -227,7 +208,6 @@ function openDictionaryDialog(): void {
   editingDictionaryId.value = null
   dictionaryForm.kind = activeDictionaryKind.value
   dictionaryForm.name = ''
-  dictionaryForm.icon = 'OTHER'
   dictionaryFormRef.value?.clearValidate()
   dictionaryDialogVisible.value = true
 }
@@ -236,7 +216,6 @@ function openDictionaryEdit(item: DictionaryItem): void {
   editingDictionaryId.value = item.id
   dictionaryForm.kind = item.kind
   dictionaryForm.name = item.name
-  dictionaryForm.icon = item.icon || 'OTHER'
   dictionaryFormRef.value?.clearValidate()
   dictionaryDialogVisible.value = true
 }
@@ -250,13 +229,11 @@ async function submitDictionary(): Promise<void> {
     if (editingDictionaryId.value === null) {
       await createDictionary({
         kind: dictionaryForm.kind,
-        name: dictionaryForm.name.trim(),
-        ...(dictionaryForm.kind === 'ACCOUNT_KIND' ? { icon: dictionaryForm.icon } : {})
+        name: dictionaryForm.name.trim()
       })
     } else {
       await updateDictionary(editingDictionaryId.value, {
-        name: dictionaryForm.name.trim(),
-        ...(dictionaryForm.kind === 'ACCOUNT_KIND' ? { icon: dictionaryForm.icon } : {})
+        name: dictionaryForm.name.trim()
       })
     }
     dictionaryDialogVisible.value = false
@@ -350,14 +327,7 @@ onMounted(loadItems)
             <template v-if="isTagTab">
               <el-tag :type="rowTagType(row)">{{ row.name }}</el-tag>
             </template>
-            <span v-else class="dict-name">
-              <AccountIcon
-                v-if="activeTab === 'ACCOUNT_KIND'"
-                :icon="rowIcon(row)"
-                :size="22"
-              />
-              {{ row.name }}
-            </span>
+            <span v-else class="dict-name">{{ row.name }}</span>
           </div>
 
           <div class="card-meta">
@@ -378,14 +348,7 @@ onMounted(loadItems)
             <template v-if="isTagTab">
               <el-tag :type="rowTagType(row)">{{ row.name }}</el-tag>
             </template>
-            <span v-else class="dict-name">
-              <AccountIcon
-                v-if="activeTab === 'ACCOUNT_KIND'"
-                :icon="rowIcon(row)"
-                :size="24"
-              />
-              {{ row.name }}
-            </span>
+            <span v-else class="dict-name">{{ row.name }}</span>
           </template>
         </el-table-column>
 
@@ -484,32 +447,6 @@ onMounted(loadItems)
               @keyup.enter="submitDictionary"
             />
           </el-form-item>
-
-          <el-form-item v-if="dictionaryForm.kind === 'ACCOUNT_KIND'" :label="$t('dictionary.icon')">
-            <el-select
-              v-model="dictionaryForm.icon"
-              :placeholder="$t('dictionary.iconPlaceholder')"
-              style="width: 100%"
-            >
-              <template #label="{ label, value }">
-                <span class="icon-option">
-                  <AccountIcon :icon="value" :size="20" />
-                  {{ label }}
-                </span>
-              </template>
-              <el-option
-                v-for="opt in accountIconOptions"
-                :key="opt.value"
-                :value="opt.value"
-                :label="$t(opt.labelKey)"
-              >
-                <span class="icon-option">
-                  <AccountIcon :icon="opt.value" :size="20" />
-                  {{ $t(opt.labelKey) }}
-                </span>
-              </el-option>
-            </el-select>
-          </el-form-item>
         </el-form>
         <template #footer>
           <el-button @click="dictionaryDialogVisible = false">{{ $t('common.cancel') }}</el-button>
@@ -590,8 +527,7 @@ onMounted(loadItems)
   min-height: 0;
 }
 
-.dict-name,
-.icon-option {
+.dict-name {
   display: inline-flex;
   align-items: center;
   gap: 8px;

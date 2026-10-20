@@ -68,10 +68,9 @@ test('字典项支持新增、编辑、删除,同类型内不能重名', async (
   const created = await request(app)
     .post('/api/dictionaries')
     .set(auth(token))
-    .send({ kind: 'ACCOUNT_KIND', name: '数字钱包', icon: 'ALIPAY' })
+    .send({ kind: 'ACCOUNT_KIND', name: '数字钱包' })
   assert.strictEqual(created.status, 201)
   assert.strictEqual(created.body.name, '数字钱包')
-  assert.strictEqual(created.body.icon, 'ALIPAY')
 
   const duplicate = await request(app)
     .post('/api/dictionaries')
@@ -82,10 +81,9 @@ test('字典项支持新增、编辑、删除,同类型内不能重名', async (
   const updated = await request(app)
     .patch(`/api/dictionaries/${created.body.id}`)
     .set(auth(token))
-    .send({ name: '数字钱包 2', icon: 'WECHAT' })
+    .send({ name: '数字钱包 2' })
   assert.strictEqual(updated.status, 200)
   assert.strictEqual(updated.body.name, '数字钱包 2')
-  assert.strictEqual(updated.body.icon, 'WECHAT')
 
   const removed = await request(app)
     .delete(`/api/dictionaries/${created.body.id}`)

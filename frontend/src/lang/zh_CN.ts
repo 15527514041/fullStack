@@ -199,8 +199,6 @@ export default {
     kind: '字典类型',
     name: '名称',
     namePlaceholder: '请输入名称',
-    icon: '图标',
-    iconPlaceholder: '选择图标',
     kindLocked: '字典类型创建后不能修改',
     colUsageAccount: '关联账户',
     colUsageCategory: '关联账单',

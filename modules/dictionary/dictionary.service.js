@@ -8,23 +8,11 @@ const DICTIONARY_KIND = {
   EXPENSE_CATEGORY: 'EXPENSE_CATEGORY'
 }
 
-const ACCOUNT_ICON_KEYS = new Set([
-  'CASH',
-  'WECHAT',
-  'ALIPAY',
-  'DEBIT_CARD',
-  'CREDIT_CARD',
-  'INVESTMENT',
-  'LIABILITY',
-  'OTHER'
-])
-
 const dictionarySelect = {
   id: true,
   kind: true,
   code: true,
   name: true,
-  icon: true,
   sortOrder: true,
   createdAt: true,
   _count: {
@@ -49,7 +37,7 @@ async function listDictionaryItems(userId, kind) {
   })
 }
 
-async function createDictionaryItem(userId, { kind, name, icon }) {
+async function createDictionaryItem(userId, { kind, name }) {
   const existing = await prisma.dictionaryItem.findFirst({ where: { userId, kind, name } })
   if (existing) {
     throw new AppError(`${kindLabel(kind)}名称已存在`, 409)
@@ -66,19 +54,13 @@ async function createDictionaryItem(userId, { kind, name, icon }) {
       userId,
       kind,
       name,
-      icon:
-        kind === DICTIONARY_KIND.ACCOUNT_KIND && ACCOUNT_ICON_KEYS.has(icon)
-          ? icon
-          : kind === DICTIONARY_KIND.ACCOUNT_KIND
-            ? 'OTHER'
-            : null,
       sortOrder: (last?.sortOrder ?? -1) + 1
     },
     select: dictionarySelect
   })
 }
 
-async function updateDictionaryItem(userId, itemId, { name, icon }) {
+async function updateDictionaryItem(userId, itemId, { name }) {
   const item = await prisma.dictionaryItem.findFirst({ where: { id: itemId, userId } })
   if (!item) {
     throw new AppError('字典项不存在', 404)
@@ -97,10 +79,7 @@ async function updateDictionaryItem(userId, itemId, { name, icon }) {
   return prisma.dictionaryItem.update({
     where: { id: itemId },
     data: {
-      ...(name === undefined ? {} : { name }),
-      ...(item.kind === DICTIONARY_KIND.ACCOUNT_KIND && icon !== undefined
-        ? { icon: ACCOUNT_ICON_KEYS.has(icon) ? icon : 'OTHER' }
-        : {})
+      ...(name === undefined ? {} : { name })
       // kind 故意不更新:字典类型是条目的身份,建完不能改
     },
     select: dictionarySelect
@@ -148,7 +127,7 @@ async function deleteDictionaryItem(userId, itemId) {
 async function assertOwnedDictionaryItem(userId, itemId, kind) {
   const item = await prisma.dictionaryItem.findFirst({
     where: { id: itemId, userId, kind },
-    select: { id: true, name: true, icon: true, kind: true }
+    select: { id: true, name: true, kind: true }
   })
   if (!item) {
     throw new AppError('字典项不存在或类型不匹配', 400)
@@ -158,7 +137,6 @@ async function assertOwnedDictionaryItem(userId, itemId, kind) {
 
 module.exports = {
   DICTIONARY_KIND,
-  ACCOUNT_ICON_KEYS,
   listDictionaryItems,
   createDictionaryItem,
   updateDictionaryItem,

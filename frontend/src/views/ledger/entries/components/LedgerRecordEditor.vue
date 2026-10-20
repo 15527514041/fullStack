@@ -12,7 +12,6 @@ import {
 } from '@/api/ledger'
 import { getTags } from '@/api/tags'
 import { getDictionaries } from '@/api/dictionaries'
-import AccountIcon from '@/components/AccountIcon.vue'
 import ActionIcon from '@/components/ActionIcon.vue'
 import BackButton from '@/components/BackButton.vue'
 import { centsToYuan, formatCents, yuanToCents } from '@/utils/money'
@@ -700,7 +699,6 @@ onMounted(load)
                 >
                   <span class="compact-category">{{ categoryLabel(row.categoryId) }}</span>
                   <span class="compact-account">
-                    <AccountIcon :icon="rowAccount(row)?.kind?.icon" :size="18" />
                     {{ rowAccount(row)?.name || '—' }}
                   </span>
                   <span class="compact-amount">
@@ -786,7 +784,6 @@ onMounted(load)
               :label="accountLabel(account)"
             >
               <span class="account-option">
-                <AccountIcon :icon="account.kind?.icon" :size="20" />
                 <span>{{ account.name }}</span>
                 <el-tag v-if="!account.enabled" size="small" type="info">
                   {{ t('ledger.accounts.disabled') }}

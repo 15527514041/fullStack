@@ -202,8 +202,6 @@ export default {
     kind: 'Dictionary type',
     name: 'Name',
     namePlaceholder: 'Enter a name',
-    icon: 'Icon',
-    iconPlaceholder: 'Choose an icon',
     kindLocked: 'Dictionary type cannot be changed after creation',
     colUsageAccount: 'Accounts',
     colUsageCategory: 'Entries',

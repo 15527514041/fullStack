@@ -198,7 +198,6 @@ export type DictionaryKind = 'ACCOUNT_KIND' | 'INCOME_CATEGORY' | 'EXPENSE_CATEG
 export interface DictionaryRef {
   id: number
   name: string
-  icon?: string | null
 }
 
 export interface DictionaryItem extends DictionaryRef {

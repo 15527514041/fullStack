@@ -1,14 +1,14 @@
 // 用户字典预设:账户类型 / 支出分类 / 收入分类
 // code 是迁移与预设识别的稳定键;name 按注册时的语言写入,之后由用户自行维护
 const DICTIONARY_ITEMS = [
-  { kind: 'ACCOUNT_KIND', code: 'CASH', icon: 'CASH', name: { zh_CN: '现金', en_US: 'Cash' } },
-  { kind: 'ACCOUNT_KIND', code: 'WECHAT', icon: 'WECHAT', name: { zh_CN: '微信零钱', en_US: 'WeChat' } },
-  { kind: 'ACCOUNT_KIND', code: 'ALIPAY', icon: 'ALIPAY', name: { zh_CN: '支付宝余额', en_US: 'Alipay' } },
-  { kind: 'ACCOUNT_KIND', code: 'DEBIT_CARD', icon: 'DEBIT_CARD', name: { zh_CN: '储蓄卡', en_US: 'Debit card' } },
-  { kind: 'ACCOUNT_KIND', code: 'CREDIT_CARD', icon: 'CREDIT_CARD', name: { zh_CN: '信用卡', en_US: 'Credit card' } },
-  { kind: 'ACCOUNT_KIND', code: 'INVESTMENT', icon: 'INVESTMENT', name: { zh_CN: '理财账户', en_US: 'Investment' } },
-  { kind: 'ACCOUNT_KIND', code: 'LIABILITY', icon: 'LIABILITY', name: { zh_CN: '负债账户', en_US: 'Liability' } },
-  { kind: 'ACCOUNT_KIND', code: 'OTHER', icon: 'OTHER', name: { zh_CN: '其他', en_US: 'Other' } },
+  { kind: 'ACCOUNT_KIND', code: 'CASH', name: { zh_CN: '现金', en_US: 'Cash' } },
+  { kind: 'ACCOUNT_KIND', code: 'WECHAT', name: { zh_CN: '微信零钱', en_US: 'WeChat' } },
+  { kind: 'ACCOUNT_KIND', code: 'ALIPAY', name: { zh_CN: '支付宝余额', en_US: 'Alipay' } },
+  { kind: 'ACCOUNT_KIND', code: 'DEBIT_CARD', name: { zh_CN: '储蓄卡', en_US: 'Debit card' } },
+  { kind: 'ACCOUNT_KIND', code: 'CREDIT_CARD', name: { zh_CN: '信用卡', en_US: 'Credit card' } },
+  { kind: 'ACCOUNT_KIND', code: 'INVESTMENT', name: { zh_CN: '理财账户', en_US: 'Investment' } },
+  { kind: 'ACCOUNT_KIND', code: 'LIABILITY', name: { zh_CN: '负债账户', en_US: 'Liability' } },
+  { kind: 'ACCOUNT_KIND', code: 'OTHER', name: { zh_CN: '其他', en_US: 'Other' } },
 
   { kind: 'INCOME_CATEGORY', code: 'SALARY', name: { zh_CN: '工资薪金', en_US: 'Salary' } },
   { kind: 'INCOME_CATEGORY', code: 'PART_TIME', name: { zh_CN: '兼职劳务', en_US: 'Part-time' } },
@@ -43,7 +43,6 @@ function buildDefaultDictionaryItems(locale = 'zh_CN') {
       kind: item.kind,
       code: item.code,
       name: item.name[language],
-      icon: item.icon || null,
       sortOrder
     }
   })

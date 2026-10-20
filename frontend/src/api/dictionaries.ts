@@ -8,12 +8,10 @@ export function getDictionaries(kind: DictionaryKind): Promise<DictionaryItem[]>
 export interface CreateDictionaryPayload {
   kind: DictionaryKind
   name: string
-  icon?: string
 }
 
 export interface UpdateDictionaryPayload {
   name?: string
-  icon?: string
 }
 
 export function createDictionary(data: CreateDictionaryPayload): Promise<DictionaryItem> {

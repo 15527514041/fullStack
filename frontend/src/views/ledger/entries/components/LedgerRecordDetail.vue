@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { deleteLedgerRecord, getLedgerRecord } from '@/api/ledger'
-import AccountIcon from '@/components/AccountIcon.vue'
 import BackButton from '@/components/BackButton.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTimeShort } from '@/utils/datetime'
@@ -151,7 +150,6 @@ watch(() => props.recordId, load, { immediate: true })
               </div>
               <div class="ledger-detail-item__meta">
                 <span class="account-cell">
-                  <AccountIcon :icon="item.account?.kind?.icon" :size="20" />
                   {{ item.account?.name || '—' }}
                 </span>
                 <span>{{ categoryLabel(item.category) }}</span>
@@ -175,7 +173,6 @@ watch(() => props.recordId, load, { immediate: true })
             <el-table-column :label="t('ledger.entries.colAccount')" min-width="160">
               <template #default="{ row }">
                 <span class="account-cell">
-                  <AccountIcon :icon="row.account?.kind?.icon" :size="22" />
                   {{ row.account?.name || '—' }}
                 </span>
               </template>

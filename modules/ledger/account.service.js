@@ -11,7 +11,7 @@ const accountSelect = {
   id: true,
   name: true,
   kindId: true,
-  kind: { select: { id: true, name: true, icon: true } },
+  kind: { select: { id: true, name: true } },
   note: true,
   balanceCents: true,
   balanceUpdatedAt: true,

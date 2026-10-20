@@ -96,8 +96,6 @@ model DictionaryItem {
   kind        DictionaryKind
   code        String?
   name        String
-  // 账户类型的图标键;分类不需要图标
-  icon        String?
   sortOrder   Int             @default(0)
   user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   accounts    LedgerAccount[]
