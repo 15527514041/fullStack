@@ -9,6 +9,9 @@ const prisma = new PrismaClient()
 async function registerAndLogin(username = 'alice') {
   await request(app).post('/api/auth/register').send({ username, password: '123456' })
   const res = await request(app).post('/api/auth/login').send({ username, password: '123456' })
+  // 这些用例关注增删改查,先清掉注册自带的预设标签
+  const user = await prisma.user.findUnique({ where: { username } })
+  await prisma.tag.deleteMany({ where: { userId: user.id } })
   return res.body.token
 }
 
@@ -39,6 +42,18 @@ test('创建标签成功(默认任务域),重复创建返回 409', async () => {
     .set('Authorization', `Bearer ${token}`)
     .send({ name: '工作' })
   assert.strictEqual(again.status, 409)
+})
+
+test('新用户注册后自带任务标签和记账标签', async () => {
+  await request(app).post('/api/auth/register').send({ username: 'preset-user', password: '123456' })
+  const login = await request(app).post('/api/auth/login').send({ username: 'preset-user', password: '123456' })
+  const token = login.body.token
+
+  const todo = await request(app).get('/api/tags?scope=TODO').set('Authorization', `Bearer ${token}`)
+  const ledger = await request(app).get('/api/tags?scope=ACCOUNTING').set('Authorization', `Bearer ${token}`)
+
+  assert.deepStrictEqual(todo.body.map((item) => item.name), ['工作', '学习', '生活', '健康', '紧急'])
+  assert.deepStrictEqual(ledger.body.map((item) => item.name), ['固定支出', '可报销', '大额', '待核对'])
 })
 
 test('不同域可以有同名标签,只有同域才算重名', async () => {

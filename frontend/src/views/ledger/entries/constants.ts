@@ -1,4 +1,4 @@
-import type { LedgerCategory, LedgerItemType, LedgerRecordSource } from '@/types'
+import type { LedgerRecordSource } from '@/types'
 
 export interface LedgerModeMeta {
   source: LedgerRecordSource
@@ -74,56 +74,4 @@ export const LEDGER_MODES: LedgerModeMeta[] = [
 
 export function getModeMeta(source: LedgerRecordSource): LedgerModeMeta {
   return LEDGER_MODES.find((item) => item.source === source) || LEDGER_MODES[0]
-}
-
-export const INCOME_CATEGORIES: LedgerCategory[] = [
-  'SALARY',
-  'PART_TIME',
-  'INVESTMENT',
-  'RENT',
-  'GIFT',
-  'SUBSIDY',
-  'OTHER_INCOME'
-]
-
-export const EXPENSE_CATEGORIES: LedgerCategory[] = [
-  'FOOD',
-  'TRANSPORT',
-  'HOUSING',
-  'SHOPPING',
-  'MEDICAL',
-  'ENTERTAINMENT',
-  'SOCIAL',
-  'EDUCATION',
-  'COMMUNICATION',
-  'INSURANCE',
-  'REPAYMENT',
-  'OTHER_EXPENSE'
-]
-
-export const CATEGORIES_BY_TYPE: Record<LedgerItemType, LedgerCategory[]> = {
-  INCOME: INCOME_CATEGORIES,
-  EXPENSE: EXPENSE_CATEGORIES
-}
-
-export const CATEGORY_I18N_KEY: Record<LedgerCategory, string> = {
-  SALARY: 'salary',
-  PART_TIME: 'partTime',
-  INVESTMENT: 'investment',
-  RENT: 'rent',
-  GIFT: 'gift',
-  SUBSIDY: 'subsidy',
-  OTHER_INCOME: 'otherIncome',
-  FOOD: 'food',
-  TRANSPORT: 'transport',
-  HOUSING: 'housing',
-  SHOPPING: 'shopping',
-  MEDICAL: 'medical',
-  ENTERTAINMENT: 'entertainment',
-  SOCIAL: 'social',
-  EDUCATION: 'education',
-  COMMUNICATION: 'communication',
-  INSURANCE: 'insurance',
-  REPAYMENT: 'repayment',
-  OTHER_EXPENSE: 'otherExpense'
 }

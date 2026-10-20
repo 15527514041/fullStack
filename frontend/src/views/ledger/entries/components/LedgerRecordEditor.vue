@@ -11,13 +11,14 @@ import {
   updateLedgerRecord
 } from '@/api/ledger'
 import { getTags } from '@/api/tags'
+import { getDictionaries } from '@/api/dictionaries'
 import AccountIcon from '@/components/AccountIcon.vue'
 import ActionIcon from '@/components/ActionIcon.vue'
 import BackButton from '@/components/BackButton.vue'
 import { centsToYuan, formatCents, yuanToCents } from '@/utils/money'
 import type {
+  DictionaryItem,
   LedgerAccount,
-  LedgerCategory,
   LedgerItem,
   LedgerItemPayload,
   LedgerItemType,
@@ -26,7 +27,7 @@ import type {
   LedgerRecordSummary,
   TagItem
 } from '@/types'
-import { CATEGORIES_BY_TYPE, CATEGORY_I18N_KEY, getModeMeta } from '../constants'
+import { getModeMeta } from '../constants'
 import {
   currentPeriodStart,
   formatPeriodLabel,
@@ -39,7 +40,7 @@ import LedgerTagList from './LedgerTagList.vue'
 
 interface EditorRow {
   key: number
-  category: LedgerCategory | ''
+  categoryId: number | null
   accountId: number | null
   amountYuan: number | undefined
   tagIds: number[]
@@ -64,20 +65,22 @@ const baseline = ref('')
 
 const accounts = ref<LedgerAccount[]>([])
 const tags = ref<TagItem[]>([])
+const incomeCategories = ref<DictionaryItem[]>([])
+const expenseCategories = ref<DictionaryItem[]>([])
 
 const itemDialogVisible = ref(false)
 const editingItemKey = ref<number | null>(null)
 const itemFormRef = ref<FormInstance>()
 const itemForm = reactive<{
   type: LedgerItemType
-  category: LedgerCategory | ''
+  categoryId: number | null
   accountId: number | null
   amountYuan: number | undefined
   tagIds: number[]
   remark: string
 }>({
   type: 'EXPENSE',
-  category: '',
+  categoryId: null,
   accountId: null,
   amountYuan: undefined,
   tagIds: [],
@@ -170,7 +173,7 @@ const itemDialogTitle = computed(() => {
     : t('ledger.entries.editTypeItem', { type: typeLabel })
 })
 const itemRules = computed<FormRules>(() => ({
-  category: [{ required: true, message: t('ledger.entries.categoryRequired'), trigger: 'change' }],
+  categoryId: [{ required: true, message: t('ledger.entries.categoryRequired'), trigger: 'change' }],
   accountId: [{ required: true, message: t('ledger.entries.accountRequired'), trigger: 'change' }],
   amountYuan: [
     {
@@ -188,7 +191,7 @@ const itemRules = computed<FormRules>(() => ({
 
 function serializeRow(row: EditorRow) {
   return {
-    category: row.category,
+    categoryId: row.categoryId,
     accountId: row.accountId,
     amountYuan: typeof row.amountYuan === 'number' ? row.amountYuan : null,
     tagIds: [...row.tagIds],
@@ -209,7 +212,7 @@ function emptyRow(accountId: number | null = null): EditorRow {
   rowSequence += 1
   return {
     key: rowSequence,
-    category: '',
+    categoryId: null,
     accountId,
     amountYuan: undefined,
     tagIds: [],
@@ -230,7 +233,7 @@ function openAddItem(type: LedgerItemType = 'EXPENSE'): void {
   const previous = list[list.length - 1]
   editingItemKey.value = null
   itemForm.type = type
-  itemForm.category = ''
+  itemForm.categoryId = null
   itemForm.accountId = previous?.accountId ?? null
   itemForm.amountYuan = undefined
   itemForm.tagIds = []
@@ -242,7 +245,7 @@ function openAddItem(type: LedgerItemType = 'EXPENSE'): void {
 function openEditItem(row: EditorRow, type: LedgerItemType): void {
   editingItemKey.value = row.key
   itemForm.type = type
-  itemForm.category = row.category
+  itemForm.categoryId = row.categoryId
   itemForm.accountId = row.accountId
   itemForm.amountYuan = row.amountYuan
   itemForm.tagIds = [...row.tagIds]
@@ -257,7 +260,7 @@ async function saveItem(continueAdding = false): Promise<void> {
 
   const row: EditorRow = {
     key: editingItemKey.value ?? ++rowSequence,
-    category: itemForm.category as LedgerCategory,
+    categoryId: itemForm.categoryId as number,
     accountId: itemForm.accountId as number,
     amountYuan: itemForm.amountYuan as number,
     tagIds: [...itemForm.tagIds],
@@ -270,7 +273,7 @@ async function saveItem(continueAdding = false): Promise<void> {
 
   if (continueAdding) {
     editingItemKey.value = null
-    itemForm.category = ''
+    itemForm.categoryId = null
     itemForm.amountYuan = undefined
     itemForm.tagIds = []
     itemForm.remark = ''
@@ -286,10 +289,14 @@ function handleWeekChange(value: string | null): void {
   weekValue.value = value ? normalizeWeekStart(value) : ''
 }
 
-function categoryOptions(type: LedgerItemType): Array<{ value: LedgerCategory; label: string }> {
-  return CATEGORIES_BY_TYPE[type].map((category) => ({
-    value: category,
-    label: t(`ledger.categories.${CATEGORY_I18N_KEY[category]}`)
+function categoriesFor(type: LedgerItemType): DictionaryItem[] {
+  return type === 'EXPENSE' ? expenseCategories.value : incomeCategories.value
+}
+
+function categoryOptions(type: LedgerItemType): Array<{ value: number; label: string }> {
+  return categoriesFor(type).map((category) => ({
+    value: category.id,
+    label: category.name
   }))
 }
 
@@ -297,10 +304,9 @@ function accountLabel(account: LedgerAccount): string {
   return account.enabled ? account.name : `${account.name} (${t('ledger.accounts.disabled')})`
 }
 
-function categoryLabel(category?: LedgerCategory | '' | null): string {
-  if (!category) return '—'
-  const key = CATEGORY_I18N_KEY[category]
-  return key ? t(`ledger.categories.${key}`) : '—'
+function categoryLabel(categoryId?: number | null): string {
+  if (!categoryId) return '—'
+  return [...incomeCategories.value, ...expenseCategories.value].find((item) => item.id === categoryId)?.name || '—'
 }
 
 function rowAccount(row: EditorRow): LedgerAccount | null {
@@ -317,7 +323,7 @@ function rowAmountCents(row: EditorRow): number {
 
 function rowHasContent(row: EditorRow): boolean {
   return Boolean(
-    row.category ||
+    row.categoryId ||
       typeof row.amountYuan === 'number' ||
       row.remark.trim() ||
       row.tagIds.length
@@ -345,7 +351,7 @@ function buildSection(
   for (let index = 0; index < rows.length; index += 1) {
     const row = rows[index]
     if (!rowHasContent(row)) continue
-    if (!row.category) return rowError(sectionKey, index, 'ledger.entries.categoryRequired')
+    if (!row.categoryId) return rowError(sectionKey, index, 'ledger.entries.categoryRequired')
     if (!row.accountId) return rowError(sectionKey, index, 'ledger.entries.accountRequired')
     if (typeof row.amountYuan !== 'number' || row.amountYuan <= 0) {
       return rowError(sectionKey, index, 'ledger.entries.amountPositive')
@@ -353,7 +359,7 @@ function buildSection(
 
     result.push({
       type,
-      category: row.category,
+      categoryId: row.categoryId,
       accountId: row.accountId,
       amountCents: yuanToCents(row.amountYuan),
       tagIds: row.tagIds,
@@ -381,7 +387,7 @@ function buildPayload(): LedgerItemPayload[] | null {
 function toEditorRow(item: LedgerItem): EditorRow {
   return {
     ...emptyRow(item.accountId),
-    category: item.category,
+    categoryId: item.categoryId,
     amountYuan: centsToYuan(item.amountCents),
     tagIds: item.tags?.map((tag) => tag.id) || [],
     remark: item.remark || ''
@@ -444,9 +450,16 @@ async function checkPeriod(): Promise<void> {
 async function load(): Promise<void> {
   loading.value = true
   try {
-    const [accountList, tagList] = await Promise.all([getAccounts(), getTags({ scope: 'ACCOUNTING' })])
+    const [accountList, tagList, incomeList, expenseList] = await Promise.all([
+      getAccounts(),
+      getTags({ scope: 'ACCOUNTING' }),
+      getDictionaries('INCOME_CATEGORY'),
+      getDictionaries('EXPENSE_CATEGORY')
+    ])
     accounts.value = accountList
     tags.value = tagList
+    incomeCategories.value = incomeList
+    expenseCategories.value = expenseList
 
     if (props.recordId !== undefined) {
       fillRecord(await getLedgerRecord(props.recordId))
@@ -685,9 +698,9 @@ onMounted(load)
                   class="ledger-compact-row"
                   @click="openEditItem(row, section.type)"
                 >
-                  <span class="compact-category">{{ categoryLabel(row.category) }}</span>
+                  <span class="compact-category">{{ categoryLabel(row.categoryId) }}</span>
                   <span class="compact-account">
-                    <AccountIcon :kind="rowAccount(row)?.kind || 'OTHER'" :size="18" />
+                    <AccountIcon :icon="rowAccount(row)?.kind?.icon" :size="18" />
                     {{ rowAccount(row)?.name || '—' }}
                   </span>
                   <span class="compact-amount">
@@ -743,9 +756,9 @@ onMounted(load)
           </el-select>
         </el-form-item>
 
-        <el-form-item :label="t('ledger.entries.category')" prop="category">
+        <el-form-item :label="t('ledger.entries.category')" prop="categoryId">
           <el-select
-            v-model="itemForm.category"
+            v-model="itemForm.categoryId"
             filterable
             :placeholder="t('ledger.entries.category')"
             style="width: 100%"
@@ -773,7 +786,7 @@ onMounted(load)
               :label="accountLabel(account)"
             >
               <span class="account-option">
-                <AccountIcon :kind="account.kind" :size="20" />
+                <AccountIcon :icon="account.kind?.icon" :size="20" />
                 <span>{{ account.name }}</span>
                 <el-tag v-if="!account.enabled" size="small" type="info">
                   {{ t('ledger.accounts.disabled') }}

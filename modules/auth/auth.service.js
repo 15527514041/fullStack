@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
 const prisma = require('../../utils/prisma')
+const { buildDefaultTags } = require('../statics/defaultTags')
+const { buildDefaultDictionaryItems } = require('../statics/defaultDictionaryItems')
 
 const JWT_SECRET = process.env.JWT_SECRET
 
@@ -10,7 +12,7 @@ if (!JWT_SECRET) {
   throw new Error('JWT_SECRET 未配置,拒绝启动')
 }
 
-const register = async (username, password) => {
+const register = async (username, password, { locale } = {}) => {
   const existing = await prisma.user.findUnique({ where: { username } })
   if (existing) {
     throw new AppError('Username already exists', 409)
@@ -20,7 +22,10 @@ const register = async (username, password) => {
   const user = await prisma.user.create({
     data: {
       username,
-      password: hashedPassword
+      password: hashedPassword,
+      // 用户与预设数据同一次嵌套写入:任何一步失败都不会留下半初始化账号
+      tags: { create: buildDefaultTags(locale) },
+      dictionaryItems: { create: buildDefaultDictionaryItems(locale) }
     }
   })
   return user

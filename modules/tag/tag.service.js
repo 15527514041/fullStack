@@ -19,8 +19,7 @@ async function listTags(userId, { scope } = {}) {
       type: true,
       scope: true,
       createdAt: true,
-      // 目前只有任务域有关联表,记账域的计数等记账模块建表后再补
-      _count: { select: { todos: true } }
+      _count: { select: { todos: true, ledgerItems: true } }
     },
     // 按域分组展示,域内保持创建顺序
     orderBy: [{ scope: 'asc' }, { id: 'asc' }]

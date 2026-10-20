@@ -9,8 +9,8 @@ import BackButton from '@/components/BackButton.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTimeShort } from '@/utils/datetime'
 import { formatCents } from '@/utils/money'
-import type { LedgerCategory, LedgerRecordDetail, LedgerRecordSource } from '@/types'
-import { CATEGORY_I18N_KEY, getModeMeta } from '../constants'
+import type { DictionaryRef, LedgerRecordDetail, LedgerRecordSource } from '@/types'
+import { getModeMeta } from '../constants'
 import { formatPeriodLabel, formatPeriodRange } from '../utils'
 import LedgerAmountText from './LedgerAmountText.vue'
 import LedgerTagList from './LedgerTagList.vue'
@@ -42,10 +42,8 @@ const netClass = computed(() => {
   return ''
 })
 
-function categoryLabel(category?: LedgerCategory | null): string {
-  if (!category) return '—'
-  const key = CATEGORY_I18N_KEY[category]
-  return key ? t(`ledger.categories.${key}`) : '—'
+function categoryLabel(category?: DictionaryRef | null): string {
+  return category?.name || '—'
 }
 
 async function load(): Promise<void> {
@@ -153,7 +151,7 @@ watch(() => props.recordId, load, { immediate: true })
               </div>
               <div class="ledger-detail-item__meta">
                 <span class="account-cell">
-                  <AccountIcon :kind="item.account?.kind || 'OTHER'" :size="20" />
+                  <AccountIcon :icon="item.account?.kind?.icon" :size="20" />
                   {{ item.account?.name || '—' }}
                 </span>
                 <span>{{ categoryLabel(item.category) }}</span>
@@ -177,7 +175,7 @@ watch(() => props.recordId, load, { immediate: true })
             <el-table-column :label="t('ledger.entries.colAccount')" min-width="160">
               <template #default="{ row }">
                 <span class="account-cell">
-                  <AccountIcon :kind="row.account?.kind || 'OTHER'" :size="22" />
+                  <AccountIcon :icon="row.account?.kind?.icon" :size="22" />
                   {{ row.account?.name || '—' }}
                 </span>
               </template>

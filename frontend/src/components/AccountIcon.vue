@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { AccountKind } from '@/types'
 
 /**
- * 资产账户类型图标:手写 SVG,每种类型一个固定图形 + 固定配色
- * (图标只跟类型有关,和账户叫什么名字无关;清单维护在这里,后端只存枚举)
+ * 资产账户类型图标:手写 SVG,每个图标键一个固定图形 + 固定配色
+ * (预设类型用自己的图标;用户新建类型可从这组图标里选择)
  *
  * 统一风格:28×28 圆角底(类型色 14% 透明)+ 单色实心图形,
  * 图形内部的镂空靠 svg 上的 fill-rule="evenodd" 挖出来
  */
-const props = withDefaults(defineProps<{ kind: AccountKind; size?: number }>(), { size: 24 })
+const props = withDefaults(defineProps<{ icon?: string | null; size?: number }>(), { size: 24 })
 
 interface IconDef {
   /** 类型色:底色和图形都用它 */
@@ -18,7 +17,7 @@ interface IconDef {
   d: string
 }
 
-const ICONS: Record<AccountKind, IconDef> = {
+const ICONS: Record<string, IconDef> = {
   // 现金:钞票 + 中间的圆 + 两端小点
   CASH: {
     color: '#22c55e',
@@ -61,7 +60,7 @@ const ICONS: Record<AccountKind, IconDef> = {
   }
 }
 
-const icon = computed<IconDef>(() => ICONS[props.kind] || ICONS.OTHER)
+const icon = computed<IconDef>(() => ICONS[props.icon || 'OTHER'] || ICONS.OTHER)
 </script>
 
 <template>

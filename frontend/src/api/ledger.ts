@@ -1,6 +1,5 @@
 import { request } from './request'
 import type {
-  AccountKind,
   CreateLedgerRecordPayload,
   LedgerAccount,
   LedgerRecordDetail,
@@ -17,7 +16,7 @@ export function getAccounts(params?: { enabled?: boolean }): Promise<LedgerAccou
 
 export interface CreateAccountPayload {
   name: string
-  kind: AccountKind
+  kindId: number
   /** 单位:分;不传按 0 建 */
   balanceCents?: number
   note?: string | null
@@ -27,7 +26,7 @@ export interface CreateAccountPayload {
 /** 备注/排序这类元信息的普通编辑:余额不在这个接口里 */
 export interface UpdateAccountPayload {
   name?: string
-  kind?: AccountKind
+  kindId?: number
   note?: string | null
   enabled?: boolean
   sortOrder?: number

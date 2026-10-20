@@ -34,7 +34,12 @@ const boolQuery = z
 // ====== auth ======
 
 const authSchemas = {
-  register: z.object({ username, password }),
+  register: z.object({
+    username,
+    password,
+    // 预设标签/字典按注册时界面语言写入;老客户端不传时默认中文
+    locale: z.enum(['zh_CN', 'en_US']).optional()
+  }),
   login: z.object({ username, password })
 }
 
@@ -206,12 +211,7 @@ const planSchemas = {
 // ====== 记账:资产账户 ======
 
 const accountName = z.string().trim().min(1, '账户名不能为空').max(20, '账户名最多 20 个字符')
-const accountKind = z.enum(
-  ['CASH', 'WECHAT', 'ALIPAY', 'DEBIT_CARD', 'CREDIT_CARD', 'INVESTMENT', 'LIABILITY', 'OTHER'],
-  {
-    errorMap: () => ({ message: '账户类型不合法' })
-  }
-)
+const accountKindId = z.number().int().positive('账户类型不合法')
 // 金额一律用「分」的整数:上限 ±999 万元(信用卡欠款是负数)
 const balanceCents = z
   .number()
@@ -223,7 +223,7 @@ const accountNote = z.string().trim().max(50, '备注最多 50 个字符').nulla
 const accountSchemas = {
   create: z.object({
     name: accountName,
-    kind: accountKind,
+    kindId: accountKindId,
     // 不传按 0 建:先把账户建起来,余额回头再补也是常见用法
     balanceCents: balanceCents.default(0),
     note: accountNote.optional(),
@@ -232,7 +232,7 @@ const accountSchemas = {
   update: z
     .object({
       name: accountName.optional(),
-      kind: accountKind.optional(),
+      kindId: accountKindId.optional(),
       note: accountNote.optional(),
       // 启用开关:停用的账户不再出现在录入选择里
       enabled: z.boolean().optional(),
@@ -257,32 +257,7 @@ const ledgerItemType = z.enum(['INCOME', 'EXPENSE'], {
   errorMap: () => ({ message: '收支类型不合法' })
 })
 
-const ledgerIncomeCategories = [
-  'SALARY',
-  'PART_TIME',
-  'INVESTMENT',
-  'RENT',
-  'GIFT',
-  'SUBSIDY',
-  'OTHER_INCOME'
-]
-const ledgerExpenseCategories = [
-  'FOOD',
-  'TRANSPORT',
-  'HOUSING',
-  'SHOPPING',
-  'MEDICAL',
-  'ENTERTAINMENT',
-  'SOCIAL',
-  'EDUCATION',
-  'COMMUNICATION',
-  'INSURANCE',
-  'REPAYMENT',
-  'OTHER_EXPENSE'
-]
-const ledgerCategory = z.enum([...ledgerIncomeCategories, ...ledgerExpenseCategories], {
-  errorMap: () => ({ message: '分类不合法' })
-})
+const ledgerCategoryId = z.number().int().positive('分类不合法')
 
 // 账单金额不允许为 0;上限与账户余额保持一致
 const ledgerAmountCents = z
@@ -296,17 +271,6 @@ const ledgerPeriodStart = dateOnly.refine((value) => {
   const date = new Date(`${value}T00:00:00.000Z`)
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
 }, '日期不合法')
-
-function checkLedgerCategoryPair(item, ctx) {
-  const allowed = item.type === 'INCOME' ? ledgerIncomeCategories : ledgerExpenseCategories
-  if (!allowed.includes(item.category)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: '分类与收支类型不匹配',
-      path: ['category']
-    })
-  }
-}
 
 // periodStart 的粒度必须和 source 对上:
 // 周账单必须是周一,月账单必须是 1 号;日账单任意日期都可以
@@ -328,16 +292,14 @@ function checkLedgerPeriod(source, periodStart, ctx) {
   }
 }
 
-const ledgerItem = z
-  .object({
-    type: ledgerItemType,
-    category: ledgerCategory,
-    accountId: z.number().int().positive('账户 ID 不合法'),
-    amountCents: ledgerAmountCents,
-    tagIds: z.array(z.number().int().positive()).optional(),
-    remark: z.string().trim().max(500, '备注最多 500 个字符').nullable().optional()
-  })
-  .superRefine(checkLedgerCategoryPair)
+const ledgerItem = z.object({
+  type: ledgerItemType,
+  categoryId: ledgerCategoryId,
+  accountId: z.number().int().positive('账户 ID 不合法'),
+  amountCents: ledgerAmountCents,
+  tagIds: z.array(z.number().int().positive()).optional(),
+  remark: z.string().trim().max(500, '备注最多 500 个字符').nullable().optional()
+})
 
 const ledgerItems = z.array(ledgerItem).min(1, '至少需要一条账单明细').max(50, '最多 50 条账单明细')
 
@@ -379,6 +341,33 @@ const adminSchemas = {
   })
 }
 
+// ====== 用户字典(账户类型 / 收支分类) ======
+
+const dictionaryKind = z.enum(['ACCOUNT_KIND', 'INCOME_CATEGORY', 'EXPENSE_CATEGORY'], {
+  errorMap: () => ({ message: '字典类型不合法' })
+})
+const dictionaryName = z.string().trim().min(1, '名称不能为空').max(20, '名称最多 20 个字符')
+const dictionaryIcon = z.enum(
+  ['CASH', 'WECHAT', 'ALIPAY', 'DEBIT_CARD', 'CREDIT_CARD', 'INVESTMENT', 'LIABILITY', 'OTHER'],
+  { errorMap: () => ({ message: '账户图标不合法' }) }
+)
+
+const dictionarySchemas = {
+  query: z.object({ kind: dictionaryKind }),
+  create: z.object({
+    kind: dictionaryKind,
+    name: dictionaryName,
+    icon: dictionaryIcon.optional()
+  }),
+  update: z
+    .object({
+      name: dictionaryName.optional(),
+      icon: dictionaryIcon.optional()
+    })
+    .strict()
+    .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' })
+}
+
 module.exports = {
   authSchemas,
   userSchemas,
@@ -388,6 +377,7 @@ module.exports = {
   planSchemas,
   accountSchemas,
   recordSchemas,
+  dictionarySchemas,
   adminSchemas,
   idParams
 }

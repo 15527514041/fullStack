@@ -2,6 +2,7 @@ const AppError = require('../../errors/AppError')
 
 const prisma = require('../../utils/prisma')
 const { assertOwnedTagIds, TAG_SCOPE } = require('../tag/tag.service')
+const { DICTIONARY_KIND } = require('../dictionary/dictionary.service')
 
 const PERIOD_LABELS = {
   manual_day: '该日期',
@@ -80,11 +81,30 @@ async function prepareItems(userId, items) {
   const allTagIds = [...new Set(items.flatMap((item) => item.tagIds || []))]
   await assertOwnedTagIds(userId, allTagIds, TAG_SCOPE.ACCOUNTING)
 
+  const categoryIds = [...new Set(items.map((item) => item.categoryId))]
+  const ownedCategories = await prisma.dictionaryItem.findMany({
+    where: { id: { in: categoryIds }, userId },
+    select: { id: true, kind: true }
+  })
+  const categoryKinds = new Map(ownedCategories.map((item) => [item.id, item.kind]))
+
   return items.map((item, index) => {
     const tagIds = [...new Set(item.tagIds || [])]
+    const categoryKind = categoryKinds.get(item.categoryId)
+    if (!categoryKind) {
+      throw new AppError('分类不存在', 400)
+    }
+    const expectedKind =
+      item.type === 'INCOME'
+        ? DICTIONARY_KIND.INCOME_CATEGORY
+        : DICTIONARY_KIND.EXPENSE_CATEGORY
+    if (categoryKind !== expectedKind) {
+      throw new AppError('分类与收支类型不匹配', 400)
+    }
+
     return {
       type: item.type,
-      category: item.category,
+      categoryId: item.categoryId,
       accountId: item.accountId,
       amountCents: item.amountCents,
       remark: normalizeRemark(item.remark),
@@ -108,7 +128,15 @@ const recordDetailInclude = {
   items: {
     orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
     include: {
-      account: { select: { id: true, name: true, kind: true, enabled: true } },
+      account: {
+        select: {
+          id: true,
+          name: true,
+          kind: { select: { id: true, name: true, icon: true } },
+          enabled: true
+        }
+      },
+      category: { select: { id: true, name: true } },
       tags: { select: { id: true, name: true, type: true } }
     }
   }
@@ -147,6 +175,7 @@ function toRecordDetail(record) {
       id: item.id,
       type: item.type,
       amountCents: item.amountCents,
+      categoryId: item.categoryId,
       category: item.category,
       accountId: item.accountId,
       remark: item.remark ?? null,

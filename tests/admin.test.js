@@ -111,15 +111,15 @@ test('管理员删除用户:账号连它的数据一起清掉', async () => {
   const adminToken = await createUser('boss')
   await makeAdmin('boss')
 
-  // 给 alice 造点各类数据:标签 / 待办(挂标签)/ 反思 / 规划
-  const tag = await request(app)
-    .post('/api/tags')
+  // alice 注册时自带 9 个标签,直接取一个来挂待办
+  const tagList = await request(app)
+    .get('/api/tags?scope=TODO')
     .set('Authorization', `Bearer ${aliceToken}`)
-    .send({ name: '工作', type: 'primary' })
+  const tagId = tagList.body[0].id
   await request(app)
     .post('/api/todos')
     .set('Authorization', `Bearer ${aliceToken}`)
-    .send({ title: '写周报', tagIds: [tag.body.id] })
+    .send({ title: '写周报', tagIds: [tagId] })
   await request(app)
     .post('/api/reflections')
     .set('Authorization', `Bearer ${aliceToken}`)
@@ -134,7 +134,7 @@ test('管理员删除用户:账号连它的数据一起清掉', async () => {
 
   assert.strictEqual(res.status, 200)
   assert.strictEqual(res.body.message, '用户已删除')
-  assert.deepStrictEqual(res.body.removed, { todos: 1, tags: 1, reflections: 1, plans: 1 })
+  assert.deepStrictEqual(res.body.removed, { todos: 1, tags: 9, reflections: 1, plans: 1 })
 
   // 库里的数据确实都没了(否则外键 RESTRICT 根本删不掉用户,这里再确认一遍)
   assert.strictEqual(await prisma.user.count({ where: { username: 'alice' } }), 0)

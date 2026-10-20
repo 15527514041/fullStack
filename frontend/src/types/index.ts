@@ -48,7 +48,7 @@ export interface Tag {
 
 export interface TagItem extends Tag {
   createdAt?: string
-  _count?: { todos: number }
+  _count?: { todos: number; ledgerItems?: number }
 }
 
 // ===== TODO =====
@@ -192,16 +192,25 @@ export interface DateRangeQuery {
 }
 
 // ===== 记账:资产账户 =====
-/** 账户类型:先固定这几种,后端枚举同名 */
-export type AccountKind =
-  | 'CASH'
-  | 'WECHAT'
-  | 'ALIPAY'
-  | 'DEBIT_CARD'
-  | 'CREDIT_CARD'
-  | 'INVESTMENT'
-  | 'LIABILITY'
-  | 'OTHER'
+export type DictionaryKind = 'ACCOUNT_KIND' | 'INCOME_CATEGORY' | 'EXPENSE_CATEGORY'
+
+/** 字典项在账户/账单接口里的精简引用 */
+export interface DictionaryRef {
+  id: number
+  name: string
+  icon?: string | null
+}
+
+export interface DictionaryItem extends DictionaryRef {
+  kind: DictionaryKind
+  code?: string | null
+  sortOrder: number
+  createdAt?: string
+  _count?: {
+    accounts: number
+    ledgerItems: number
+  }
+}
 
 /**
  * 资产账户
@@ -210,7 +219,8 @@ export type AccountKind =
 export interface LedgerAccount {
   id: number
   name: string
-  kind: AccountKind
+  kindId: number
+  kind: DictionaryRef
   note?: string | null
   /** 单位:分;信用卡欠款是负数 */
   balanceCents: number
@@ -227,33 +237,11 @@ export interface LedgerAccount {
 export type LedgerRecordSource = 'manual_day' | 'manual_week' | 'manual_month'
 export type LedgerItemType = 'INCOME' | 'EXPENSE'
 
-/** 固定分类代码:后端枚举同名,展示文案走 i18n */
-export type LedgerCategory =
-  | 'SALARY'
-  | 'PART_TIME'
-  | 'INVESTMENT'
-  | 'RENT'
-  | 'GIFT'
-  | 'SUBSIDY'
-  | 'OTHER_INCOME'
-  | 'FOOD'
-  | 'TRANSPORT'
-  | 'HOUSING'
-  | 'SHOPPING'
-  | 'MEDICAL'
-  | 'ENTERTAINMENT'
-  | 'SOCIAL'
-  | 'EDUCATION'
-  | 'COMMUNICATION'
-  | 'INSURANCE'
-  | 'REPAYMENT'
-  | 'OTHER_EXPENSE'
-
 /** 明细里带出的账户快照字段 */
 export interface LedgerItemAccount {
   id: number
   name: string
-  kind: AccountKind
+  kind: DictionaryRef
   enabled: boolean
 }
 
@@ -261,7 +249,8 @@ export interface LedgerItem {
   id?: number
   type: LedgerItemType
   amountCents: number
-  category: LedgerCategory
+  categoryId: number
+  category: DictionaryRef
   accountId: number
   remark?: string | null
   sortOrder?: number
@@ -299,7 +288,7 @@ export interface LedgerRecordQuery {
 
 export interface LedgerItemPayload {
   type: LedgerItemType
-  category: LedgerCategory
+  categoryId: number
   accountId: number
   amountCents: number
   tagIds?: number[]

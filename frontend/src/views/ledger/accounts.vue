@@ -4,31 +4,26 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'elem
 import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { createAccount, deleteAccount, getAccounts, updateAccount, updateAccountBalance } from '@/api/ledger'
+import { getDictionaries } from '@/api/dictionaries'
 import AccountIcon from '@/components/AccountIcon.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTimeShort } from '@/utils/datetime'
 import { centsToYuan, formatCents, yuanToCents } from '@/utils/money'
-import type { AccountKind, LedgerAccount } from '@/types'
+import type { DictionaryItem, LedgerAccount } from '@/types'
 
 const { t } = useI18n()
 const { isMobile } = useIsMobile()
 
 const accounts = ref<LedgerAccount[]>([])
+const accountKinds = ref<DictionaryItem[]>([])
 const loading = ref(false)
 
-const kindOptions = computed<Array<{ value: AccountKind; label: string }>>(() => [
-  { value: 'CASH', label: t('ledger.accounts.kindCash') },
-  { value: 'WECHAT', label: t('ledger.accounts.kindWechat') },
-  { value: 'ALIPAY', label: t('ledger.accounts.kindAlipay') },
-  { value: 'DEBIT_CARD', label: t('ledger.accounts.kindDebitCard') },
-  { value: 'CREDIT_CARD', label: t('ledger.accounts.kindCreditCard') },
-  { value: 'INVESTMENT', label: t('ledger.accounts.kindInvestment') },
-  { value: 'LIABILITY', label: t('ledger.accounts.kindLiability') },
-  { value: 'OTHER', label: t('ledger.accounts.kindOther') }
-])
+const kindOptions = computed(() =>
+  accountKinds.value.map((item) => ({ value: item.id, label: item.name, icon: item.icon }))
+)
 
-function kindLabel(kind: AccountKind): string {
-  return kindOptions.value.find((item) => item.value === kind)?.label || kind
+function kindIcon(kindId: number): string {
+  return accountKinds.value.find((item) => item.id === kindId)?.icon || 'OTHER'
 }
 
 // 停用的账户整体淡化(表格版),它不参与资产汇总,数据还在
@@ -63,7 +58,12 @@ const staleCount = computed(() => {
 async function loadAccounts(): Promise<void> {
   loading.value = true
   try {
-    accounts.value = await getAccounts()
+    const [accountList, kindList] = await Promise.all([
+      getAccounts(),
+      getDictionaries('ACCOUNT_KIND')
+    ])
+    accounts.value = accountList
+    accountKinds.value = kindList
   } catch {
     // 错误提示已在 axios 拦截器统一处理
   } finally {
@@ -76,9 +76,9 @@ const dialogVisible = ref(false)
 const editingAccountId = ref<number | null>(null)
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
-const form = reactive<{ name: string; kind: AccountKind; balanceYuan: number | undefined; note: string }>({
+const form = reactive<{ name: string; kindId: number | undefined; balanceYuan: number | undefined; note: string }>({
   name: '',
-  kind: 'CASH',
+  kindId: undefined,
   balanceYuan: undefined,
   note: ''
 })
@@ -92,13 +92,14 @@ const rules = computed<FormRules>(() => ({
   name: [
     { required: true, message: t('validation.accountNameRequired'), trigger: 'blur' },
     { min: 1, max: 20, message: t('validation.accountNameLength'), trigger: 'blur' }
-  ]
+  ],
+  kindId: [{ required: true, message: t('validation.accountKindRequired'), trigger: 'change' }]
 }))
 
 function openAddDialog(): void {
   editingAccountId.value = null
   form.name = ''
-  form.kind = 'CASH'
+  form.kindId = accountKinds.value[0]?.id
   form.balanceYuan = undefined
   form.note = ''
   formRef.value?.clearValidate()
@@ -108,7 +109,7 @@ function openAddDialog(): void {
 function openEditDialog(account: LedgerAccount): void {
   editingAccountId.value = account.id
   form.name = account.name
-  form.kind = account.kind
+  form.kindId = account.kindId
   form.balanceYuan = centsToYuan(account.balanceCents)
   form.note = account.note || ''
   formRef.value?.clearValidate()
@@ -126,14 +127,14 @@ async function handleSubmit(): Promise<void> {
     if (editingAccountId.value === null) {
       await createAccount({
         name: form.name.trim(),
-        kind: form.kind,
+        kindId: form.kindId as number,
         balanceCents: yuanToCents(form.balanceYuan ?? 0),
         note
       })
       ElMessage.success(t('ledger.accounts.created'))
     } else {
       // 余额不在这个接口里改:它有自己的入口(要刷新「上次对账」时间)
-      await updateAccount(editingAccountId.value, { name: form.name.trim(), kind: form.kind, note })
+      await updateAccount(editingAccountId.value, { name: form.name.trim(), kindId: form.kindId as number, note })
       ElMessage.success(t('ledger.accounts.updated'))
     }
     dialogVisible.value = false
@@ -264,8 +265,8 @@ onMounted(loadAccounts)
 
         <div class="card-meta">
           <span class="kind-cell">
-            <AccountIcon :kind="row.kind" :size="20" />
-            {{ kindLabel(row.kind) }}
+            <AccountIcon :icon="row.kind.icon" :size="20" />
+            {{ row.kind.name }}
           </span>
           <span v-if="row.note">{{ row.note }}</span>
           <span>{{ $t('ledger.accounts.colUpdatedAt') }}:{{ formatDateTimeShort(row.balanceUpdatedAt) }}</span>
@@ -292,8 +293,8 @@ onMounted(loadAccounts)
       <el-table-column :label="$t('ledger.accounts.colKind')" width="128">
         <template #default="{ row }">
           <span class="kind-cell">
-            <AccountIcon :kind="row.kind" :size="24" />
-            {{ kindLabel(row.kind) }}
+            <AccountIcon :icon="row.kind.icon" :size="24" />
+            {{ row.kind.name }}
           </span>
         </template>
       </el-table-column>
@@ -364,18 +365,18 @@ onMounted(loadAccounts)
           />
         </el-form-item>
 
-        <el-form-item :label="$t('ledger.accounts.colKind')" prop="kind">
-          <el-select v-model="form.kind" style="width: 100%">
+        <el-form-item :label="$t('ledger.accounts.colKind')" prop="kindId">
+          <el-select v-model="form.kindId" style="width: 100%">
             <!-- 选中态和下拉项都带上该类型的固定图标 -->
             <template #label="{ label, value }">
               <span class="kind-cell">
-                <AccountIcon :kind="value" :size="20" />
+                <AccountIcon :icon="kindIcon(value)" :size="20" />
                 {{ label }}
               </span>
             </template>
             <el-option v-for="opt in kindOptions" :key="opt.value" :label="opt.label" :value="opt.value">
               <span class="kind-cell">
-                <AccountIcon :kind="opt.value" :size="20" />
+                <AccountIcon :icon="opt.icon" :size="20" />
                 {{ opt.label }}
               </span>
             </el-option>
