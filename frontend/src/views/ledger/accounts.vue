@@ -3,16 +3,20 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import { createAccount, deleteAccount, getAccounts, updateAccount, updateAccountBalance } from '@/api/ledger'
 import { getDictionaries } from '@/api/dictionaries'
 import ColorDot from '@/components/ColorDot.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTimeShort } from '@/utils/datetime'
+import { DICTIONARY_CREATE_VALUE, dictionaryTabRoute } from '@/utils/dictionary'
 import { centsToYuan, formatCents, yuanToCents } from '@/utils/money'
 import type { DictionaryItem, LedgerAccount } from '@/types'
 
 const { t } = useI18n()
 const { isMobile } = useIsMobile()
+const route = useRoute()
+const router = useRouter()
 
 const accounts = ref<LedgerAccount[]>([])
 const accountKinds = ref<DictionaryItem[]>([])
@@ -102,6 +106,12 @@ function openAddDialog(): void {
   form.note = ''
   formRef.value?.clearValidate()
   dialogVisible.value = true
+}
+
+function handleKindChange(value: string | number): void {
+  if (value !== DICTIONARY_CREATE_VALUE) return
+  form.kindId = (accountKinds.value.find((item) => item.enabled) || accountKinds.value[0])?.id
+  router.push(dictionaryTabRoute('ACCOUNT_KIND'))
 }
 
 function openEditDialog(account: LedgerAccount): void {
@@ -203,7 +213,12 @@ async function handleDelete(account: LedgerAccount): Promise<void> {
   }
 }
 
-onMounted(loadAccounts)
+onMounted(async () => {
+  await loadAccounts()
+  if (route.query.create !== '1') return
+  openAddDialog()
+  router.replace({ query: { ...route.query, create: undefined } })
+})
 </script>
 
 <template>
@@ -364,9 +379,18 @@ onMounted(loadAccounts)
         </el-form-item>
 
         <el-form-item :label="$t('ledger.accounts.colKind')" prop="kindId">
-          <el-select v-model="form.kindId" style="width: 100%">
+          <el-select v-model="form.kindId" style="width: 100%" @change="handleKindChange">
             <el-option v-for="opt in kindOptions" :key="opt.value" :label="opt.label" :value="opt.value">
               <span class="kind-cell"><ColorDot :color="opt.color" />{{ opt.label }}</span>
+            </el-option>
+            <el-option
+              :value="DICTIONARY_CREATE_VALUE"
+              :label="$t('dictionary.addButton', { type: $t('dictionary.accountKind') })"
+            >
+              <span class="dictionary-add-option">
+                <el-icon><Plus /></el-icon>
+                {{ $t('dictionary.addButton', { type: $t('dictionary.accountKind') }) }}
+              </span>
             </el-option>
           </el-select>
         </el-form-item>

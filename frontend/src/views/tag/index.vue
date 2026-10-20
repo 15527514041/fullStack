@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { createTag, deleteTag, getTags, updateTag } from '@/api/tags'
 import {
@@ -13,13 +14,15 @@ import {
 import ColorDot from '@/components/ColorDot.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTime } from '@/utils/datetime'
+import type { DictionaryTab } from '@/utils/dictionary'
 import type { DictionaryItem, DictionaryKind, TagItem, TagScope } from '@/types'
 
-type DictionaryTab = TagScope | DictionaryKind
 type DictionaryRow = TagItem | DictionaryItem
 
 const { t } = useI18n()
 const { isMobile } = useIsMobile()
+const route = useRoute()
+const router = useRouter()
 
 const tabs = computed<Array<{ value: DictionaryTab; label: string }>>(() => [
   { value: 'TODO', label: t('tag.tabTodo') },
@@ -58,7 +61,14 @@ function switchTab(tab: DictionaryTab): void {
   activeTab.value = tab
   tagRows.value = []
   dictionaryRows.value = []
+  router.replace({ query: { ...route.query, tab } })
   loadItems()
+}
+
+function tabFromQuery(): DictionaryTab | null {
+  const value = route.query.tab
+  if (typeof value !== 'string') return null
+  return tabs.value.some((tab) => tab.value === value) ? (value as DictionaryTab) : null
 }
 
 async function loadItems(): Promise<void> {
@@ -101,8 +111,7 @@ const editingId = ref<number | null>(null)
 const form = reactive({
   name: '',
   color: '#0bb06d',
-  sortOrder: 0,
-  enabled: true
+  sortOrder: 0
 })
 
 const colorOptions = [
@@ -138,7 +147,6 @@ function openAddDialog(): void {
   form.name = ''
   form.color = '#0bb06d'
   form.sortOrder = maxSort + 1
-  form.enabled = true
   formRef.value?.clearValidate()
   dialogVisible.value = true
 }
@@ -148,7 +156,6 @@ function openEditDialog(row: DictionaryRow): void {
   form.name = row.name
   form.color = row.color || '#0bb06d'
   form.sortOrder = row.sortOrder || 0
-  form.enabled = row.enabled
   formRef.value?.clearValidate()
   dialogVisible.value = true
 }
@@ -165,15 +172,14 @@ async function submitItem(): Promise<void> {
           name: form.name.trim(),
           color: form.color,
           scope: activeTagScope.value,
-          enabled: form.enabled,
+          enabled: true,
           sortOrder: form.sortOrder
         })
       } else {
         await updateTag(editingId.value, {
           name: form.name.trim(),
           color: form.color,
-          sortOrder: form.sortOrder,
-          enabled: form.enabled
+          sortOrder: form.sortOrder
         })
       }
     } else if (editingId.value === null) {
@@ -181,15 +187,14 @@ async function submitItem(): Promise<void> {
         kind: activeDictionaryKind.value,
         name: form.name.trim(),
         color: form.color,
-        enabled: form.enabled,
+        enabled: true,
         sortOrder: form.sortOrder
       })
     } else {
       await updateDictionary(editingId.value, {
         name: form.name.trim(),
         color: form.color,
-        sortOrder: form.sortOrder,
-        enabled: form.enabled
+        sortOrder: form.sortOrder
       })
     }
     dialogVisible.value = false
@@ -272,7 +277,23 @@ async function handleDelete(row: DictionaryRow): Promise<void> {
   }
 }
 
-onMounted(loadItems)
+onMounted(() => {
+  const initialTab = tabFromQuery()
+  if (initialTab) activeTab.value = initialTab
+  loadItems()
+})
+
+watch(
+  () => route.query.tab,
+  () => {
+    const tab = tabFromQuery()
+    if (!tab || tab === activeTab.value) return
+    activeTab.value = tab
+    tagRows.value = []
+    dictionaryRows.value = []
+    loadItems()
+  }
+)
 </script>
 
 <template>
@@ -376,13 +397,6 @@ onMounted(loadItems)
 
       <el-dialog v-model="dialogVisible" :title="dialogTitle" width="min(640px, 94vw)" :show-close="false">
         <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-          <el-form-item :label="$t('dictionary.kind')">
-            <div class="scope-field">
-              <el-input :model-value="activeTabLabel" disabled />
-              <span class="scope-locked">{{ $t('dictionary.kindLocked') }}</span>
-            </div>
-          </el-form-item>
-
           <el-form-item :label="$t('dictionary.name')" prop="name">
             <el-input
               v-model="form.name"
@@ -393,20 +407,22 @@ onMounted(loadItems)
             />
           </el-form-item>
 
+          <el-form-item :label="$t('dictionary.sortOrder')">
+            <el-input-number
+              v-model="form.sortOrder"
+              class="sort-order-input"
+              :controls="false"
+              :min="0"
+              :max="9999"
+            />
+          </el-form-item>
+
           <el-form-item :label="$t('dictionary.color')">
             <div class="color-field">
               <el-color-picker v-model="form.color" :predefine="colorOptions" />
               <ColorDot :color="form.color" :size="10" />
               <span>{{ form.color }}</span>
             </div>
-          </el-form-item>
-
-          <el-form-item :label="$t('dictionary.sortOrder')">
-            <el-input-number v-model="form.sortOrder" :min="0" :max="9999" style="width: 100%" />
-          </el-form-item>
-
-          <el-form-item :label="$t('dictionary.status')">
-            <el-switch v-model="form.enabled" />
           </el-form-item>
         </el-form>
         <template #footer>
@@ -494,15 +510,20 @@ onMounted(loadItems)
   gap: 8px;
 }
 
-.scope-field {
+.sort-order-input {
   width: 100%;
+  height: 50px;
 }
 
-.scope-locked {
-  display: block;
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--color-text-3);
+.sort-order-input :deep(.el-input__wrapper) {
+  min-height: 50px;
+  height: 50px;
+  box-sizing: border-box;
+}
+
+.sort-order-input :deep(.el-input__inner) {
+  height: 100%;
+  line-height: normal;
 }
 
 :deep(.row-off),

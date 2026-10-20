@@ -9,6 +9,7 @@ import { getTags } from '@/api/tags'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import { formatDateTime } from '@/utils/datetime'
+import { DICTIONARY_CREATE_VALUE, dictionaryTabRoute } from '@/utils/dictionary'
 import OssUploader from '@/components/OssUploader.vue'
 import OssAttachmentPreview from '@/components/OssAttachmentPreview.vue'
 import ColorDot from '@/components/ColorDot.vue'
@@ -196,6 +197,12 @@ function handleReset(): void {
   query.dateRange = ''
   query.page = 1
   loadTodos()
+}
+
+function handleTagFormChange(values: Array<string | number>): void {
+  if (!values.includes(DICTIONARY_CREATE_VALUE)) return
+  form.tagIds = values.filter((value): value is number => typeof value === 'number')
+  router.push(dictionaryTabRoute('TODO'))
 }
 
 // 附件列的 ossId 列表(后端已按 sortOrder 排好)
@@ -424,7 +431,14 @@ onMounted(() => {
 
         <el-form-item :label="$t('todo.formTags')">
           <!-- 选中的标签用各自的类型颜色回显(EP 默认是一律中性灰) -->
-          <el-select v-model="form.tagIds" multiple class="tag-multiselect" :placeholder="$t('common.optional')" style="width: 100%">
+          <el-select
+            v-model="form.tagIds"
+            multiple
+            class="tag-multiselect"
+            :placeholder="$t('common.optional')"
+            style="width: 100%"
+            @change="handleTagFormChange"
+          >
             <template #tag="{ data, deleteTag, selectDisabled }">
               <el-tag
                 v-for="item in data"
@@ -439,6 +453,15 @@ onMounted(() => {
             </template>
             <el-option v-for="tag in tagOptions" :key="tag.id" :label="tag.name" :value="tag.id">
               <span class="tag-option"><ColorDot :color="tag.color" />{{ tag.name }}</span>
+            </el-option>
+            <el-option
+              :value="DICTIONARY_CREATE_VALUE"
+              :label="$t('dictionary.addButton', { type: $t('tag.tabTodo') })"
+            >
+              <span class="dictionary-add-option">
+                <el-icon><Plus /></el-icon>
+                {{ $t('dictionary.addButton', { type: $t('tag.tabTodo') }) }}
+              </span>
             </el-option>
           </el-select>
         </el-form-item>

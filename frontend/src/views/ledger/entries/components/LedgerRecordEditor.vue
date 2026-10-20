@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import {
   createLedgerRecord,
@@ -16,6 +17,7 @@ import ColorDot from '@/components/ColorDot.vue'
 import ActionIcon from '@/components/ActionIcon.vue'
 import BackButton from '@/components/BackButton.vue'
 import { centsToYuan, formatCents, yuanToCents } from '@/utils/money'
+import { DICTIONARY_CREATE_VALUE, dictionaryTabRoute } from '@/utils/dictionary'
 import type {
   DictionaryItem,
   LedgerAccount,
@@ -37,6 +39,8 @@ import {
 } from '../utils'
 import LedgerAmountText from './LedgerAmountText.vue'
 import LedgerTagList from './LedgerTagList.vue'
+
+const ACCOUNT_CREATE_VALUE = '__account_create__'
 
 interface EditorRow {
   key: number
@@ -110,6 +114,17 @@ const periodLabel = computed(() =>
 )
 const periodRange = computed(() =>
   formatPeriodRange(props.source, periodStart.value, periodEnd.value)
+)
+const periodTooltip = computed(() =>
+  t('ledger.entries.periodTooltip', {
+    unit: t(
+      props.source === 'manual_day'
+        ? 'ledger.entries.periodUnitDate'
+        : props.source === 'manual_week'
+          ? 'ledger.entries.periodUnitWeek'
+          : 'ledger.entries.periodUnitMonth'
+    )
+  })
 )
 const weekPickerFormat = computed(() =>
   locale.value === 'en_US' ? '[Week] ww, YYYY' : 'YYYY 年第 ww 周'
@@ -254,7 +269,7 @@ function openEditItem(row: EditorRow, type: LedgerItemType): void {
   void nextTick(() => itemFormRef.value?.clearValidate())
 }
 
-async function saveItem(continueAdding = false): Promise<void> {
+async function saveItem(): Promise<void> {
   const valid = await itemFormRef.value?.validate().catch(() => false)
   if (!valid) return
 
@@ -270,17 +285,6 @@ async function saveItem(continueAdding = false): Promise<void> {
   expenseRows.value = expenseRows.value.filter((item) => item.key !== row.key)
   incomeRows.value = incomeRows.value.filter((item) => item.key !== row.key)
   rowsFor(itemForm.type).value.push(row)
-
-  if (continueAdding) {
-    editingItemKey.value = null
-    itemForm.categoryId = null
-    itemForm.amountYuan = undefined
-    itemForm.tagIds = []
-    itemForm.remark = ''
-    itemForm.accountId = row.accountId
-    void nextTick(() => itemFormRef.value?.clearValidate())
-    return
-  }
 
   itemDialogVisible.value = false
 }
@@ -330,6 +334,36 @@ function tagChipStyle(tagId: number) {
   const color = tagColorOf(tagId)
   return { color, backgroundColor: `${color}14`, borderColor: `${color}33` }
 }
+
+function handleCategoryChange(value: string | number): void {
+  if (value !== DICTIONARY_CREATE_VALUE) return
+  itemForm.categoryId = null
+  router.push(
+    dictionaryTabRoute(itemForm.type === 'EXPENSE' ? 'EXPENSE_CATEGORY' : 'INCOME_CATEGORY')
+  )
+}
+
+function handleEditorTagChange(values: Array<string | number>): void {
+  if (!values.includes(DICTIONARY_CREATE_VALUE)) return
+  itemForm.tagIds = values.filter((value): value is number => typeof value === 'number')
+  router.push(dictionaryTabRoute('ACCOUNTING'))
+}
+
+function handleAccountChange(value: string | number): void {
+  if (value !== ACCOUNT_CREATE_VALUE) return
+  itemForm.accountId = null
+  router.push({ name: 'ledger-accounts', query: { create: '1' } })
+}
+
+const categoryAddLabel = computed(() =>
+  t('dictionary.addButton', {
+    type: t(
+      itemForm.type === 'EXPENSE'
+        ? 'dictionary.expenseCategory'
+        : 'dictionary.incomeCategory'
+    )
+  })
+)
 
 function rowAccount(row: EditorRow): LedgerAccount | null {
   return accounts.value.find((account) => account.id === row.accountId) || null
@@ -597,14 +631,14 @@ onMounted(load)
                 <h3 class="editor-section__title period-label">{{ t('ledger.entries.periodSection') }}</h3>
                 <el-tooltip
                   v-if="isNew"
-                  :content="t('ledger.entries.periodTooltip')"
+                  :content="periodTooltip"
                   placement="top"
                   popper-class="period-help-popper"
                 >
                   <span
                     class="period-help"
                     tabindex="0"
-                    :aria-label="t('ledger.entries.periodTooltip')"
+                    :aria-label="periodTooltip"
                   >
                     <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
                       <circle cx="10" cy="10" r="7.4" stroke="currentColor" stroke-width="1.5" />
@@ -768,6 +802,7 @@ onMounted(load)
 
     <el-dialog
       v-model="itemDialogVisible"
+      class="ledger-item-dialog"
       :title="itemDialogTitle"
       width="min(720px, 94vw)"
       :show-close="false"
@@ -787,6 +822,7 @@ onMounted(load)
             filterable
             :placeholder="t('ledger.entries.category')"
             style="width: 100%"
+            @change="handleCategoryChange"
           >
             <el-option
               v-for="option in categoryOptions(itemForm.type)"
@@ -799,6 +835,15 @@ onMounted(load)
                 {{ option.label }}
               </span>
             </el-option>
+            <el-option
+              :value="DICTIONARY_CREATE_VALUE"
+              :label="categoryAddLabel"
+            >
+              <span class="dictionary-add-option">
+                <el-icon><Plus /></el-icon>
+                {{ categoryAddLabel }}
+              </span>
+            </el-option>
           </el-select>
         </el-form-item>
 
@@ -808,6 +853,7 @@ onMounted(load)
             filterable
             :placeholder="t('ledger.entries.account')"
             style="width: 100%"
+            @change="handleAccountChange"
           >
             <el-option
               v-for="account in accounts"
@@ -821,6 +867,15 @@ onMounted(load)
                 <el-tag v-if="!account.enabled" size="small" type="info">
                   {{ t('ledger.accounts.disabled') }}
                 </el-tag>
+              </span>
+            </el-option>
+            <el-option
+              :value="ACCOUNT_CREATE_VALUE"
+              :label="t('ledger.accounts.addButton')"
+            >
+              <span class="dictionary-add-option">
+                <el-icon><Plus /></el-icon>
+                {{ t('ledger.accounts.addButton') }}
               </span>
             </el-option>
           </el-select>
@@ -846,6 +901,7 @@ onMounted(load)
             filterable
             :placeholder="t('ledger.entries.tags')"
             style="width: 100%"
+            @change="handleEditorTagChange"
           >
             <template #tag="{ data, deleteTag, selectDisabled }">
               <el-tag
@@ -861,6 +917,15 @@ onMounted(load)
             <el-option v-for="tag in tagOptions" :key="tag.id" :value="tag.id" :label="tag.name">
               <span class="color-option"><ColorDot :color="tag.color" />{{ tag.name }}</span>
             </el-option>
+            <el-option
+              :value="DICTIONARY_CREATE_VALUE"
+              :label="t('dictionary.addButton', { type: t('tag.tabAccounting') })"
+            >
+              <span class="dictionary-add-option">
+                <el-icon><Plus /></el-icon>
+                {{ t('dictionary.addButton', { type: t('tag.tabAccounting') }) }}
+              </span>
+            </el-option>
           </el-select>
         </el-form-item>
 
@@ -875,10 +940,7 @@ onMounted(load)
 
       <template #footer>
         <el-button @click="itemDialogVisible = false">{{ t('common.cancel') }}</el-button>
-        <el-button v-if="editingItemKey === null" @click="saveItem(true)">
-          {{ t('ledger.entries.addAndContinue') }}
-        </el-button>
-        <el-button type="primary" @click="saveItem(false)">
+        <el-button type="primary" @click="saveItem">
           {{ editingItemKey === null ? t('ledger.entries.addToEntry') : t('common.save') }}
         </el-button>
       </template>
@@ -1457,5 +1519,31 @@ onMounted(load)
   padding: 8px 12px;
   font-size: 12px;
   line-height: 1.6;
+}
+
+/* 明细弹窗:上下留白,内容超高时只滚动表单区 */
+.ledger-item-dialog.el-dialog {
+  --el-dialog-margin-top: 6vh;
+  display: flex;
+  max-height: 88vh;
+  margin-bottom: 6vh;
+  flex-direction: column;
+}
+
+.ledger-item-dialog .el-dialog__body {
+  overflow-y: auto;
+}
+
+.ledger-item-dialog .el-dialog__header,
+.ledger-item-dialog .el-dialog__footer {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .ledger-item-dialog.el-dialog {
+    --el-dialog-margin-top: 4vh;
+    max-height: 92vh;
+    margin-bottom: 4vh;
+  }
 }
 </style>

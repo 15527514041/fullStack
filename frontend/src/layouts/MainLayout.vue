@@ -65,8 +65,7 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
       // 标签是任务和记账共用的通用能力,所以不挂在任务管理下
       title: t('menu.commonGroup'),
       items: [
-        { path: '/tags', title: t('menu.tags'), icon: 'tag' },
-        { path: 'plan-settings', title: t('menu.systemSettings'), icon: 'settings', disabled: true }
+        { path: '/tags', title: t('menu.tags'), icon: 'tag' }
       ]
     },
     {

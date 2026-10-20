@@ -407,6 +407,15 @@ body {
   margin-bottom: 16px;
 }
 
+/* 字典选择框末尾的“新增”入口:和普通选项区分开 */
+.dictionary-add-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--el-color-primary);
+  font-weight: 500;
+}
+
 /* 表格:表头不铺底色(参考 client),行分隔线 + hover 反馈 */
 .el-table {
   --el-table-border-color: var(--color-border);
