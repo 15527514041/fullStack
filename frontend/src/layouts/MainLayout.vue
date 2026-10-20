@@ -41,10 +41,10 @@ interface MenuItem {
 const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
   const groups = [
     {
-      title: t('menu.tasksGroup'),
+      title: t('menu.ledgerGroup'),
       items: [
-        { path: '/', title: t('menu.todoList'), icon: 'tasks' },
-        { path: '/trash', title: t('menu.trash'), icon: 'trash' }
+        { path: '/ledger/accounts', title: t('menu.accounts'), icon: 'wallet' },
+        { path: '/ledger/entries', title: t('menu.entries'), icon: 'bill' }
       ]
     },
     {
@@ -55,10 +55,10 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
       ]
     },
     {
-      title: t('menu.ledgerGroup'),
+      title: t('menu.tasksGroup'),
       items: [
-        { path: '/ledger/accounts', title: t('menu.accounts'), icon: 'wallet' },
-        { path: '/ledger/entries', title: t('menu.entries'), icon: 'bill' }
+        { path: '/', title: t('menu.todoList'), icon: 'tasks' },
+        { path: '/trash', title: t('menu.trash'), icon: 'trash' }
       ]
     },
     {
