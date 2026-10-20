@@ -8,10 +8,16 @@ export function getDictionaries(kind: DictionaryKind): Promise<DictionaryItem[]>
 export interface CreateDictionaryPayload {
   kind: DictionaryKind
   name: string
+  color: string
+  enabled?: boolean
+  sortOrder?: number
 }
 
 export interface UpdateDictionaryPayload {
   name?: string
+  color?: string
+  enabled?: boolean
+  sortOrder?: number
 }
 
 export function createDictionary(data: CreateDictionaryPayload): Promise<DictionaryItem> {

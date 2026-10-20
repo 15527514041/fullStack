@@ -13,6 +13,8 @@ const dictionarySelect = {
   kind: true,
   code: true,
   name: true,
+  color: true,
+  enabled: true,
   sortOrder: true,
   createdAt: true,
   _count: {
@@ -37,7 +39,7 @@ async function listDictionaryItems(userId, kind) {
   })
 }
 
-async function createDictionaryItem(userId, { kind, name }) {
+async function createDictionaryItem(userId, { kind, name, color, enabled, sortOrder }) {
   const existing = await prisma.dictionaryItem.findFirst({ where: { userId, kind, name } })
   if (existing) {
     throw new AppError(`${kindLabel(kind)}名称已存在`, 409)
@@ -54,13 +56,15 @@ async function createDictionaryItem(userId, { kind, name }) {
       userId,
       kind,
       name,
-      sortOrder: (last?.sortOrder ?? -1) + 1
+      color,
+      enabled: enabled ?? true,
+      sortOrder: sortOrder === undefined ? (last?.sortOrder ?? -1) + 1 : sortOrder
     },
     select: dictionarySelect
   })
 }
 
-async function updateDictionaryItem(userId, itemId, { name }) {
+async function updateDictionaryItem(userId, itemId, { name, color, enabled, sortOrder }) {
   const item = await prisma.dictionaryItem.findFirst({ where: { id: itemId, userId } })
   if (!item) {
     throw new AppError('字典项不存在', 404)
@@ -79,7 +83,10 @@ async function updateDictionaryItem(userId, itemId, { name }) {
   return prisma.dictionaryItem.update({
     where: { id: itemId },
     data: {
-      ...(name === undefined ? {} : { name })
+      ...(name === undefined ? {} : { name }),
+      ...(color === undefined ? {} : { color }),
+      ...(enabled === undefined ? {} : { enabled }),
+      ...(sortOrder === undefined ? {} : { sortOrder })
       // kind 故意不更新:字典类型是条目的身份,建完不能改
     },
     select: dictionarySelect
@@ -106,8 +113,8 @@ async function deleteDictionaryItem(userId, itemId) {
   if (used > 0) {
     throw new AppError(
       item.kind === DICTIONARY_KIND.ACCOUNT_KIND
-        ? '该账户类型下已有账户，不能删除'
-        : '该分类下已有账单，不能删除',
+        ? `该字典已关联 ${used} 个账户，无法删除，可选择禁用`
+        : `该字典已关联 ${used} 条账单，无法删除，可选择禁用`,
       409
     )
   }
@@ -127,7 +134,7 @@ async function deleteDictionaryItem(userId, itemId) {
 async function assertOwnedDictionaryItem(userId, itemId, kind) {
   const item = await prisma.dictionaryItem.findFirst({
     where: { id: itemId, userId, kind },
-    select: { id: true, name: true, kind: true }
+    select: { id: true, name: true, color: true, enabled: true, kind: true }
   })
   if (!item) {
     throw new AppError('字典项不存在或类型不匹配', 400)

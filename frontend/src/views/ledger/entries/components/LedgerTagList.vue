@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Tag } from '@/types'
+import ColorTag from '@/components/ColorTag.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -17,9 +18,7 @@ const hiddenCount = computed(() => Math.max(props.tags.length - props.max, 0))
 
 <template>
   <span v-if="tags.length" class="ledger-tag-list">
-    <el-tag v-for="tag in visibleTags" :key="tag.id" :type="tag.type" size="small" effect="light">
-      {{ tag.name }}
-    </el-tag>
+    <ColorTag v-for="tag in visibleTags" :key="tag.id" :name="tag.name" :color="tag.color" />
     <span v-if="hiddenCount" class="ledger-tag-list__more">+{{ hiddenCount }}</span>
   </span>
   <span v-else class="ledger-tag-list__empty">{{ emptyText }}</span>

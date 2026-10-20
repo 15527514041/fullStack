@@ -132,12 +132,12 @@ const recordDetailInclude = {
         select: {
           id: true,
           name: true,
-          kind: { select: { id: true, name: true } },
+          kind: { select: { id: true, name: true, color: true } },
           enabled: true
         }
       },
-      category: { select: { id: true, name: true } },
-      tags: { select: { id: true, name: true, type: true } }
+      category: { select: { id: true, name: true, color: true } },
+      tags: { select: { id: true, name: true, color: true, enabled: true } }
     }
   }
 }

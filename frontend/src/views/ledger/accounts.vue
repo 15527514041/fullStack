@@ -5,6 +5,7 @@ import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { createAccount, deleteAccount, getAccounts, updateAccount, updateAccountBalance } from '@/api/ledger'
 import { getDictionaries } from '@/api/dictionaries'
+import ColorDot from '@/components/ColorDot.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTimeShort } from '@/utils/datetime'
 import { centsToYuan, formatCents, yuanToCents } from '@/utils/money'
@@ -16,10 +17,6 @@ const { isMobile } = useIsMobile()
 const accounts = ref<LedgerAccount[]>([])
 const accountKinds = ref<DictionaryItem[]>([])
 const loading = ref(false)
-
-const kindOptions = computed(() =>
-  accountKinds.value.map((item) => ({ value: item.id, label: item.name }))
-)
 
 // 停用的账户整体淡化(表格版),它不参与资产汇总,数据还在
 function rowClassName(data: { row: LedgerAccount }): string {
@@ -78,6 +75,12 @@ const form = reactive<{ name: string; kindId: number | undefined; balanceYuan: n
   note: ''
 })
 
+const kindOptions = computed(() =>
+  accountKinds.value
+    .filter((item) => item.enabled || item.id === form.kindId)
+    .map((item) => ({ value: item.id, label: item.name, color: item.color }))
+)
+
 const dialogTitle = computed(() =>
   editingAccountId.value === null ? t('ledger.accounts.dialogAdd') : t('ledger.accounts.dialogEdit')
 )
@@ -94,7 +97,7 @@ const rules = computed<FormRules>(() => ({
 function openAddDialog(): void {
   editingAccountId.value = null
   form.name = ''
-  form.kindId = accountKinds.value[0]?.id
+  form.kindId = (accountKinds.value.find((item) => item.enabled) || accountKinds.value[0])?.id
   form.balanceYuan = undefined
   form.note = ''
   formRef.value?.clearValidate()
@@ -260,6 +263,7 @@ onMounted(loadAccounts)
 
         <div class="card-meta">
           <span class="kind-cell">
+            <ColorDot :color="row.kind.color" />
             {{ row.kind.name }}
           </span>
           <span v-if="row.note">{{ row.note }}</span>
@@ -287,6 +291,7 @@ onMounted(loadAccounts)
       <el-table-column :label="$t('ledger.accounts.colKind')" width="128">
         <template #default="{ row }">
           <span class="kind-cell">
+            <ColorDot :color="row.kind.color" />
             {{ row.kind.name }}
           </span>
         </template>
@@ -361,7 +366,7 @@ onMounted(loadAccounts)
         <el-form-item :label="$t('ledger.accounts.colKind')" prop="kindId">
           <el-select v-model="form.kindId" style="width: 100%">
             <el-option v-for="opt in kindOptions" :key="opt.value" :label="opt.label" :value="opt.value">
-              {{ opt.label }}
+              <span class="kind-cell"><ColorDot :color="opt.color" />{{ opt.label }}</span>
             </el-option>
           </el-select>
         </el-form-item>

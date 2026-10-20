@@ -68,9 +68,12 @@ test('字典项支持新增、编辑、删除,同类型内不能重名', async (
   const created = await request(app)
     .post('/api/dictionaries')
     .set(auth(token))
-    .send({ kind: 'ACCOUNT_KIND', name: '数字钱包' })
+    .send({ kind: 'ACCOUNT_KIND', name: '数字钱包', color: '#9254de', sortOrder: 20 })
   assert.strictEqual(created.status, 201)
   assert.strictEqual(created.body.name, '数字钱包')
+  assert.strictEqual(created.body.color, '#9254de')
+  assert.strictEqual(created.body.sortOrder, 20)
+  assert.strictEqual(created.body.enabled, true)
 
   const duplicate = await request(app)
     .post('/api/dictionaries')
@@ -81,9 +84,12 @@ test('字典项支持新增、编辑、删除,同类型内不能重名', async (
   const updated = await request(app)
     .patch(`/api/dictionaries/${created.body.id}`)
     .set(auth(token))
-    .send({ name: '数字钱包 2' })
+    .send({ name: '数字钱包 2', color: '#2d9cdb', sortOrder: 2, enabled: false })
   assert.strictEqual(updated.status, 200)
   assert.strictEqual(updated.body.name, '数字钱包 2')
+  assert.strictEqual(updated.body.color, '#2d9cdb')
+  assert.strictEqual(updated.body.sortOrder, 2)
+  assert.strictEqual(updated.body.enabled, false)
 
   const removed = await request(app)
     .delete(`/api/dictionaries/${created.body.id}`)
@@ -110,7 +116,7 @@ test('被账户或账单引用的字典项不能删除,也不能跨用户使用'
     .delete(`/api/dictionaries/${wechat.id}`)
     .set(auth(aliceToken))
   assert.strictEqual(kindUsed.status, 409)
-  assert.strictEqual(kindUsed.body.message, '该账户类型下已有账户，不能删除')
+  assert.strictEqual(kindUsed.body.message, '该字典已关联 1 个账户，无法删除，可选择禁用')
 
   const record = await request(app)
     .post('/api/ledger/records')
@@ -126,7 +132,7 @@ test('被账户或账单引用的字典项不能删除,也不能跨用户使用'
     .delete(`/api/dictionaries/${food.id}`)
     .set(auth(aliceToken))
   assert.strictEqual(categoryUsed.status, 409)
-  assert.strictEqual(categoryUsed.body.message, '该分类下已有账单，不能删除')
+  assert.strictEqual(categoryUsed.body.message, '该字典已关联 1 条账单，无法删除，可选择禁用')
 
   // Bob 不能拿 Alice 的字典项建账户
   const crossUser = await request(app)

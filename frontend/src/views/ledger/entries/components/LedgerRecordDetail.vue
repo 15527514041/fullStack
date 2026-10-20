@@ -9,6 +9,7 @@ import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTimeShort } from '@/utils/datetime'
 import { formatCents } from '@/utils/money'
 import type { DictionaryRef, LedgerRecordDetail, LedgerRecordSource } from '@/types'
+import ColorDot from '@/components/ColorDot.vue'
 import { getModeMeta } from '../constants'
 import { formatPeriodLabel, formatPeriodRange } from '../utils'
 import LedgerAmountText from './LedgerAmountText.vue'
@@ -43,6 +44,10 @@ const netClass = computed(() => {
 
 function categoryLabel(category?: DictionaryRef | null): string {
   return category?.name || '—'
+}
+
+function categoryColor(category?: DictionaryRef | null): string {
+  return category?.color || '#0bb06d'
 }
 
 async function load(): Promise<void> {
@@ -150,9 +155,13 @@ watch(() => props.recordId, load, { immediate: true })
               </div>
               <div class="ledger-detail-item__meta">
                 <span class="account-cell">
+                  <ColorDot :color="item.account?.kind?.color" />
                   {{ item.account?.name || '—' }}
                 </span>
-                <span>{{ categoryLabel(item.category) }}</span>
+                <span class="category-cell">
+                  <ColorDot :color="categoryColor(item.category)" />
+                  {{ categoryLabel(item.category) }}
+                </span>
               </div>
               <LedgerTagList v-if="item.tags?.length" :tags="item.tags" class="ledger-detail-item__tags" />
               <div v-if="item.remark" class="ledger-detail-item__remark">{{ item.remark }}</div>
@@ -173,12 +182,18 @@ watch(() => props.recordId, load, { immediate: true })
             <el-table-column :label="t('ledger.entries.colAccount')" min-width="160">
               <template #default="{ row }">
                 <span class="account-cell">
+                  <ColorDot :color="row.account?.kind?.color" />
                   {{ row.account?.name || '—' }}
                 </span>
               </template>
             </el-table-column>
             <el-table-column :label="t('ledger.entries.colCategory')" width="110">
-              <template #default="{ row }">{{ categoryLabel(row.category) }}</template>
+              <template #default="{ row }">
+                <span class="category-cell">
+                  <ColorDot :color="categoryColor(row.category)" />
+                  {{ categoryLabel(row.category) }}
+                </span>
+              </template>
             </el-table-column>
             <el-table-column :label="t('ledger.entries.colTags')" min-width="160">
               <template #default="{ row }">
@@ -294,6 +309,12 @@ watch(() => props.recordId, load, { immediate: true })
   align-items: center;
   gap: 6px;
   color: var(--color-text-2);
+}
+
+.category-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .ledger-detail-items {

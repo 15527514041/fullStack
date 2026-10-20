@@ -11,7 +11,9 @@ import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import { formatDateTime } from '@/utils/datetime'
 import OssUploader from '@/components/OssUploader.vue'
 import OssAttachmentPreview from '@/components/OssAttachmentPreview.vue'
-import type { TagItem, TagType, Todo } from '@/types'
+import ColorDot from '@/components/ColorDot.vue'
+import ColorTag from '@/components/ColorTag.vue'
+import type { TagItem, Todo } from '@/types'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -201,9 +203,21 @@ function attachmentIds(todo: Todo): string[] {
   return (todo.attachments || []).map((item) => item.ossId)
 }
 
-// 多选标签按类型着色:老数据没有 type 时按 primary 兜底
-function tagTypeOf(tagId: number): TagType {
-  return tags.value.find((item) => item.id === tagId)?.type || 'primary'
+const tagOptions = computed(() =>
+  tags.value.filter((tag) => tag.enabled || form.tagIds.includes(tag.id))
+)
+
+function tagColorOf(tagId: number): string {
+  return tags.value.find((item) => item.id === tagId)?.color || '#0bb06d'
+}
+
+function tagChipStyle(tagId: number) {
+  const color = tagColorOf(tagId)
+  return {
+    color,
+    backgroundColor: `${color}14`,
+    borderColor: `${color}33`
+  }
 }
 
 // 详情单独一个页面(样式参考 client 的详情页)
@@ -274,7 +288,7 @@ onMounted(() => {
         @change="handleSearch"
       >
         <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id">
-          <el-tag :type="tag.type || 'primary'">{{ tag.name }}</el-tag>
+          <span class="tag-option"><ColorDot :color="tag.color" />{{ tag.name }}</span>
         </el-option>
       </el-select>
 
@@ -308,7 +322,7 @@ onMounted(() => {
         <div v-if="row.remark" class="card-remark">{{ row.remark }}</div>
 
         <div v-if="row.tags && row.tags.length" class="card-tags">
-          <el-tag v-for="tag in row.tags" :key="tag.id" :type="tag.type || 'primary'">{{ tag.name }}</el-tag>
+          <ColorTag v-for="tag in row.tags" :key="tag.id" :name="tag.name" :color="tag.color" />
         </div>
 
         <div v-if="attachmentIds(row).length" class="card-attachment">
@@ -342,7 +356,7 @@ onMounted(() => {
 
       <el-table-column :label="$t('todo.colTags')" min-width="140">
         <template #default="{ row }">
-          <el-tag v-for="tag in row.tags" :key="tag.id" class="tag-item" :type="tag.type || 'primary'">{{ tag.name }}</el-tag>
+          <ColorTag v-for="tag in row.tags" :key="tag.id" :name="tag.name" :color="tag.color" class="tag-item" />
         </template>
       </el-table-column>
 
@@ -416,15 +430,15 @@ onMounted(() => {
                 v-for="item in data"
                 :key="item.value"
                 class="tag-multiselect__chip"
-                :type="tagTypeOf(item.value)"
+                :style="tagChipStyle(item.value)"
                 :closable="!selectDisabled && !item.isDisabled"
                 @close="deleteTag($event, item)"
               >
                 {{ item.currentLabel }}
               </el-tag>
             </template>
-            <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id">
-              <el-tag :type="tag.type || 'primary'">{{ tag.name }}</el-tag>
+            <el-option v-for="tag in tagOptions" :key="tag.id" :label="tag.name" :value="tag.id">
+              <span class="tag-option"><ColorDot :color="tag.color" />{{ tag.name }}</span>
             </el-option>
           </el-select>
         </el-form-item>
@@ -518,6 +532,12 @@ onMounted(() => {
 
 .card-attachment {
   margin-top: 10px;
+}
+
+.tag-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 @media (max-width: 768px) {

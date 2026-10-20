@@ -6,10 +6,8 @@ const username = z.string().trim().min(2, '用户至少 2 个字符').max(20, '�
 const password = z.string().min(6, '密码至少 6 个字符').max(32, '密码最多 32 个字符')
 const title = z.string().trim().min(1, '内容不能为空').max(100, '内容最多 100 个字符')
 const tagName = z.string().trim().min(1, '标签名不能为空').max(20, '标签名最多 20 个字符')
-// 标签类型:取值直接对应 Element Plus el-tag 的语义类型
-const tagType = z.enum(['primary', 'success', 'info', 'warning', 'danger'], {
-  errorMap: () => ({ message: '标签类型不合法' })
-})
+const dictionaryColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, '颜色必须是 #RRGGBB 格式')
+const dictionarySortOrder = z.number().int().min(0).max(9999)
 // 标签域:标签是通用能力,用域区分这套标签给哪个模块用(任务 / 记账)
 const tagScope = z.enum(['TODO', 'ACCOUNTING'], {
   errorMap: () => ({ message: '标签域不合法' })
@@ -99,15 +97,18 @@ const todoSchemas = {
 const tagSchemas = {
   create: z.object({
     name: tagName,
-    // 不传则按 primary 落库(老客户端/老数据兼容)
-    type: tagType.default('primary'),
+    color: dictionaryColor.default('#0bb06d'),
+    enabled: z.boolean().optional(),
+    sortOrder: dictionarySortOrder.optional(),
     // 不传则落到任务域:老前端只会传 name/type,加分类前建的标签本来就都是任务的
     scope: tagScope.default('TODO')
   }),
   update: z
     .object({
       name: tagName.optional(),
-      type: tagType.optional(),
+      color: dictionaryColor.optional(),
+      enabled: z.boolean().optional(),
+      sortOrder: dictionarySortOrder.optional(),
       // 域是标签的身份,建完不能改。这里显式接住 scope 再拦掉,
       // 是为了回一句能看懂的中文报错,而不是让 zod 的 strict 回英文的 Unrecognized key
       scope: tagScope.optional()
@@ -352,11 +353,17 @@ const dictionarySchemas = {
   query: z.object({ kind: dictionaryKind }),
   create: z.object({
     kind: dictionaryKind,
-    name: dictionaryName
+    name: dictionaryName,
+    color: dictionaryColor.default('#0bb06d'),
+    enabled: z.boolean().optional(),
+    sortOrder: dictionarySortOrder.optional()
   }),
   update: z
     .object({
-      name: dictionaryName.optional()
+      name: dictionaryName.optional(),
+      color: dictionaryColor.optional(),
+      enabled: z.boolean().optional(),
+      sortOrder: dictionarySortOrder.optional()
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' })

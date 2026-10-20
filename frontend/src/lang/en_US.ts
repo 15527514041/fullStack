@@ -202,6 +202,9 @@ export default {
     kind: 'Dictionary type',
     name: 'Name',
     namePlaceholder: 'Enter a name',
+    color: 'Color',
+    sortOrder: 'Order',
+    status: 'Status',
     kindLocked: 'Dictionary type cannot be changed after creation',
     colUsageAccount: 'Accounts',
     colUsageCategory: 'Entries',
@@ -209,7 +212,11 @@ export default {
     created: 'Created',
     updated: 'Updated',
     deleted: 'Deleted',
-    deleteConfirm: 'Delete "{name}"?'
+    deleteConfirm: 'Delete "{name}"?',
+    inUseTitle: 'Cannot delete',
+    inUseDisable: '"{name}" is linked to {count} records. It cannot be deleted. Disabling keeps historical data but removes it from new selections. Disable it instead?',
+    inUseDisabled: '"{name}" is linked to {count} records and cannot be deleted.',
+    disable: 'Disable'
   },
   growth: {
     last7: 'Last 7 days',

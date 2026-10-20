@@ -12,6 +12,7 @@ import {
 } from '@/api/ledger'
 import { getTags } from '@/api/tags'
 import { getDictionaries } from '@/api/dictionaries'
+import ColorDot from '@/components/ColorDot.vue'
 import ActionIcon from '@/components/ActionIcon.vue'
 import BackButton from '@/components/BackButton.vue'
 import { centsToYuan, formatCents, yuanToCents } from '@/utils/money'
@@ -293,10 +294,12 @@ function categoriesFor(type: LedgerItemType): DictionaryItem[] {
 }
 
 function categoryOptions(type: LedgerItemType): Array<{ value: number; label: string }> {
-  return categoriesFor(type).map((category) => ({
-    value: category.id,
-    label: category.name
-  }))
+  return categoriesFor(type)
+    .filter((category) => category.enabled || category.id === itemForm.categoryId)
+    .map((category) => ({
+      value: category.id,
+      label: category.name
+    }))
 }
 
 function accountLabel(account: LedgerAccount): string {
@@ -306,6 +309,26 @@ function accountLabel(account: LedgerAccount): string {
 function categoryLabel(categoryId?: number | null): string {
   if (!categoryId) return '—'
   return [...incomeCategories.value, ...expenseCategories.value].find((item) => item.id === categoryId)?.name || '—'
+}
+
+function categoryColor(categoryId?: number | null): string {
+  return (
+    [...incomeCategories.value, ...expenseCategories.value].find((item) => item.id === categoryId)
+      ?.color || '#0bb06d'
+  )
+}
+
+const tagOptions = computed(() =>
+  tags.value.filter((tag) => tag.enabled || itemForm.tagIds.includes(tag.id))
+)
+
+function tagColorOf(tagId: number): string {
+  return tags.value.find((tag) => tag.id === tagId)?.color || '#0bb06d'
+}
+
+function tagChipStyle(tagId: number) {
+  const color = tagColorOf(tagId)
+  return { color, backgroundColor: `${color}14`, borderColor: `${color}33` }
 }
 
 function rowAccount(row: EditorRow): LedgerAccount | null {
@@ -697,8 +720,12 @@ onMounted(load)
                   class="ledger-compact-row"
                   @click="openEditItem(row, section.type)"
                 >
-                  <span class="compact-category">{{ categoryLabel(row.categoryId) }}</span>
+                  <span class="compact-category">
+                    <ColorDot :color="categoryColor(row.categoryId)" />
+                    {{ categoryLabel(row.categoryId) }}
+                  </span>
                   <span class="compact-account">
+                    <ColorDot :color="rowAccount(row)?.kind?.color" />
                     {{ rowAccount(row)?.name || '—' }}
                   </span>
                   <span class="compact-amount">
@@ -766,7 +793,12 @@ onMounted(load)
               :key="option.value"
               :value="option.value"
               :label="option.label"
-            />
+            >
+              <span class="color-option">
+                <ColorDot :color="categoryColor(option.value)" />
+                {{ option.label }}
+              </span>
+            </el-option>
           </el-select>
         </el-form-item>
 
@@ -784,6 +816,7 @@ onMounted(load)
               :label="accountLabel(account)"
             >
               <span class="account-option">
+                <ColorDot :color="account.kind?.color" />
                 <span>{{ account.name }}</span>
                 <el-tag v-if="!account.enabled" size="small" type="info">
                   {{ t('ledger.accounts.disabled') }}
@@ -814,7 +847,20 @@ onMounted(load)
             :placeholder="t('ledger.entries.tags')"
             style="width: 100%"
           >
-            <el-option v-for="tag in tags" :key="tag.id" :value="tag.id" :label="tag.name" />
+            <template #tag="{ data, deleteTag, selectDisabled }">
+              <el-tag
+                v-for="item in data"
+                :key="item.value"
+                :style="tagChipStyle(item.value)"
+                :closable="!selectDisabled && !item.isDisabled"
+                @close="deleteTag($event, item)"
+              >
+                {{ item.currentLabel }}
+              </el-tag>
+            </template>
+            <el-option v-for="tag in tagOptions" :key="tag.id" :value="tag.id" :label="tag.name">
+              <span class="color-option"><ColorDot :color="tag.color" />{{ tag.name }}</span>
+            </el-option>
           </el-select>
         </el-form-item>
 
@@ -1099,6 +1145,9 @@ onMounted(load)
 }
 
 .compact-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   overflow: hidden;
   font-weight: 500;
   color: var(--color-text-1);
@@ -1237,6 +1286,12 @@ onMounted(load)
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.color-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .ledger-stats-card {

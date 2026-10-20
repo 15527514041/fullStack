@@ -6,6 +6,7 @@ import { getTodos, restoreTodo } from '@/api/todo'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import { formatDateTime } from '@/utils/datetime'
+import ColorTag from '@/components/ColorTag.vue'
 import type { Todo } from '@/types'
 
 const { t } = useI18n()
@@ -76,7 +77,7 @@ onMounted(loadTrash)
         </div>
 
         <div v-if="row.tags && row.tags.length" class="card-tags">
-          <el-tag v-for="tag in row.tags" :key="tag.id" :type="tag.type || 'primary'">{{ tag.name }}</el-tag>
+          <ColorTag v-for="tag in row.tags" :key="tag.id" :name="tag.name" :color="tag.color" />
         </div>
 
         <div class="card-meta">
@@ -98,7 +99,7 @@ onMounted(loadTrash)
 
       <el-table-column :label="$t('trash.colTags')" min-width="140">
         <template #default="{ row }">
-          <el-tag v-for="tag in row.tags" :key="tag.id" class="tag-item" :type="tag.type || 'primary'">{{ tag.name }}</el-tag>
+          <ColorTag v-for="tag in row.tags" :key="tag.id" :name="tag.name" :color="tag.color" class="tag-item" />
         </template>
       </el-table-column>
 

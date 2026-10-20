@@ -5,6 +5,7 @@ import { getTodo } from '@/api/todo'
 import { formatDateTime } from '@/utils/datetime'
 import BackButton from '@/components/BackButton.vue'
 import OssAttachmentPreview from '@/components/OssAttachmentPreview.vue'
+import ColorTag from '@/components/ColorTag.vue'
 import type { Todo } from '@/types'
 
 /**
@@ -80,9 +81,7 @@ onMounted(loadDetail)
           <span class="label">{{ $t('todo.formTags') }}</span>
           <span class="value">
             <template v-if="todo.tags && todo.tags.length">
-              <el-tag v-for="tag in todo.tags" :key="tag.id" class="tag-item" :type="tag.type || 'primary'">
-                {{ tag.name }}
-              </el-tag>
+              <ColorTag v-for="tag in todo.tags" :key="tag.id" :name="tag.name" :color="tag.color" class="tag-item" />
             </template>
             <span v-else class="empty-value">-</span>
           </span>

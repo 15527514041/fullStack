@@ -23,15 +23,6 @@ enum UploadVisibility {
   PRIVATE
 }
 
-// 标签类型:取值直接对应 Element Plus el-tag 的语义类型,前端不用再做映射
-enum TagType {
-  primary
-  success
-  info
-  warning
-  danger
-}
-
 // 标签域:标签管理是通用能力,各业务模块各用一套(任务 / 记账)
 enum TagScope {
   TODO
@@ -96,6 +87,8 @@ model DictionaryItem {
   kind        DictionaryKind
   code        String?
   name        String
+  color       String          @default("#0bb06d")
+  enabled     Boolean         @default(true)
   sortOrder   Int             @default(0)
   user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   accounts    LedgerAccount[]
@@ -145,7 +138,9 @@ model TodoAttachment {
 model Tag {
   id          Int          @id @default(autoincrement())
   name        String
-  type        TagType      @default(primary)
+  color       String       @default("#0bb06d")
+  enabled     Boolean      @default(true)
+  sortOrder   Int          @default(0)
   // 标签所属的域:任务域的标签只给 TODO 用,记账域的只给记账用
   scope       TagScope     @default(TODO)
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)

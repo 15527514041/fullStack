@@ -40,7 +40,7 @@ async function createAccountingTag(token, body = {}) {
   const res = await request(app)
     .post('/api/tags')
     .set(auth(token))
-    .send({ name: '日常', type: 'info', scope: 'ACCOUNTING', ...body })
+    .send({ name: '日常', color: '#909399', scope: 'ACCOUNTING', ...body })
   return res
 }
 
@@ -293,7 +293,7 @@ test('明细校验:金额、分类与类型、账户归属、标签域', async (
   const todoTag = await request(app)
     .post('/api/tags')
     .set(auth(aliceToken))
-    .send({ name: '任务标签', type: 'primary', scope: 'TODO' })
+    .send({ name: '任务标签', color: '#0bb06d', scope: 'TODO' })
 
   const zeroAmount = await createRecord(aliceToken, {
     source: 'manual_day',
@@ -408,7 +408,7 @@ test('删除账单返回 204;有账单的账户不能删除,改为停用', async
   assert.strictEqual(accountRemoved.status, 204)
 })
 
-test('删除标签后账单保留,只是不再关联该标签', async () => {
+test('有关联的记账标签不能删除,可以改为禁用', async () => {
   const token = await registerAndLogin()
   const cats = await getCategoryIds(token)
   const account = await createAccount(token)
@@ -421,11 +421,19 @@ test('删除标签后账单保留,只是不再关联该标签', async () => {
   })
 
   const tagRemoved = await request(app).delete(`/api/tags/${tag.body.id}`).set(auth(token))
-  assert.strictEqual(tagRemoved.status, 204)
+  assert.strictEqual(tagRemoved.status, 409)
+  assert.match(tagRemoved.body.message, /已关联 1 条数据/)
+
+  const disabled = await request(app)
+    .patch(`/api/tags/${tag.body.id}`)
+    .set(auth(token))
+    .send({ enabled: false })
+  assert.strictEqual(disabled.status, 200)
+  assert.strictEqual(disabled.body.enabled, false)
 
   const detail = await request(app).get(`/api/ledger/records/${created.body.id}`).set(auth(token))
   assert.strictEqual(detail.status, 200)
-  assert.deepStrictEqual(detail.body.items[0].tags, [])
+  assert.strictEqual(detail.body.items[0].tags.length, 1)
   assert.strictEqual(detail.body.itemCount, 1)
 })
 

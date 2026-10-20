@@ -199,6 +199,9 @@ export default {
     kind: '字典类型',
     name: '名称',
     namePlaceholder: '请输入名称',
+    color: '颜色',
+    sortOrder: '序号',
+    status: '启用状态',
     kindLocked: '字典类型创建后不能修改',
     colUsageAccount: '关联账户',
     colUsageCategory: '关联账单',
@@ -206,7 +209,11 @@ export default {
     created: '已创建',
     updated: '已更新',
     deleted: '已删除',
-    deleteConfirm: '确定删除「{name}」吗？'
+    deleteConfirm: '确定删除「{name}」吗？',
+    inUseTitle: '无法删除',
+    inUseDisable: '「{name}」已关联 {count} 条数据，无法直接删除。禁用后会保留历史数据，但新建时不再可选。是否改为禁用？',
+    inUseDisabled: '「{name}」已关联 {count} 条数据，无法删除。',
+    disable: '禁用'
   },
   growth: {
     last7: '过去 7 天',

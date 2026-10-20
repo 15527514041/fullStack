@@ -30,8 +30,6 @@ export interface ChangePasswordPayload {
 
 // ===== 标签 =====
 /** 标签类型:与 Element Plus el-tag 的语义类型一一对应,直接透传不映射 */
-export type TagType = 'primary' | 'success' | 'info' | 'warning' | 'danger'
-
 /**
  * 标签分类(后端字段叫 scope):标签是通用能力,用分类区分这套标签给哪个模块用
  * TODO = 任务域,ACCOUNTING = 记账域
@@ -41,7 +39,9 @@ export type TagScope = 'TODO' | 'ACCOUNTING'
 export interface Tag {
   id: number
   name: string
-  type: TagType
+  color: string
+  enabled: boolean
+  sortOrder: number
   /** TODO 接口里带出来的标签不带这个字段(那里的标签必然是任务域的) */
   scope?: TagScope
 }
@@ -198,11 +198,13 @@ export type DictionaryKind = 'ACCOUNT_KIND' | 'INCOME_CATEGORY' | 'EXPENSE_CATEG
 export interface DictionaryRef {
   id: number
   name: string
+  color: string
 }
 
 export interface DictionaryItem extends DictionaryRef {
   kind: DictionaryKind
   code?: string | null
+  enabled: boolean
   sortOrder: number
   createdAt?: string
   _count?: {

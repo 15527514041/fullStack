@@ -10,15 +10,10 @@ import {
   getDictionaries,
   updateDictionary
 } from '@/api/dictionaries'
+import ColorDot from '@/components/ColorDot.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTime } from '@/utils/datetime'
-import type {
-  DictionaryItem,
-  DictionaryKind,
-  TagItem,
-  TagScope,
-  TagType
-} from '@/types'
+import type { DictionaryItem, DictionaryKind, TagItem, TagScope } from '@/types'
 
 type DictionaryTab = TagScope | DictionaryKind
 type DictionaryRow = TagItem | DictionaryItem
@@ -47,10 +42,10 @@ const loading = ref(false)
 let loadSeq = 0
 
 const addButtonLabel = computed(() =>
-  isTagTab.value ? t('tag.addButton') : t('dictionary.addButton', { type: activeTabLabel.value })
+  t('dictionary.addButton', { type: activeTabLabel.value })
 )
 const emptyDescription = computed(() =>
-  isTagTab.value ? t('tag.empty') : t('dictionary.empty', { type: activeTabLabel.value })
+  t('dictionary.empty', { type: activeTabLabel.value })
 )
 const usageColumnLabel = computed(() => {
   if (activeTab.value === 'TODO') return t('tag.colTodoCount')
@@ -94,180 +89,171 @@ function rowUsage(row: DictionaryRow): number {
   return activeTab.value === 'ACCOUNT_KIND' ? count?.accounts || 0 : count?.ledgerItems || 0
 }
 
-function rowTagType(row: DictionaryRow): TagType {
-  return (row as TagItem).type || 'primary'
+function rowClassName(data: { row: DictionaryRow }): string {
+  return data.row.enabled ? '' : 'is-off'
 }
 
-// ===== 标签弹窗 =====
-const tagDialogVisible = ref(false)
-const tagSubmitting = ref(false)
-const tagFormRef = ref<FormInstance>()
-const editingTagId = ref<number | null>(null)
-const tagForm = reactive<{ name: string; type: TagType; scope: TagScope }>({
+// ===== 统一的新增 / 编辑弹窗 =====
+const dialogVisible = ref(false)
+const submitting = ref(false)
+const formRef = ref<FormInstance>()
+const editingId = ref<number | null>(null)
+const form = reactive({
   name: '',
-  type: 'primary',
-  scope: 'TODO'
+  color: '#0bb06d',
+  sortOrder: 0,
+  enabled: true
 })
 
-const scopeOptions = computed<Array<{ value: TagScope; label: string }>>(() => [
-  { value: 'TODO', label: t('tag.scopeTodo') },
-  { value: 'ACCOUNTING', label: t('tag.scopeAccounting') }
-])
-const tagTypeOptions = computed<Array<{ value: TagType; label: string }>>(() => [
-  { value: 'primary', label: t('tag.typePrimary') },
-  { value: 'success', label: t('tag.typeSuccess') },
-  { value: 'info', label: t('tag.typeInfo') },
-  { value: 'warning', label: t('tag.typeWarning') },
-  { value: 'danger', label: t('tag.typeDanger') }
-])
-const tagDialogTitle = computed(() =>
-  editingTagId.value === null ? t('tag.dialogTitle') : t('tag.dialogEdit')
+const colorOptions = [
+  '#0bb06d',
+  '#67c23a',
+  '#2d9cdb',
+  '#2f80ed',
+  '#9254de',
+  '#bb6bd9',
+  '#f2994a',
+  '#e6a23c',
+  '#f2c94c',
+  '#eb5757',
+  '#f56c6c',
+  '#909399'
+]
+
+const dialogTitle = computed(() =>
+  t(editingId.value === null ? 'dictionary.dialogAdd' : 'dictionary.dialogEdit', {
+    type: activeTabLabel.value
+  })
 )
-const tagRules = computed<FormRules>(() => ({
-  name: [
-    { required: true, message: t('validation.tagNameRequired'), trigger: 'blur' },
-    { min: 1, max: 20, message: t('validation.tagNameLength'), trigger: 'blur' }
-  ],
-  scope: [{ required: true, message: t('validation.tagScopeRequired'), trigger: 'change' }]
-}))
-
-function openTagDialog(): void {
-  editingTagId.value = null
-  tagForm.name = ''
-  tagForm.type = 'primary'
-  tagForm.scope = activeTagScope.value
-  tagFormRef.value?.clearValidate()
-  tagDialogVisible.value = true
-}
-
-function openTagEdit(tag: TagItem): void {
-  editingTagId.value = tag.id
-  tagForm.name = tag.name
-  tagForm.type = tag.type || 'primary'
-  tagForm.scope = tag.scope || 'TODO'
-  tagFormRef.value?.clearValidate()
-  tagDialogVisible.value = true
-}
-
-async function submitTag(): Promise<void> {
-  const valid = await tagFormRef.value?.validate().catch(() => false)
-  if (!valid) return
-
-  tagSubmitting.value = true
-  try {
-    const payload = { name: tagForm.name.trim(), type: tagForm.type }
-    if (editingTagId.value === null) {
-      await createTag({ ...payload, scope: tagForm.scope })
-    } else {
-      await updateTag(editingTagId.value, payload)
-    }
-    tagDialogVisible.value = false
-    ElMessage.success(
-      editingTagId.value === null ? t('tag.created') : t('tag.updated')
-    )
-    await loadItems()
-  } catch {
-    // 错误提示已在 axios 拦截器统一处理
-  } finally {
-    tagSubmitting.value = false
-  }
-}
-
-// ===== 账户类型 / 分类弹窗 =====
-const dictionaryDialogVisible = ref(false)
-const dictionarySubmitting = ref(false)
-const dictionaryFormRef = ref<FormInstance>()
-const editingDictionaryId = ref<number | null>(null)
-const dictionaryForm = reactive<{
-  kind: DictionaryKind
-  name: string
-}>({
-  kind: 'ACCOUNT_KIND',
-  name: ''
-})
-
-const dictionaryRules = computed<FormRules>(() => ({
+const rules = computed<FormRules>(() => ({
   name: [
     { required: true, message: t('dictionary.namePlaceholder'), trigger: 'blur' },
     { min: 1, max: 20, message: t('dictionary.namePlaceholder'), trigger: 'blur' }
   ]
 }))
-const dictionaryKindOptions = computed<Array<{ value: DictionaryKind; label: string }>>(() => [
-  { value: 'ACCOUNT_KIND', label: t('dictionary.accountKind') },
-  { value: 'EXPENSE_CATEGORY', label: t('dictionary.expenseCategory') },
-  { value: 'INCOME_CATEGORY', label: t('dictionary.incomeCategory') }
-])
-const dictionaryDialogTitle = computed(() => {
-  const kindLabel = dictionaryKindOptions.value.find((item) => item.value === dictionaryForm.kind)?.label || ''
-  return t(editingDictionaryId.value === null ? 'dictionary.dialogAdd' : 'dictionary.dialogEdit', {
-    type: kindLabel
-  })
-})
 
-function openDictionaryDialog(): void {
-  editingDictionaryId.value = null
-  dictionaryForm.kind = activeDictionaryKind.value
-  dictionaryForm.name = ''
-  dictionaryFormRef.value?.clearValidate()
-  dictionaryDialogVisible.value = true
+function openAddDialog(): void {
+  const maxSort = rows.value.reduce((max, row) => Math.max(max, row.sortOrder || 0), -1)
+  editingId.value = null
+  form.name = ''
+  form.color = '#0bb06d'
+  form.sortOrder = maxSort + 1
+  form.enabled = true
+  formRef.value?.clearValidate()
+  dialogVisible.value = true
 }
 
-function openDictionaryEdit(item: DictionaryItem): void {
-  editingDictionaryId.value = item.id
-  dictionaryForm.kind = item.kind
-  dictionaryForm.name = item.name
-  dictionaryFormRef.value?.clearValidate()
-  dictionaryDialogVisible.value = true
+function openEditDialog(row: DictionaryRow): void {
+  editingId.value = row.id
+  form.name = row.name
+  form.color = row.color || '#0bb06d'
+  form.sortOrder = row.sortOrder || 0
+  form.enabled = row.enabled
+  formRef.value?.clearValidate()
+  dialogVisible.value = true
 }
 
-async function submitDictionary(): Promise<void> {
-  const valid = await dictionaryFormRef.value?.validate().catch(() => false)
+async function submitItem(): Promise<void> {
+  const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
 
-  dictionarySubmitting.value = true
+  submitting.value = true
   try {
-    if (editingDictionaryId.value === null) {
+    if (isTagTab.value) {
+      if (editingId.value === null) {
+        await createTag({
+          name: form.name.trim(),
+          color: form.color,
+          scope: activeTagScope.value,
+          enabled: form.enabled,
+          sortOrder: form.sortOrder
+        })
+      } else {
+        await updateTag(editingId.value, {
+          name: form.name.trim(),
+          color: form.color,
+          sortOrder: form.sortOrder,
+          enabled: form.enabled
+        })
+      }
+    } else if (editingId.value === null) {
       await createDictionary({
-        kind: dictionaryForm.kind,
-        name: dictionaryForm.name.trim()
+        kind: activeDictionaryKind.value,
+        name: form.name.trim(),
+        color: form.color,
+        enabled: form.enabled,
+        sortOrder: form.sortOrder
       })
     } else {
-      await updateDictionary(editingDictionaryId.value, {
-        name: dictionaryForm.name.trim()
+      await updateDictionary(editingId.value, {
+        name: form.name.trim(),
+        color: form.color,
+        sortOrder: form.sortOrder,
+        enabled: form.enabled
       })
     }
-    dictionaryDialogVisible.value = false
-    ElMessage.success(
-      editingDictionaryId.value === null ? t('dictionary.created') : t('dictionary.updated')
-    )
+    dialogVisible.value = false
+    ElMessage.success(editingId.value === null ? t('dictionary.created') : t('dictionary.updated'))
     await loadItems()
   } catch {
     // 错误提示已在 axios 拦截器统一处理
   } finally {
-    dictionarySubmitting.value = false
+    submitting.value = false
   }
 }
 
-function openAddDialog(): void {
-  if (isTagTab.value) openTagDialog()
-  else openDictionaryDialog()
+async function updateEnabled(row: DictionaryRow, enabled: boolean): Promise<boolean> {
+  try {
+    if (isTagTab.value) await updateTag(row.id, { enabled })
+    else await updateDictionary(row.id, { enabled })
+    row.enabled = enabled
+    ElMessage.success(enabled ? t('common.enabled') : t('common.disabled'))
+    return true
+  } catch {
+    row.enabled = !enabled
+    return false
+  }
 }
 
-function openEditDialog(row: DictionaryRow): void {
-  if (isTagTab.value) openTagEdit(row as TagItem)
-  else openDictionaryEdit(row as DictionaryItem)
+function handleEnabledChange(row: DictionaryRow, value: unknown): void {
+  updateEnabled(row, Boolean(value))
 }
 
 async function handleDelete(row: DictionaryRow): Promise<void> {
+  const related = rowUsage(row)
+  if (related > 0) {
+    if (!row.enabled) {
+      await ElMessageBox.alert(
+        t('dictionary.inUseDisabled', { name: row.name, count: related }),
+        t('dictionary.inUseTitle'),
+        { type: 'warning', confirmButtonText: t('common.gotIt') }
+      )
+      return
+    }
+
+    try {
+      await ElMessageBox.confirm(
+        t('dictionary.inUseDisable', { name: row.name, count: related }),
+        t('dictionary.inUseTitle'),
+        {
+          type: 'warning',
+          confirmButtonText: t('dictionary.disable'),
+          cancelButtonText: t('common.cancel')
+        }
+      )
+    } catch {
+      return
+    }
+    await updateEnabled(row, false)
+    return
+  }
+
   try {
     await ElMessageBox.confirm(
-      isTagTab.value
-        ? t('tag.deleteConfirm', { name: row.name })
-        : t('dictionary.deleteConfirm', { name: row.name }),
+      t('dictionary.deleteConfirm', { name: row.name }),
       t('common.tip'),
       {
         type: 'warning',
-        showClose: false,
         confirmButtonText: t('common.delete'),
         cancelButtonText: t('common.cancel')
       }
@@ -279,7 +265,7 @@ async function handleDelete(row: DictionaryRow): Promise<void> {
   try {
     if (isTagTab.value) await deleteTag(row.id)
     else await deleteDictionary(row.id)
-    ElMessage.success(isTagTab.value ? t('tag.deleted') : t('dictionary.deleted'))
+    ElMessage.success(t('dictionary.deleted'))
     await loadItems()
   } catch {
     // 错误提示已在 axios 拦截器统一处理
@@ -291,7 +277,6 @@ onMounted(loadItems)
 
 <template>
   <div class="dictionary-view">
-    <!-- 所有字典入口放在同一个胶囊里,卡片内只保留标题和列表 -->
     <div class="scope-tabs" role="tablist" :aria-label="$t('tag.title')">
       <button
         v-for="tab in tabs"
@@ -318,19 +303,23 @@ onMounted(loadItems)
 
       <el-skeleton v-if="loading && rows.length === 0" :rows="6" animated class="list-skeleton" />
 
-      <!-- 移动端:卡片列表 -->
       <div v-else-if="isMobile" class="card-list">
         <el-empty v-if="rows.length === 0" :description="emptyDescription" />
 
-        <div v-for="row in rows" :key="row.id" class="list-card">
+        <div v-for="row in rows" :key="row.id" class="list-card" :class="{ 'is-off': !row.enabled }">
           <div class="card-head">
-            <template v-if="isTagTab">
-              <el-tag :type="rowTagType(row)">{{ row.name }}</el-tag>
-            </template>
-            <span v-else class="dict-name">{{ row.name }}</span>
+            <span class="dict-name">
+              <ColorDot :color="row.color" :size="9" />
+              {{ row.name }}
+            </span>
+            <el-switch
+              v-model="row.enabled"
+              @change="handleEnabledChange(row, $event)"
+            />
           </div>
 
           <div class="card-meta">
+            <span>{{ $t('dictionary.sortOrder') }}:{{ row.sortOrder }}</span>
             <span>{{ usageColumnLabel }}:{{ rowUsage(row) }}</span>
             <span>{{ $t('common.createdAt') }}:{{ formatDateTime(row.createdAt) }}</span>
           </div>
@@ -342,18 +331,31 @@ onMounted(loadItems)
         </div>
       </div>
 
-      <el-table v-else :data="rows">
-        <el-table-column :label="isTagTab ? $t('tag.colName') : $t('dictionary.name')" min-width="220">
+      <el-table v-else :data="rows" :row-class-name="rowClassName">
+        <el-table-column :label="$t('dictionary.name')" min-width="200">
           <template #default="{ row }">
-            <template v-if="isTagTab">
-              <el-tag :type="rowTagType(row)">{{ row.name }}</el-tag>
-            </template>
-            <span v-else class="dict-name">{{ row.name }}</span>
+            <span class="dict-name">
+              <ColorDot :color="row.color" :size="9" />
+              {{ row.name }}
+            </span>
           </template>
+        </el-table-column>
+
+        <el-table-column :label="$t('dictionary.sortOrder')" width="90" align="center">
+          <template #default="{ row }">{{ row.sortOrder }}</template>
         </el-table-column>
 
         <el-table-column :label="usageColumnLabel" width="120" align="center">
           <template #default="{ row }">{{ rowUsage(row) }}</template>
+        </el-table-column>
+
+        <el-table-column :label="$t('dictionary.status')" width="110" align="center">
+          <template #default="{ row }">
+            <el-switch
+              v-model="row.enabled"
+              @change="handleEnabledChange(row, $event)"
+            />
+          </template>
         </el-table-column>
 
         <el-table-column :label="$t('common.createdAt')" width="180">
@@ -372,85 +374,44 @@ onMounted(loadItems)
         </template>
       </el-table>
 
-      <!-- 标签编辑 -->
-      <el-dialog v-model="tagDialogVisible" :title="tagDialogTitle" width="min(640px, 94vw)" :show-close="false">
-        <el-form ref="tagFormRef" :model="tagForm" :rules="tagRules" label-position="top">
-          <el-form-item :label="$t('tag.colScope')" prop="scope">
-            <div class="scope-field">
-              <el-select v-model="tagForm.scope" disabled style="width: 100%">
-                <el-option v-for="opt in scopeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
-              </el-select>
-              <span class="scope-locked">{{ $t('tag.scopeLocked') }}</span>
-            </div>
-          </el-form-item>
-
-          <el-form-item :label="$t('tag.colName')" prop="name">
-            <el-input
-              v-model="tagForm.name"
-              :placeholder="$t('tag.namePlaceholder')"
-              maxlength="20"
-              show-word-limit
-              @keyup.enter="submitTag"
-            />
-          </el-form-item>
-
-          <el-form-item :label="$t('tag.colType')" prop="type">
-            <el-select v-model="tagForm.type" style="width: 100%">
-              <template #label="{ label, value }">
-                <el-tag :type="value">{{ label }}</el-tag>
-              </template>
-              <el-option v-for="opt in tagTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value">
-                <el-tag :type="opt.value">{{ opt.label }}</el-tag>
-              </el-option>
-            </el-select>
-          </el-form-item>
-        </el-form>
-        <template #footer>
-          <el-button @click="tagDialogVisible = false">{{ $t('common.cancel') }}</el-button>
-          <el-button type="primary" :loading="tagSubmitting" @click="submitTag">{{ $t('common.confirm') }}</el-button>
-        </template>
-      </el-dialog>
-
-      <!-- 账户类型 / 分类编辑 -->
-      <el-dialog
-        v-model="dictionaryDialogVisible"
-        :title="dictionaryDialogTitle"
-        width="min(640px, 94vw)"
-        :show-close="false"
-      >
-        <el-form
-          ref="dictionaryFormRef"
-          :model="dictionaryForm"
-          :rules="dictionaryRules"
-          label-position="top"
-        >
+      <el-dialog v-model="dialogVisible" :title="dialogTitle" width="min(640px, 94vw)" :show-close="false">
+        <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
           <el-form-item :label="$t('dictionary.kind')">
             <div class="scope-field">
-              <el-select v-model="dictionaryForm.kind" disabled style="width: 100%">
-                <el-option
-                  v-for="opt in dictionaryKindOptions"
-                  :key="opt.value"
-                  :label="opt.label"
-                  :value="opt.value"
-                />
-              </el-select>
+              <el-input :model-value="activeTabLabel" disabled />
               <span class="scope-locked">{{ $t('dictionary.kindLocked') }}</span>
             </div>
           </el-form-item>
 
           <el-form-item :label="$t('dictionary.name')" prop="name">
             <el-input
-              v-model="dictionaryForm.name"
+              v-model="form.name"
               :placeholder="$t('dictionary.namePlaceholder')"
               maxlength="20"
               show-word-limit
-              @keyup.enter="submitDictionary"
+              @keyup.enter="submitItem"
             />
+          </el-form-item>
+
+          <el-form-item :label="$t('dictionary.color')">
+            <div class="color-field">
+              <el-color-picker v-model="form.color" :predefine="colorOptions" />
+              <ColorDot :color="form.color" :size="10" />
+              <span>{{ form.color }}</span>
+            </div>
+          </el-form-item>
+
+          <el-form-item :label="$t('dictionary.sortOrder')">
+            <el-input-number v-model="form.sortOrder" :min="0" :max="9999" style="width: 100%" />
+          </el-form-item>
+
+          <el-form-item :label="$t('dictionary.status')">
+            <el-switch v-model="form.enabled" />
           </el-form-item>
         </el-form>
         <template #footer>
-          <el-button @click="dictionaryDialogVisible = false">{{ $t('common.cancel') }}</el-button>
-          <el-button type="primary" :loading="dictionarySubmitting" @click="submitDictionary">
+          <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" :loading="submitting" @click="submitItem">
             {{ $t('common.confirm') }}
           </el-button>
         </template>
@@ -468,7 +429,6 @@ onMounted(loadItems)
   gap: 16px;
 }
 
-/* 胶囊 Tab:五个入口共用一条横向胶囊 */
 .scope-tabs {
   align-self: flex-start;
   display: inline-flex;
@@ -527,7 +487,8 @@ onMounted(loadItems)
   min-height: 0;
 }
 
-.dict-name {
+.dict-name,
+.color-field {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -542,6 +503,11 @@ onMounted(loadItems)
   margin-top: 4px;
   font-size: 12px;
   color: var(--color-text-3);
+}
+
+:deep(.row-off),
+.list-card.is-off {
+  opacity: 0.55;
 }
 
 @media (max-width: 768px) {
