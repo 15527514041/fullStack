@@ -148,6 +148,24 @@ const canCopyHistory = computed(
     !checkingPeriod.value &&
     !periodExists.value
 )
+const copyTextParams = computed(() => {
+  const typeKey =
+    props.source === 'manual_day'
+      ? 'copyTypeDay'
+      : props.source === 'manual_week'
+        ? 'copyTypeWeek'
+        : 'copyTypeMonth'
+  const targetKey =
+    props.source === 'manual_day'
+      ? 'copyTargetDay'
+      : props.source === 'manual_week'
+        ? 'copyTargetWeek'
+        : 'copyTargetMonth'
+  return {
+    type: t(`ledger.entries.${typeKey}`),
+    target: t(`ledger.entries.${targetKey}`)
+  }
+})
 const pageTitle = computed(() => t(isNew.value ? meta.addTitleKey : meta.editTitleKey))
 const backTarget = computed(() =>
   isNew.value || fromList.value
@@ -806,7 +824,7 @@ onMounted(load)
                     @click="openCopyDialog"
                   >
                     <el-icon><CopyDocument /></el-icon>
-                    {{ t('ledger.entries.copyHistory') }}
+                    {{ t('ledger.entries.copyHistory', copyTextParams) }}
                   </el-button>
                 </div>
 
@@ -918,24 +936,24 @@ onMounted(load)
     <el-dialog
       v-model="copyDialogVisible"
       class="ledger-copy-dialog"
-      :title="t('ledger.entries.copyDialogTitle')"
+      :title="t('ledger.entries.copyDialogTitle', copyTextParams)"
       width="min(560px, 94vw)"
       :show-close="false"
       :close-on-click-modal="false"
     >
-      <p class="copy-dialog__hint">{{ t('ledger.entries.copyHint') }}</p>
+      <p class="copy-dialog__hint">{{ t('ledger.entries.copyHint', copyTextParams) }}</p>
 
       <el-skeleton v-if="copyLoading" :rows="2" animated />
       <el-empty
         v-else-if="copyOptions.length === 0"
-        :description="t('ledger.entries.copyEmpty')"
+        :description="t('ledger.entries.copyEmpty', copyTextParams)"
       />
       <el-select
         v-else
         v-model="copySourceId"
         filterable
         style="width: 100%"
-        :placeholder="t('ledger.entries.copySourcePlaceholder')"
+        :placeholder="t('ledger.entries.copySourcePlaceholder', copyTextParams)"
       >
         <el-option
           v-for="option in copyOptions"
@@ -1012,11 +1030,11 @@ onMounted(load)
           </el-select>
         </el-form-item>
 
-        <el-form-item :label="t('ledger.entries.assetAccount')" prop="accountId">
+        <el-form-item :label="t('ledger.entries.accountName')" prop="accountId">
           <el-select
             v-model="itemForm.accountId"
             filterable
-            :placeholder="t('ledger.entries.assetAccount')"
+            :placeholder="t('ledger.entries.accountName')"
             style="width: 100%"
             @change="handleAccountChange"
           >

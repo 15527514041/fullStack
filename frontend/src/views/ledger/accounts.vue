@@ -17,6 +17,8 @@ const { t } = useI18n()
 const { isMobile } = useIsMobile()
 const route = useRoute()
 const router = useRouter()
+const infoTipPath =
+  'M16.4004 10C16.4004 6.46538 13.5346 3.59961 10 3.59961C6.46538 3.59961 3.59961 6.46538 3.59961 10C3.59961 13.5346 6.46538 16.4004 10 16.4004V18C5.58172 18 2 14.4183 2 10C2 5.58172 5.58172 2 10 2C14.4183 2 18 5.58172 18 10C18 14.4183 14.4183 18 10 18V16.4004C13.5346 16.4004 16.4004 13.5346 16.4004 10ZM10.0078 12.4004C10.4496 12.4004 10.8076 12.7584 10.8076 13.2002C10.8075 13.6419 10.4496 14 10.0078 14H10C9.55824 14 9.2003 13.6419 9.2002 13.2002C9.2002 12.7584 9.55817 12.4004 10 12.4004H10.0078ZM9.2002 10V6.7998C9.2003 6.35807 9.55824 6 10 6C10.4418 6 10.7997 6.35807 10.7998 6.7998V10C10.7998 10.4418 10.4418 10.7998 10 10.7998C9.55817 10.7998 9.2002 10.4418 9.2002 10Z'
 
 const accounts = ref<LedgerAccount[]>([])
 const accountKinds = ref<DictionaryItem[]>([])
@@ -260,15 +262,54 @@ onMounted(async () => {
     <!-- 资金概览:一个带底色的卡片,只放这三个数(样式参考 client) -->
     <div class="asset-card">
       <div class="asset-item">
-        <div class="asset-label">{{ $t('ledger.accounts.totalAssets') }}</div>
+        <div class="asset-label">
+          <span>{{ $t('ledger.accounts.totalAssets') }}</span>
+          <el-tooltip :content="$t('ledger.accounts.totalAssetsTip')" placement="top">
+            <span
+              class="asset-tip"
+              tabindex="0"
+              :aria-label="$t('ledger.accounts.totalAssetsTip')"
+            >
+              <svg class="th-tip-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path :d="infoTipPath" fill="currentColor" />
+              </svg>
+            </span>
+          </el-tooltip>
+        </div>
         <div class="asset-value">{{ formatCents(totals.assets) }}</div>
       </div>
       <div class="asset-item">
-        <div class="asset-label">{{ $t('ledger.accounts.totalDebt') }}</div>
-        <div class="asset-value">{{ formatCents(totals.debt) }}</div>
+        <div class="asset-label">
+          <span>{{ $t('ledger.accounts.totalDebt') }}</span>
+          <el-tooltip :content="$t('ledger.accounts.totalDebtTip')" placement="top">
+            <span
+              class="asset-tip"
+              tabindex="0"
+              :aria-label="$t('ledger.accounts.totalDebtTip')"
+            >
+              <svg class="th-tip-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path :d="infoTipPath" fill="currentColor" />
+              </svg>
+            </span>
+          </el-tooltip>
+        </div>
+        <div class="asset-value is-debt">{{ formatCents(totals.debt) }}</div>
       </div>
       <div class="asset-item">
-        <div class="asset-label">{{ $t('ledger.accounts.netAssets') }}</div>
+        <div class="asset-label">
+          <span>{{ $t('ledger.accounts.netAssets') }}</span>
+          <el-tooltip :content="$t('ledger.accounts.netAssetsTip')" placement="top">
+            <span
+              class="asset-tip"
+              tabindex="0"
+              :aria-label="$t('ledger.accounts.netAssetsTip')"
+            >
+              <svg class="th-tip-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path :d="infoTipPath" fill="currentColor" />
+              </svg>
+            </span>
+          </el-tooltip>
+        </div>
         <div class="asset-value">{{ formatCents(totals.net) }}</div>
       </div>
     </div>
@@ -349,10 +390,7 @@ onMounted(async () => {
             <el-tooltip :content="$t('ledger.accounts.enabledTip')" placement="top">
               <!-- 提示图标和 client 端「在途余额」那个一致:细线圆圈 + 感叹号,放在文字左边 -->
               <svg class="th-tip-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path
-                  d="M16.4004 10C16.4004 6.46538 13.5346 3.59961 10 3.59961C6.46538 3.59961 3.59961 6.46538 3.59961 10C3.59961 13.5346 6.46538 16.4004 10 16.4004V18C5.58172 18 2 14.4183 2 10C2 5.58172 5.58172 2 10 2C14.4183 2 18 5.58172 18 10C18 14.4183 14.4183 18 10 18V16.4004C13.5346 16.4004 16.4004 13.5346 16.4004 10ZM10.0078 12.4004C10.4496 12.4004 10.8076 12.7584 10.8076 13.2002C10.8075 13.6419 10.4496 14 10.0078 14H10C9.55824 14 9.2003 13.6419 9.2002 13.2002C9.2002 12.7584 9.55817 12.4004 10 12.4004H10.0078ZM9.2002 10V6.7998C9.2003 6.35807 9.55824 6 10 6C10.4418 6 10.7997 6.35807 10.7998 6.7998V10C10.7998 10.4418 10.4418 10.7998 10 10.7998C9.55817 10.7998 9.2002 10.4418 9.2002 10Z"
-                  fill="currentColor"
-                />
+                <path :d="infoTipPath" fill="currentColor" />
               </svg>
             </el-tooltip>
             {{ $t('ledger.accounts.colEnabled') }}
@@ -454,7 +492,7 @@ onMounted(async () => {
       <div v-if="balanceTarget" class="balance-body">
         <div class="balance-dialog-name">{{ balanceTarget.name }}</div>
         <div class="balance-dialog-meta">
-          {{ $t('ledger.accounts.colUpdatedAt') }}:{{ formatDateTimeShort(balanceTarget.balanceUpdatedAt) }}
+          {{ $t('ledger.accounts.balanceUpdatedAtLabel') }}:{{ formatDateTimeShort(balanceTarget.balanceUpdatedAt) }}
         </div>
 
         <el-input-number
@@ -498,9 +536,29 @@ onMounted(async () => {
 }
 
 .asset-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 13px;
   line-height: 20px;
   color: rgba(255, 255, 255, 0.75);
+}
+
+.asset-tip {
+  display: inline-flex;
+  align-items: center;
+  outline: none;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.asset-tip .th-tip-icon {
+  color: inherit;
+}
+
+.asset-tip:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.55);
+  outline-offset: 2px;
+  border-radius: 50%;
 }
 
 .asset-value {
@@ -509,6 +567,10 @@ onMounted(async () => {
   font-weight: 600;
   line-height: 34px;
   word-break: break-all;
+}
+
+.asset-value.is-debt {
+  color: #ffe0b8;
 }
 
 .account-name {
