@@ -50,8 +50,8 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
     {
       title: t('menu.growthGroup'),
       items: [
-        { path: '/reflections', title: t('menu.reflections'), icon: 'reflect' },
-        { path: '/plans', title: t('menu.plans'), icon: 'schedule' }
+        { path: '/plans', title: t('menu.plans'), icon: 'schedule' },
+        { path: '/reflections', title: t('menu.reflections'), icon: 'reflect' }
       ]
     },
     {

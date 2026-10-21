@@ -160,7 +160,10 @@ watch(() => props.recordId, load, { immediate: true })
 
       <div v-else-if="record" ref="detailRef" class="ledger-detail-layout">
         <aside class="ledger-detail-side">
-          <div class="ledger-summary-card">
+          <div
+            class="ledger-summary-card"
+            :class="{ 'is-two-columns': source === 'manual_day' }"
+          >
             <div class="ledger-summary-item">
               <span>{{ t('ledger.entries.colExpense') }}</span>
               <strong class="is-expense">{{ formatCents(record.expenseCents) }}</strong>
@@ -169,7 +172,7 @@ watch(() => props.recordId, load, { immediate: true })
               <span>{{ t('ledger.entries.colIncome') }}</span>
               <strong class="is-income">{{ formatCents(record.incomeCents) }}</strong>
             </div>
-            <div class="ledger-summary-item">
+            <div v-if="source !== 'manual_day'" class="ledger-summary-item">
               <span>{{ t('ledger.entries.colNet') }}</span>
               <strong :class="netClass">{{ formatCents(record.netCents) }}</strong>
             </div>
@@ -206,7 +209,7 @@ watch(() => props.recordId, load, { immediate: true })
                 <LedgerTypeTag :type="row.type" />
               </template>
             </el-table-column>
-            <el-table-column :label="t('ledger.entries.colAmount')" width="130" align="right">
+            <el-table-column :label="t('ledger.entries.colAmount')" width="130" align="left">
               <template #default="{ row }">
                 <LedgerAmountText :amount-cents="row.amountCents" :type="row.type" />
               </template>
@@ -296,6 +299,10 @@ watch(() => props.recordId, load, { immediate: true })
   color: #fff;
 }
 
+.ledger-summary-card.is-two-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .ledger-summary-item {
   display: flex;
   flex-direction: column;
@@ -372,7 +379,7 @@ watch(() => props.recordId, load, { immediate: true })
 .ledger-detail-item__head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
 }
 
@@ -412,6 +419,10 @@ watch(() => props.recordId, load, { immediate: true })
     gap: 10px;
     padding: 16px 18px;
     border-radius: 18px;
+  }
+
+  .ledger-summary-card.is-two-columns {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .ledger-summary-item {
