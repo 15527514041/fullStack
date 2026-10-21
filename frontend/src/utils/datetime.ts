@@ -62,6 +62,18 @@ export function formatDayLabel(value?: string | null): string {
   return `${formatDate(value)} ${formatWeekday(value)}`
 }
 
+// 每日反思 / 每日规划标题:2026年10月20日 星期二 / Tuesday, October 20, 2026
+export function formatDayHeading(value?: string | null): string {
+  if (!value) return '-'
+  const isEnglish = i18n.global.locale.value === 'en_US'
+  const date = new Intl.DateTimeFormat(isEnglish ? 'en-US' : 'zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).format(parseDateOnly(value))
+  return isEnglish ? `${formatWeekdayLong(value)}, ${date}` : `${date} ${formatWeekdayLong(value)}`
+}
+
 // 用时:后端给分钟数,这里格式化成 1h30m / 2h / 45m(不四舍五入,避免看着少了 15 分钟)
 export function formatDuration(minutes?: number | null): string {
   if (minutes === null || minutes === undefined) return ''

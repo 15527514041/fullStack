@@ -8,7 +8,7 @@ import ActionIcon from '@/components/ActionIcon.vue'
 import BackButton from '@/components/BackButton.vue'
 import ReflectionFormDialog, { type ReflectionSubmitPayload } from '@/views/reflection/components/ReflectionFormDialog.vue'
 import MarkdownText from '@/components/MarkdownText.vue'
-import { formatDayLabel } from '@/utils/datetime'
+import { formatDayHeading } from '@/utils/datetime'
 import type { DailyReflection, ReflectionItem } from '@/types'
 
 /**
@@ -85,7 +85,7 @@ async function removeItem(index: number): Promise<void> {
   const isLast = items.value.length === 1
   try {
     await ElMessageBox.confirm(
-      isLast ? t('reflection.deleteLastItemConfirm', { date: formatDayLabel(record.value?.date) }) : t('reflection.deleteItemConfirm'),
+      isLast ? t('reflection.deleteLastItemConfirm', { date: formatDayHeading(record.value?.date) }) : t('reflection.deleteItemConfirm'),
       t('common.tip'),
       {
         type: 'warning',
@@ -140,7 +140,7 @@ onMounted(loadDetail)
       <template v-else-if="record">
         <!-- 顶部:左边「日期 + 星期」,右边「添加一条」(不套卡片) -->
         <div class="reflection-head">
-          <div class="reflection-head__title">{{ formatDayLabel(record.date) }}</div>
+          <div class="reflection-head__title">{{ formatDayHeading(record.date) }}</div>
           <el-button type="primary" size="small" @click="openAdd">
             <ActionIcon name="add" :size="16" class="reflection-head__icon" />
             {{ $t('reflection.addItem') }}

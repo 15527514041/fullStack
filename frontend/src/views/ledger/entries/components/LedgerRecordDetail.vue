@@ -2,9 +2,12 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { MoreFilled } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { deleteLedgerRecord, getLedgerRecord } from '@/api/ledger'
 import BackButton from '@/components/BackButton.vue'
+import FileIcon from '@/components/FileIcon.vue'
+import { useImageExport } from '@/composables/useImageExport'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTimeShort } from '@/utils/datetime'
 import { formatCents } from '@/utils/money'
@@ -28,6 +31,8 @@ const meta = getModeMeta(props.source)
 
 const record = ref<LedgerRecordDetail | null>(null)
 const loading = ref(true)
+const detailRef = ref<HTMLElement | null>(null)
+const { exporting, exportImage } = useImageExport()
 
 const periodLabel = computed(() =>
   record.value ? formatPeriodLabel(props.source, record.value.periodStart, record.value.periodEnd) : ''
@@ -63,6 +68,19 @@ async function load(): Promise<void> {
 
 function openEdit(): void {
   router.push({ name: meta.editRoute, params: { id: props.recordId } })
+}
+
+function handleExport(): void {
+  if (!record.value) return
+  exportImage(detailRef.value, {
+    title: periodLabel.value || t(meta.titleKey),
+    fileName: t('ledger.entries.exportFileName', { date: record.value.periodStart })
+  })
+}
+
+function handleMore(command: string): void {
+  if (command === 'export') handleExport()
+  else if (command === 'delete') handleDelete()
 }
 
 async function handleDelete(): Promise<void> {
@@ -118,15 +136,29 @@ watch(() => props.recordId, load, { immediate: true })
         </span>
       </div>
       <div class="ledger-detail-actions">
-        <el-button link type="danger" @click="handleDelete">{{ t('common.delete') }}</el-button>
-        <el-button type="primary" @click="openEdit">{{ t('common.edit') }}</el-button>
+        <el-button type="primary" @click="openEdit">{{ t('ledger.entries.update') }}</el-button>
+        <el-dropdown trigger="click" placement="bottom-end" @command="handleMore">
+          <el-button class="more-btn" :loading="exporting" :aria-label="t('common.more')">
+            <el-icon><MoreFilled /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="export">
+                <FileIcon name="download" :size="16" class="more-menu__icon" />{{ t('common.export') }}
+              </el-dropdown-item>
+              <el-dropdown-item command="delete" class="is-danger">
+                <FileIcon name="delete" :size="16" class="more-menu__icon" />{{ t('common.delete') }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </div>
 
     <div class="detail-container ledger-detail-container">
       <el-skeleton v-if="loading" :rows="8" animated />
 
-      <div v-else-if="record" class="ledger-detail-layout">
+      <div v-else-if="record" ref="detailRef" class="ledger-detail-layout">
         <aside class="ledger-detail-side">
           <div class="ledger-summary-card">
             <div class="ledger-summary-item">
@@ -229,6 +261,14 @@ watch(() => props.recordId, load, { immediate: true })
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.ledger-detail-actions :deep(.el-button.more-btn) {
+  padding: 0 10px;
+}
+
+.more-menu__icon {
+  margin-right: 6px;
 }
 
 .ledger-detail-container {

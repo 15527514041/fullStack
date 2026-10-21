@@ -187,6 +187,13 @@ const itemDialogTitle = computed(() => {
     ? t('ledger.entries.addTypeItem', { type: typeLabel })
     : t('ledger.entries.editTypeItem', { type: typeLabel })
 })
+const categoryFieldLabel = computed(() =>
+  t(
+    itemForm.type === 'EXPENSE'
+      ? 'dictionary.expenseCategory'
+      : 'dictionary.incomeCategory'
+  )
+)
 const itemRules = computed<FormRules>(() => ({
   categoryId: [{ required: true, message: t('ledger.entries.categoryRequired'), trigger: 'change' }],
   accountId: [{ required: true, message: t('ledger.entries.accountRequired'), trigger: 'change' }],
@@ -352,7 +359,7 @@ function handleEditorTagChange(values: Array<string | number>): void {
 function handleAccountChange(value: string | number): void {
   if (value !== ACCOUNT_CREATE_VALUE) return
   itemForm.accountId = null
-  router.push({ name: 'ledger-accounts', query: { create: '1' } })
+  router.push({ name: 'ledger-accounts' })
 }
 
 const categoryAddLabel = computed(() =>
@@ -816,11 +823,11 @@ onMounted(load)
           </el-select>
         </el-form-item>
 
-        <el-form-item :label="t('ledger.entries.category')" prop="categoryId">
+        <el-form-item :label="categoryFieldLabel" prop="categoryId">
           <el-select
             v-model="itemForm.categoryId"
             filterable
-            :placeholder="t('ledger.entries.category')"
+            :placeholder="categoryFieldLabel"
             style="width: 100%"
             @change="handleCategoryChange"
           >
@@ -847,11 +854,11 @@ onMounted(load)
           </el-select>
         </el-form-item>
 
-        <el-form-item :label="t('ledger.entries.account')" prop="accountId">
+        <el-form-item :label="t('ledger.entries.assetAccount')" prop="accountId">
           <el-select
             v-model="itemForm.accountId"
             filterable
-            :placeholder="t('ledger.entries.account')"
+            :placeholder="t('ledger.entries.assetAccount')"
             style="width: 100%"
             @change="handleAccountChange"
           >

@@ -95,7 +95,20 @@ const rules = computed<FormRules>(() => ({
     { required: true, message: t('validation.accountNameRequired'), trigger: 'blur' },
     { min: 1, max: 20, message: t('validation.accountNameLength'), trigger: 'blur' }
   ],
-  kindId: [{ required: true, message: t('validation.accountKindRequired'), trigger: 'change' }]
+  kindId: [{ required: true, message: t('validation.accountKindRequired'), trigger: 'change' }],
+  balanceYuan: [
+    {
+      required: true,
+      validator: (_rule, value, callback) => {
+        if (typeof value !== 'number' || Number.isNaN(value)) {
+          callback(new Error(t('validation.accountBalanceRequired')))
+        } else {
+          callback()
+        }
+      },
+      trigger: ['blur', 'change']
+    }
+  ]
 }))
 
 function openAddDialog(): void {
@@ -374,7 +387,7 @@ onMounted(async () => {
     <!-- 新建 / 编辑 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="min(640px, 94vw)" :show-close="false">
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-        <el-form-item :label="$t('ledger.accounts.colName')" prop="name">
+        <el-form-item :label="$t('ledger.accounts.formName')" prop="name">
           <el-input
             v-model="form.name"
             :placeholder="$t('ledger.accounts.namePlaceholder')"

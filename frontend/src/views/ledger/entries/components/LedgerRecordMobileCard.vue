@@ -51,7 +51,7 @@ const netClass = computed(() => {
     </div>
 
     <div class="ledger-mobile-card__actions" @click.stop>
-      <el-button link type="primary" @click="$emit('edit')">{{ t('common.edit') }}</el-button>
+      <el-button link type="primary" @click="$emit('edit')">{{ t('ledger.entries.update') }}</el-button>
       <el-button link type="danger" @click="$emit('delete')">{{ t('common.delete') }}</el-button>
     </div>
   </div>

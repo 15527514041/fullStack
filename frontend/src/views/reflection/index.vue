@@ -8,7 +8,7 @@ import { createReflection, getReflections } from '@/api/reflection'
 import ReflectionFormDialog, { type ReflectionSubmitPayload } from '@/views/reflection/components/ReflectionFormDialog.vue'
 import { useDateRangeTabs, type DateRangeTab } from '@/composables/useDateRangeTabs'
 import { useFeedList } from '@/composables/useFeedList'
-import { formatDayLabel } from '@/utils/datetime'
+import { formatDayHeading } from '@/utils/datetime'
 import type { DailyReflection } from '@/types'
 
 /**
@@ -107,7 +107,7 @@ async function handleSubmit(payload: ReflectionSubmitPayload): Promise<void> {
           <div class="card-content">
             <div class="card-left">
               <div class="card-title-row">
-                <span class="card-title">{{ formatDayLabel(row.date) }}</span>
+                <span class="card-title">{{ formatDayHeading(row.date) }}</span>
                 <span class="pill">{{ $t('reflection.itemCount', { count: row.items.length }) }}</span>
               </div>
               <div class="card-summary">{{ summary(row) }}</div>

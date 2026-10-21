@@ -25,14 +25,14 @@ const route = useRoute()
 const router = useRouter()
 
 const tabs = computed<Array<{ value: DictionaryTab; label: string }>>(() => [
-  { value: 'TODO', label: t('tag.tabTodo') },
-  { value: 'ACCOUNTING', label: t('tag.tabAccounting') },
   { value: 'ACCOUNT_KIND', label: t('dictionary.accountKind') },
   { value: 'EXPENSE_CATEGORY', label: t('dictionary.expenseCategory') },
-  { value: 'INCOME_CATEGORY', label: t('dictionary.incomeCategory') }
+  { value: 'INCOME_CATEGORY', label: t('dictionary.incomeCategory') },
+  { value: 'ACCOUNTING', label: t('tag.tabAccounting') },
+  { value: 'TODO', label: t('tag.tabTodo') }
 ])
 
-const activeTab = ref<DictionaryTab>('TODO')
+const activeTab = ref<DictionaryTab>('ACCOUNT_KIND')
 const isTagTab = computed(() => activeTab.value === 'TODO' || activeTab.value === 'ACCOUNTING')
 const activeTagScope = computed<TagScope>(() => activeTab.value as TagScope)
 const activeDictionaryKind = computed<DictionaryKind>(() => activeTab.value as DictionaryKind)

@@ -6,7 +6,7 @@ import { useI18n } from 'vue-i18n'
 import { getPlans } from '@/api/plan'
 import { useDateRangeTabs, type DateRangeTab } from '@/composables/useDateRangeTabs'
 import { useFeedList } from '@/composables/useFeedList'
-import { formatDayLabel, toDateString } from '@/utils/datetime'
+import { formatDayHeading, toDateString } from '@/utils/datetime'
 import type { DailyPlanListItem } from '@/types'
 
 /**
@@ -83,7 +83,7 @@ function openDetail(row: DailyPlanListItem): void {
           <div class="card-content">
             <div class="card-left">
               <div class="card-title-row">
-                <span class="card-title">{{ formatDayLabel(row.date) }}</span>
+                <span class="card-title">{{ formatDayHeading(row.date) }}</span>
                 <span v-for="pill in pills(row)" :key="pill.key" class="pill">{{ pill.text }}</span>
                 <span v-if="dayBadge(row.date)" class="pill pill--day">{{ dayBadge(row.date) }}</span>
               </div>
