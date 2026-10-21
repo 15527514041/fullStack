@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, provide, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getPreferences } from '@/api/preferences'
 import {
   DEFAULT_LEDGER_ENTRY_SOURCES,
+  LEDGER_DIMENSION_TIP,
   normalizeLedgerEntrySources
 } from '@/utils/ledgerPreferences'
 import type { LedgerRecordSource } from '@/types'
@@ -12,6 +14,7 @@ import LedgerModeSwitch from './LedgerModeSwitch.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { locale, t } = useI18n()
 const loading = ref(true)
 const visibleSources = ref<LedgerRecordSource[]>([...DEFAULT_LEDGER_ENTRY_SOURCES])
 
@@ -24,6 +27,26 @@ const currentSource = computed<LedgerRecordSource>(
 const visibleModes = computed(() =>
   LEDGER_MODES.filter((mode) => visibleSources.value.includes(mode.source))
 )
+const dimensionTip = computed(() => {
+  const names = visibleModes.value.map((mode) =>
+    t(
+      mode.source === 'manual_day'
+        ? 'ledger.entries.dimensionUnitDay'
+        : mode.source === 'manual_week'
+          ? 'ledger.entries.dimensionUnitWeek'
+          : 'ledger.entries.dimensionUnitMonth'
+    )
+  )
+  const dimensions =
+    locale.value === 'en_US'
+      ? new Intl.ListFormat('en-US', { style: 'long', type: 'conjunction' }).format(names)
+      : names.join('、')
+  return {
+    visible: visibleModes.value.length >= 2,
+    content: t('ledger.entries.dimensionIndependentTip', { dimensions })
+  }
+})
+provide(LEDGER_DIMENSION_TIP, dimensionTip)
 const isEntryIndex = computed(() => route.path.replace(/\/+$/, '') === '/ledger/entries')
 
 async function loadPreferences(): Promise<void> {

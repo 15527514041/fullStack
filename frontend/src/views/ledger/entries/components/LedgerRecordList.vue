@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { deleteLedgerRecord } from '@/api/ledger'
+import InfoTipIcon from '@/components/InfoTipIcon.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTimeShort } from '@/utils/datetime'
+import { LEDGER_DIMENSION_TIP } from '@/utils/ledgerPreferences'
 import { formatCents } from '@/utils/money'
 import type { LedgerRecordSource, LedgerRecordSummary } from '@/types'
 import { getModeMeta } from '../constants'
@@ -21,6 +23,10 @@ const router = useRouter()
 const { t } = useI18n()
 const { isMobile } = useIsMobile()
 const meta = computed(() => getModeMeta(props.source))
+const dimensionTip = inject(
+  LEDGER_DIMENSION_TIP,
+  computed(() => ({ visible: false, content: '' }))
+)
 
 const {
   list,
@@ -104,7 +110,13 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
     <div class="list-page ledger-record-list">
       <div class="page-header">
         <div class="title-section">
-          <div class="page-title">{{ t(meta.titleKey) }}</div>
+          <div class="page-title-row">
+            <div class="page-title">{{ t(meta.titleKey) }}</div>
+            <InfoTipIcon
+              v-if="dimensionTip.visible"
+              :content="dimensionTip.content"
+            />
+          </div>
           <div class="page-subtitle">{{ t(meta.subtitleKey) }}</div>
         </div>
         <el-button type="primary" @click="openCreate">
@@ -245,6 +257,17 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
 
 .ledger-record-table :deep(.el-table__row) {
   cursor: pointer;
+}
+
+.page-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.page-title-row + .page-subtitle {
+  margin-top: 8px;
 }
 
 .range-field {
