@@ -160,6 +160,8 @@ model Todo {
   title       String
   // 备注:非必填
   remark      String?
+  // 截止日期:只到日期,可选;不参与每日规划关联
+  dueDate     DateTime?        @db.Date
   completed   Boolean          @default(false)
   createdAt   DateTime         @default(now())
   // 最近一次更新时间:@updatedAt 每次写库自动刷新;@default(now()) 是为了给已有数据直接补列
@@ -172,6 +174,7 @@ model Todo {
   tags        Tag[]
 
   @@index([userId])
+  @@index([userId, dueDate])
 }
 
 // ===== 个人成长:每日反思 =====

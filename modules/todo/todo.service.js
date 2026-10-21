@@ -19,13 +19,22 @@ const todoInclude = {
   }
 }
 
+function toDateOnlyValue(value) {
+  return value ? new Date(`${value}T00:00:00.000Z`) : null
+}
+
+function toDateOnlyString(value) {
+  return value ? value.toISOString().slice(0, 10) : null
+}
+
 // 关联表结构比较深,统一拍平成前端好用的数组
 function toTodoDTO(todo) {
   if (!todo) return todo
-  const { attachments = [], ...rest } = todo
+  const { attachments = [], dueDate, ...rest } = todo
 
   return {
     ...rest,
+    dueDate: toDateOnlyString(dueDate),
     attachments: attachments.map((item) => ({
       ossId: item.ossId,
       sortOrder: item.sortOrder,
@@ -63,7 +72,19 @@ function normalizeRemark(value) {
 
 // deleted=true 时查回收站(已删除的),默认只查未删除的
 async function listTodos(userId, query) {
-  const { page = 1, pageSize = 10, keyword, completed, tagId, deleted = false, from, to } = query
+  const {
+    page = 1,
+    pageSize = 10,
+    keyword,
+    completed,
+    tagId,
+    deleted = false,
+    from,
+    to,
+    dueFrom,
+    dueTo,
+    dueDateMissing = false
+  } = query
 
   const where = { userId, deletedAt: deleted ? { not: null } : null }
   // 创建时间范围:前端传的是按用户本地时区算好的 UTC 时刻(ISO 字符串)
@@ -78,6 +99,14 @@ async function listTodos(userId, query) {
   }
   if (completed !== undefined) {
     where.completed = completed
+  }
+  if (dueDateMissing) {
+    where.dueDate = null
+  } else if (dueFrom || dueTo) {
+    where.dueDate = {
+      ...(dueFrom ? { gte: toDateOnlyValue(dueFrom) } : {}),
+      ...(dueTo ? { lte: toDateOnlyValue(dueTo) } : {})
+    }
   }
   if (tagId) {
     // 只能按任务域的标签筛选:传记账域标签的 id 会筛不出东西,不会拿错名单
@@ -114,6 +143,7 @@ async function createTodo(data, userId) {
     data: {
       title: data.title,
       remark: normalizeRemark(data.remark) ?? null,
+      dueDate: toDateOnlyValue(data.dueDate),
       completed: data.completed ?? false,
       userId,
       tags: tagIds.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
@@ -137,6 +167,7 @@ async function updateTodo(id, userId, data) {
   const payload = {}
   if (data.title !== undefined) payload.title = data.title
   if (data.remark !== undefined) payload.remark = normalizeRemark(data.remark)
+  if (data.dueDate !== undefined) payload.dueDate = toDateOnlyValue(data.dueDate)
   if (data.attachmentOssIds !== undefined) {
     // 传空数组表示清空附件;整体替换(先删后建,顺序即数组顺序)
     const attachmentIds = await normalizeAttachmentIds(userId, data.attachmentOssIds)
