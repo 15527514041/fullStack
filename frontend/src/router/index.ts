@@ -104,15 +104,34 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'ledger/entries',
-        name: 'ledger-entries',
-        // 入口直达日维度列表,不再有颗粒度选择页
-        redirect: { name: 'ledger-entries-day' }
-      },
-      {
-        path: 'ledger/entries/day',
-        name: 'ledger-entries-day',
-        component: () => import('@/views/ledger/entries/day/index.vue'),
-        meta: { titleKey: 'route.ledgerEntriesDay', requiresAuth: true }
+        component: () => import('@/views/ledger/entries/components/LedgerEntriesListShell.vue'),
+        meta: { requiresAuth: true },
+        children: [
+          {
+            path: '',
+            name: 'ledger-entries',
+            component: () => import('@/views/ledger/entries/components/LedgerEntriesIndex.vue'),
+            meta: { titleKey: 'route.ledgerEntries', requiresAuth: true }
+          },
+          {
+            path: 'day',
+            name: 'ledger-entries-day',
+            component: () => import('@/views/ledger/entries/day/index.vue'),
+            meta: { titleKey: 'route.ledgerEntriesDay', requiresAuth: true }
+          },
+          {
+            path: 'week',
+            name: 'ledger-entries-week',
+            component: () => import('@/views/ledger/entries/week/index.vue'),
+            meta: { titleKey: 'route.ledgerEntriesWeek', requiresAuth: true }
+          },
+          {
+            path: 'month',
+            name: 'ledger-entries-month',
+            component: () => import('@/views/ledger/entries/month/index.vue'),
+            meta: { titleKey: 'route.ledgerEntriesMonth', requiresAuth: true }
+          }
+        ]
       },
       {
         path: 'ledger/entries/day/new',
@@ -133,12 +152,6 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'route.ledgerEntryDayDetail', requiresAuth: true, noSidebar: true }
       },
       {
-        path: 'ledger/entries/week',
-        name: 'ledger-entries-week',
-        component: () => import('@/views/ledger/entries/week/index.vue'),
-        meta: { titleKey: 'route.ledgerEntriesWeek', requiresAuth: true }
-      },
-      {
         path: 'ledger/entries/week/new',
         name: 'ledger-entry-week-new',
         component: () => import('@/views/ledger/entries/week/edit.vue'),
@@ -157,12 +170,6 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'route.ledgerEntryWeekDetail', requiresAuth: true, noSidebar: true }
       },
       {
-        path: 'ledger/entries/month',
-        name: 'ledger-entries-month',
-        component: () => import('@/views/ledger/entries/month/index.vue'),
-        meta: { titleKey: 'route.ledgerEntriesMonth', requiresAuth: true }
-      },
-      {
         path: 'ledger/entries/month/new',
         name: 'ledger-entry-month-new',
         component: () => import('@/views/ledger/entries/month/edit.vue'),
@@ -179,6 +186,12 @@ const routes: RouteRecordRaw[] = [
         name: 'ledger-entry-month-detail',
         component: () => import('@/views/ledger/entries/month/detail.vue'),
         meta: { titleKey: 'route.ledgerEntryMonthDetail', requiresAuth: true, noSidebar: true }
+      },
+      {
+        path: 'settings/preferences',
+        name: 'preferences',
+        component: () => import('@/views/preferences/index.vue'),
+        meta: { titleKey: 'route.preferences', requiresAuth: true }
       },
       {
         path: 'admin',

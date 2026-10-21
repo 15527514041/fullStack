@@ -69,6 +69,7 @@ export default {
     todoList: 'TODO List',
     trash: 'Trash',
     tags: 'Dictionary',
+    preferences: 'Preferences',
     growthGroup: 'Growth',
     reflections: 'Daily Reflection',
     plans: 'Daily Plan',
@@ -219,6 +220,23 @@ export default {
   growth: {
     last7: 'Last 7 days',
     last30: 'Last 30 days'
+  },
+  preferences: {
+    title: 'Preferences',
+    subtitle: 'Manage how your ledger records are displayed.',
+    ledgerDimensionsTitle: 'Ledger dimension settings',
+    ledgerDimensionsHint: 'Choose the ledger dimensions to display and keep at least one. Hiding a dimension only removes its entry without changing historical data; each dimension remains independent.',
+    dimensionDay: 'Daily entries',
+    dimensionDayDescription: 'One entry per day with all income and expense items',
+    dimensionWeek: 'Weekly entries',
+    dimensionWeekDescription: 'One entry per week to summarize cash flow and review the balance',
+    dimensionMonth: 'Monthly entries',
+    dimensionMonthDescription: 'One entry per month for category-level summary and monthly review',
+    keepOne: 'Keep at least one dimension',
+    unsaved: 'You have unsaved changes',
+    saved: 'Preferences saved',
+    discardConfirm: 'You have unsaved changes. Leave this page?',
+    discard: 'Discard'
   },
   reflection: {
     title: 'Daily Reflection',
@@ -553,6 +571,7 @@ export default {
     trash: 'Trash',
     todoDetail: 'TODO Detail',
     tags: 'Dictionary',
+    preferences: 'Preferences',
     reflections: 'Daily Reflection',
     plans: 'Daily Plan',
     ledgerAccounts: 'Accounts',

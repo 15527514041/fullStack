@@ -12,7 +12,6 @@ import type { LedgerRecordSource, LedgerRecordSummary } from '@/types'
 import { getModeMeta } from '../constants'
 import { useLedgerRecordList } from '../composables/useLedgerRecordList'
 import { formatPeriodLabel, type LedgerListPreset } from '../utils'
-import LedgerModeSwitch from './LedgerModeSwitch.vue'
 import LedgerPeriodLabel from './LedgerPeriodLabel.vue'
 import LedgerRecordMobileCard from './LedgerRecordMobileCard.vue'
 
@@ -102,9 +101,6 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
 
 <template>
   <div class="ledger-entries-view">
-    <!-- 维度和卡片平级,放在卡片外侧;卡片内只放标题、筛选和列表 -->
-    <LedgerModeSwitch :source="source" />
-
     <div class="list-page ledger-record-list">
       <div class="page-header">
         <div class="title-section">

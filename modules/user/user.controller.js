@@ -42,4 +42,13 @@ async function changePassword(req, res) {
   res.json({ message: '密码修改成功' })
 }
 
-module.exports = { updateAvatar, changePassword }
+async function getPreferences(req, res) {
+  res.json(await userService.getPreferences(req.user.id))
+}
+
+async function updatePreferences(req, res) {
+  const { ledgerEntrySources } = req.validated.body
+  res.json(await userService.updatePreferences(req.user.id, ledgerEntrySources))
+}
+
+module.exports = { updateAvatar, changePassword, getPreferences, updatePreferences }

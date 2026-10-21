@@ -58,26 +58,28 @@ enum LedgerItemType {
 }
 
 model User {
-  id                Int               @id @default(autoincrement())
-  username          String            @unique
-  password          String
+  id                 Int                  @id @default(autoincrement())
+  username           String               @unique
+  password           String
   // 只存上传记录的 ossId,不存 URL:换域名/CDN/签名策略都不用改库
-  avatarOssId       String?
-  role              Role              @default(USER)
-  status            UserStatus        @default(ACTIVE)
-  todos             Todo[]
-  tags              Tag[]
-  dictionaryItems   DictionaryItem[]
-  uploads           Upload[]
-  reflections       DailyReflection[]
-  plans             DailyPlan[]
-  ledgerAccounts    LedgerAccount[]
-  ledgerRecords     LedgerRecord[]
-  createdAt         DateTime          @default(now())
+  avatarOssId        String?
+  role               Role                 @default(USER)
+  status             UserStatus           @default(ACTIVE)
+  todos              Todo[]
+  tags               Tag[]
+  dictionaryItems    DictionaryItem[]
+  uploads            Upload[]
+  reflections        DailyReflection[]
+  plans              DailyPlan[]
+  ledgerAccounts     LedgerAccount[]
+  ledgerRecords      LedgerRecord[]
+  // 用户希望显示的账单维度;至少一项,由接口校验
+  ledgerEntrySources LedgerRecordSource[] @default([manual_day, manual_week, manual_month])
+  createdAt          DateTime             @default(now())
   // 最近一次登录成功的时间(登录时更新),后台用户列表展示用
-  lastLoginAt       DateTime?
+  lastLoginAt        DateTime?
   // 密码最后修改时间:签发时间早于它的 token 全部失效(改完密码即踢下线);null = 从没改过
-  passwordChangedAt DateTime?
+  passwordChangedAt  DateTime?
 }
 
 // 账户类型 / 收支分类:预设项带 code(迁移和默认值识别用),用户新建的自定义项 code 为空

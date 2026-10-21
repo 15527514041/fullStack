@@ -10,6 +10,8 @@ const { imageUpload } = require('../../middlewares/upload')
 
 router.use(auth);
 
+router.get('/me/preferences', userController.getPreferences);
+router.patch('/me/preferences', validate(userSchemas.updatePreferences), userController.updatePreferences);
 router.post('/me/avatar', imageUpload.single('avatar'), userController.updateAvatar);
 router.patch('/me/password', validate(userSchemas.changePassword), userController.changePassword);
 

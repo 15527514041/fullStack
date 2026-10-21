@@ -236,6 +236,10 @@ export interface LedgerAccount {
 // ===== 记账:周期账单 =====
 /** 日 / 周 / 月三种账本来源 */
 export type LedgerRecordSource = 'manual_day' | 'manual_week' | 'manual_month'
+
+export interface LedgerPreferences {
+  ledgerEntrySources: LedgerRecordSource[]
+}
 export type LedgerItemType = 'INCOME' | 'EXPENSE'
 
 /** 明细里带出的账户快照字段 */

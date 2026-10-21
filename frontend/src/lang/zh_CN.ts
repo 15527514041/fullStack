@@ -69,6 +69,7 @@ export default {
     todoList: 'TODO 列表',
     trash: '回收站',
     tags: '字典管理',
+    preferences: '偏好设置',
     growthGroup: '个人成长',
     reflections: '每日反思',
     plans: '每日规划',
@@ -216,6 +217,23 @@ export default {
   growth: {
     last7: '过去 7 天',
     last30: '过去 30 天'
+  },
+  preferences: {
+    title: '偏好设置',
+    subtitle: '管理账单记录的显示方式。',
+    ledgerDimensionsTitle: '账单维度设置',
+    ledgerDimensionsHint: '选择展示的账单维度，至少保留一项。隐藏仅收起入口，不会改动历史数据；各维度账单相互独立、互不联动。',
+    dimensionDay: '日维度账单',
+    dimensionDayDescription: '一天一条，承载当日全部收支明细',
+    dimensionWeek: '周维度账单',
+    dimensionWeekDescription: '一周一条，汇总本周收支、复盘结余',
+    dimensionMonth: '月维度账单',
+    dimensionMonthDescription: '一月一条，按月大类汇总，月度复盘',
+    keepOne: '至少保留一个维度',
+    unsaved: '有未保存修改',
+    saved: '设置已保存',
+    discardConfirm: '当前设置尚未保存，确定离开吗？',
+    discard: '放弃修改'
   },
   reflection: {
     title: '每日反思',
@@ -549,6 +567,7 @@ export default {
     trash: '回收站',
     todoDetail: 'TODO 详情',
     tags: '字典管理',
+    preferences: '偏好设置',
     reflections: '每日反思',
     plans: '每日规划',
     ledgerAccounts: '资产账户',
