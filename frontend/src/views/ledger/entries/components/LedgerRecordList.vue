@@ -176,7 +176,12 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
               <span class="ledger-total is-income">{{ formatCents(row.incomeCents) }}</span>
             </template>
           </el-table-column>
-          <el-table-column :label="t('ledger.entries.colNet')" min-width="120" align="left">
+          <el-table-column
+            v-if="meta.source !== 'manual_day'"
+            :label="t('ledger.entries.colNet')"
+            min-width="120"
+            align="left"
+          >
             <template #default="{ row }">
               <span class="ledger-total" :class="netClass(row.netCents)">
                 {{ formatCents(row.netCents) }}

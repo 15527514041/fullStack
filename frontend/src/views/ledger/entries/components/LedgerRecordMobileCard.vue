@@ -30,7 +30,10 @@ const netClass = computed(() => {
       <el-icon class="ledger-mobile-card__arrow"><ArrowRight /></el-icon>
     </div>
 
-    <div class="ledger-mobile-card__stats">
+    <div
+      class="ledger-mobile-card__stats"
+      :class="{ 'is-two-columns': source === 'manual_day' }"
+    >
       <div class="ledger-mobile-stat">
         <span>{{ t('ledger.entries.colExpense') }}</span>
         <strong class="is-expense">{{ formatCents(record.expenseCents) }}</strong>
@@ -39,7 +42,7 @@ const netClass = computed(() => {
         <span>{{ t('ledger.entries.colIncome') }}</span>
         <strong class="is-income">{{ formatCents(record.incomeCents) }}</strong>
       </div>
-      <div class="ledger-mobile-stat">
+      <div v-if="source !== 'manual_day'" class="ledger-mobile-stat">
         <span>{{ t('ledger.entries.colNet') }}</span>
         <strong :class="netClass">{{ formatCents(record.netCents) }}</strong>
       </div>
@@ -88,6 +91,10 @@ const netClass = computed(() => {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-top: 14px;
+}
+
+.ledger-mobile-card__stats.is-two-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .ledger-mobile-stat {

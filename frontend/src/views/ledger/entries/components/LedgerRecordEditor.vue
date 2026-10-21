@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { CopyDocument, Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import {
   createLedgerRecord,
@@ -16,6 +16,7 @@ import { getDictionaries } from '@/api/dictionaries'
 import ColorDot from '@/components/ColorDot.vue'
 import ActionIcon from '@/components/ActionIcon.vue'
 import BackButton from '@/components/BackButton.vue'
+import { parseDateOnly, toDateString } from '@/utils/datetime'
 import { centsToYuan, formatCents, yuanToCents } from '@/utils/money'
 import { DICTIONARY_CREATE_VALUE, dictionaryTabRoute } from '@/utils/dictionary'
 import type {
@@ -41,6 +42,7 @@ import LedgerAmountText from './LedgerAmountText.vue'
 import LedgerTagList from './LedgerTagList.vue'
 
 const ACCOUNT_CREATE_VALUE = '__account_create__'
+const COPY_HISTORY_LIMIT = 10
 
 interface EditorRow {
   key: number
@@ -103,6 +105,12 @@ const existingRecord = ref<LedgerRecordSummary | null>(null)
 const checkingPeriod = ref(false)
 let checkSequence = 0
 
+const copyDialogVisible = ref(false)
+const copyLoading = ref(false)
+const copySubmitting = ref(false)
+const copyOptions = ref<LedgerRecordSummary[]>([])
+const copySourceId = ref<number | null>(null)
+
 const periodStart = computed(() => {
   if (props.source === 'manual_day') return dayValue.value
   if (props.source === 'manual_week') return weekValue.value ? normalizeWeekStart(weekValue.value) : ''
@@ -133,6 +141,13 @@ const monthPickerFormat = computed(() =>
   locale.value === 'en_US' ? 'MMMM YYYY' : 'YYYY 年 MM 月'
 )
 const periodExists = computed(() => isNew.value && Boolean(existingRecord.value))
+const canCopyHistory = computed(
+  () =>
+    isNew.value &&
+    Boolean(periodStart.value) &&
+    !checkingPeriod.value &&
+    !periodExists.value
+)
 const pageTitle = computed(() => t(isNew.value ? meta.addTitleKey : meta.editTitleKey))
 const backTarget = computed(() =>
   isNew.value || fromList.value
@@ -510,6 +525,83 @@ async function checkPeriod(): Promise<void> {
   }
 }
 
+async function loadCopyOptions(): Promise<void> {
+  const start = periodStart.value
+  if (!start) return
+
+  const startDate = parseDateOnly(start)
+  const previousPeriodEnd = toDateString(
+    new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() - 1)
+  )
+
+  copyLoading.value = true
+  copyOptions.value = []
+  copySourceId.value = null
+  try {
+    const result = await getLedgerRecords({
+      source: props.source,
+      page: 1,
+      pageSize: COPY_HISTORY_LIMIT,
+      to: previousPeriodEnd
+    })
+    copyOptions.value = result.list.slice(0, COPY_HISTORY_LIMIT)
+  } catch {
+    copyOptions.value = []
+  } finally {
+    copyLoading.value = false
+  }
+}
+
+async function openCopyDialog(): Promise<void> {
+  if (!canCopyHistory.value) return
+  copyDialogVisible.value = true
+  await loadCopyOptions()
+}
+
+async function copyFromHistory(): Promise<void> {
+  const sourceRecord = copyOptions.value.find((item) => item.id === copySourceId.value)
+  if (!sourceRecord || copySubmitting.value) return
+
+  if (expenseRows.value.length || incomeRows.value.length) {
+    try {
+      await ElMessageBox.confirm(
+        t('ledger.entries.copyOverwrite'),
+        t('common.tip'),
+        {
+          type: 'warning',
+          showClose: false,
+          confirmButtonText: t('common.confirm'),
+          cancelButtonText: t('common.cancel')
+        }
+      )
+    } catch {
+      return
+    }
+  }
+
+  copySubmitting.value = true
+  try {
+    const detail = await getLedgerRecord(sourceRecord.id)
+    expenseRows.value = detail.items
+      .filter((item) => item.type === 'EXPENSE')
+      .map(toEditorRow)
+    incomeRows.value = detail.items
+      .filter((item) => item.type === 'INCOME')
+      .map(toEditorRow)
+    copyDialogVisible.value = false
+    copySourceId.value = null
+    ElMessage.success(
+      t('ledger.entries.copySuccess', {
+        period: formatPeriodLabel(props.source, sourceRecord.periodStart, sourceRecord.periodEnd)
+      })
+    )
+  } catch {
+    // 错误提示由 axios 拦截器统一处理
+  } finally {
+    copySubmitting.value = false
+  }
+}
+
 async function load(): Promise<void> {
   loading.value = true
   try {
@@ -578,6 +670,7 @@ function goAccounts(): void {
 }
 
 watch(periodStart, () => {
+  copyDialogVisible.value = false
   void checkPeriod()
 }, { immediate: true })
 
@@ -706,6 +799,15 @@ onMounted(load)
                     :closable="false"
                     :title="t('ledger.entries.periodExists', { period: periodLabel })"
                   />
+                  <el-button
+                    v-else-if="canCopyHistory"
+                    class="copy-history-action"
+                    plain
+                    @click="openCopyDialog"
+                  >
+                    <el-icon><CopyDocument /></el-icon>
+                    {{ t('ledger.entries.copyHistory') }}
+                  </el-button>
                 </div>
 
                 <el-alert
@@ -737,7 +839,13 @@ onMounted(load)
                     {{ t('ledger.entries.itemCount', { count: section.rows.length }) }}
                   </span>
                 </div>
-                <el-button type="primary" plain size="small" @click="openAddItem(section.type)">
+                <el-button
+                  class="section-add-button"
+                  type="primary"
+                  size="small"
+                  @click="openAddItem(section.type)"
+                >
+                  <el-icon><Plus /></el-icon>
                   {{ t(section.addKey) }}
                 </el-button>
               </div>
@@ -806,6 +914,56 @@ onMounted(load)
 
       </div>
     </div>
+
+    <el-dialog
+      v-model="copyDialogVisible"
+      class="ledger-copy-dialog"
+      :title="t('ledger.entries.copyDialogTitle')"
+      width="min(560px, 94vw)"
+      :show-close="false"
+      :close-on-click-modal="false"
+    >
+      <p class="copy-dialog__hint">{{ t('ledger.entries.copyHint') }}</p>
+
+      <el-skeleton v-if="copyLoading" :rows="2" animated />
+      <el-empty
+        v-else-if="copyOptions.length === 0"
+        :description="t('ledger.entries.copyEmpty')"
+      />
+      <el-select
+        v-else
+        v-model="copySourceId"
+        filterable
+        style="width: 100%"
+        :placeholder="t('ledger.entries.copySourcePlaceholder')"
+      >
+        <el-option
+          v-for="option in copyOptions"
+          :key="option.id"
+          :value="option.id"
+          :label="formatPeriodLabel(source, option.periodStart, option.periodEnd)"
+        >
+          <span class="copy-record-option">
+            <span>{{ formatPeriodLabel(source, option.periodStart, option.periodEnd) }}</span>
+            <span class="copy-record-option__meta">
+              {{ t('ledger.entries.itemCount', { count: option.itemCount }) }}
+            </span>
+          </span>
+        </el-option>
+      </el-select>
+
+      <template #footer>
+        <el-button @click="copyDialogVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button
+          type="primary"
+          :disabled="!copySourceId || copyLoading"
+          :loading="copySubmitting"
+          @click="copyFromHistory"
+        >
+          {{ t('ledger.entries.copyAction') }}
+        </el-button>
+      </template>
+    </el-dialog>
 
     <el-dialog
       v-model="itemDialogVisible"
@@ -1013,6 +1171,10 @@ onMounted(load)
   color: var(--color-text-1);
 }
 
+.section-add-button {
+  border-radius: 6px;
+}
+
 .period-row {
   display: flex;
   align-items: flex-start;
@@ -1160,6 +1322,30 @@ onMounted(load)
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+.copy-dialog__hint {
+  margin: 12px 0 16px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-text-3);
+}
+
+.copy-history-action {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.copy-record-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.copy-record-option__meta {
+  color: var(--color-text-3);
+  font-size: 12px;
 }
 
 .ledger-items-toolbar__title {
