@@ -2,6 +2,8 @@ const prisma = require('../../utils/prisma')
 const bcrypt = require('bcryptjs')
 const AppError = require('../../errors/AppError')
 
+const LEDGER_ENTRY_SOURCE_ORDER = ['manual_day', 'manual_week', 'manual_month']
+
 async function findById(userId) {
   return prisma.user.findUnique({
     where: { id: userId },
@@ -18,6 +20,28 @@ async function updateAvatar(userId, avatarOssId) {
   return prisma.user.update({
     where: { id: userId },
     data: { avatarOssId }
+  })
+}
+
+async function getPreferences(userId) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { ledgerEntrySources: true }
+  })
+  if (!user) {
+    throw new AppError('User not found', 401)
+  }
+  return user
+}
+
+async function updatePreferences(userId, ledgerEntrySources) {
+  const orderedSources = LEDGER_ENTRY_SOURCE_ORDER.filter((source) =>
+    ledgerEntrySources.includes(source)
+  )
+  return prisma.user.update({
+    where: { id: userId },
+    data: { ledgerEntrySources: orderedSources },
+    select: { ledgerEntrySources: true }
   })
 }
 
@@ -52,5 +76,7 @@ async function changePassword(userId, oldPassword, password) {
 module.exports = {
   findById,
   updateAvatar,
-  changePassword
+  changePassword,
+  getPreferences,
+  updatePreferences
 }

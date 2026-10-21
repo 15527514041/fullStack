@@ -8,10 +8,9 @@ import { createTodo, deleteTodo, getTodos, updateTodo } from '@/api/todo'
 import { getTags } from '@/api/tags'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
-import { formatDateTime } from '@/utils/datetime'
+import { formatDate, formatDateTime, toDateString } from '@/utils/datetime'
 import { DICTIONARY_CREATE_VALUE, dictionaryTabRoute } from '@/utils/dictionary'
 import OssUploader from '@/components/OssUploader.vue'
-import OssAttachmentPreview from '@/components/OssAttachmentPreview.vue'
 import ColorDot from '@/components/ColorDot.vue'
 import ColorTag from '@/components/ColorTag.vue'
 import type { TagItem, Todo } from '@/types'
@@ -27,6 +26,7 @@ const loading = ref(false)
 const loadingMore = ref(false)
 const sentinelRef = ref<HTMLElement | null>(null)
 const hasMore = computed(() => todos.value.length < total.value)
+type DueFilter = '' | 'today' | 'next7' | 'overdue' | 'none'
 
 const query = reactive({
   page: 1,
@@ -34,7 +34,8 @@ const query = reactive({
   keyword: '',
   tagId: undefined as number | undefined,
   /** 时间筛选:'' = 全部(不传给后端) */
-  dateRange: ''
+  dateRange: '',
+  dueFilter: '' as DueFilter
 })
 
 // 时间筛选选项(前端维护);「过去 7 天 / 30 天」复用已有的公共文案
@@ -44,6 +45,21 @@ const dateOptions = computed(() => [
   { value: 'week', label: t('growth.last7') },
   { value: 'month', label: t('growth.last30') }
 ])
+
+const dueFilterOptions = computed(() => [
+  { value: '', label: t('todo.dueAll') },
+  { value: 'today', label: t('todo.dueToday') },
+  { value: 'next7', label: t('todo.dueNext7') },
+  { value: 'overdue', label: t('todo.dueOverdue') },
+  { value: 'none', label: t('todo.dueNone') }
+])
+
+function dateWithOffset(offset: number): string {
+  const date = new Date()
+  date.setHours(12, 0, 0, 0)
+  date.setDate(date.getDate() + offset)
+  return toDateString(date)
+}
 
 /**
  * 时间筛选 → 后端参数
@@ -64,6 +80,28 @@ function dateRangeParams(): { from?: string; to?: string } {
   return { from: start.toISOString(), to: end.toISOString() }
 }
 
+function dueFilterParams(): {
+  dueFrom?: string
+  dueTo?: string
+  dueDateMissing?: boolean
+  completed?: boolean
+} {
+  if (query.dueFilter === 'today') {
+    const today = dateWithOffset(0)
+    return { dueFrom: today, dueTo: today }
+  }
+  if (query.dueFilter === 'next7') {
+    return { dueFrom: dateWithOffset(0), dueTo: dateWithOffset(6) }
+  }
+  if (query.dueFilter === 'overdue') {
+    return { dueTo: dateWithOffset(-1), completed: false }
+  }
+  if (query.dueFilter === 'none') {
+    return { dueDateMissing: true }
+  }
+  return {}
+}
+
 // 新增 / 编辑弹窗:editingTodoId 为 null 表示新增
 const dialogVisible = ref(false)
 const editingTodoId = ref<number | null>(null)
@@ -71,6 +109,7 @@ const submitting = ref(false)
 const formRef = ref<FormInstance>()
 const form = reactive({
   title: '',
+  dueDate: '' as string | null,
   remark: '',
   attachmentOssIds: [] as string[],
   tagIds: [] as number[]
@@ -115,7 +154,8 @@ async function loadTodos(append = false): Promise<void> {
       pageSize: query.pageSize,
       keyword: query.keyword.trim() || undefined,
       tagId: query.tagId,
-      ...dateRangeParams()
+      ...dateRangeParams(),
+      ...dueFilterParams()
     })
     todos.value = append ? [...todos.value, ...result.list] : result.list
     total.value = result.total
@@ -138,6 +178,7 @@ useInfiniteScroll(sentinelRef, () => {
 function openAddDialog(): void {
   editingTodoId.value = null
   form.title = ''
+  form.dueDate = ''
   form.remark = ''
   form.attachmentOssIds = []
   form.tagIds = []
@@ -149,6 +190,7 @@ function openAddDialog(): void {
 function openEditDialog(todo: Todo): void {
   editingTodoId.value = todo.id
   form.title = todo.title
+  form.dueDate = todo.dueDate || ''
   form.remark = todo.remark || ''
   form.attachmentOssIds = (todo.attachments || []).map((item) => item.ossId)
   form.tagIds = (todo.tags || []).map((tag) => tag.id)
@@ -165,6 +207,7 @@ async function handleSubmit(): Promise<void> {
   try {
     const payload = {
       title: form.title.trim(),
+      dueDate: form.dueDate || null,
       // 备注空串统一传 null(后端也做了归一化)
       remark: form.remark.trim() || null,
       attachmentOssIds: form.attachmentOssIds,
@@ -195,6 +238,7 @@ function handleReset(): void {
   query.keyword = ''
   query.tagId = undefined
   query.dateRange = ''
+  query.dueFilter = ''
   query.page = 1
   loadTodos()
 }
@@ -203,11 +247,6 @@ function handleTagFormChange(values: Array<string | number>): void {
   if (!values.includes(DICTIONARY_CREATE_VALUE)) return
   form.tagIds = values.filter((value): value is number => typeof value === 'number')
   router.push(dictionaryTabRoute('TODO'))
-}
-
-// 附件列的 ossId 列表(后端已按 sortOrder 排好)
-function attachmentIds(todo: Todo): string[] {
-  return (todo.attachments || []).map((item) => item.ossId)
 }
 
 const tagOptions = computed(() =>
@@ -225,6 +264,10 @@ function tagChipStyle(tagId: number) {
     backgroundColor: `${color}14`,
     borderColor: `${color}33`
   }
+}
+
+function isOverdue(todo: Todo): boolean {
+  return Boolean(todo.dueDate && !todo.completed && todo.dueDate < dateWithOffset(0))
 }
 
 // 详情单独一个页面(样式参考 client 的详情页)
@@ -310,6 +353,22 @@ onMounted(() => {
         <el-option v-for="option in dateOptions" :key="option.value" :label="option.label" :value="option.value" />
       </el-select>
 
+      <el-select
+        v-model="query.dueFilter"
+        class="due-select"
+        :placeholder="$t('todo.dueFilterPlaceholder')"
+        :value-on-clear="''"
+        clearable
+        @change="handleSearch"
+      >
+        <el-option
+          v-for="option in dueFilterOptions"
+          :key="option.value"
+          :label="option.label"
+          :value="option.value"
+        />
+      </el-select>
+
       <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
       <el-button class="reset-btn" @click="handleReset">{{ $t('common.reset') }}</el-button>
     </div>
@@ -332,11 +391,17 @@ onMounted(() => {
           <ColorTag v-for="tag in row.tags" :key="tag.id" :name="tag.name" :color="tag.color" />
         </div>
 
-        <div v-if="attachmentIds(row).length" class="card-attachment">
-          <OssAttachmentPreview :value="attachmentIds(row)" :size="56" :max="3" :radius="8" />
-        </div>
-
         <div class="card-meta">
+          <span>
+            {{ $t('todo.colDueDate') }}:
+            <span v-if="row.dueDate" class="due-date" :class="{ 'is-overdue': isOverdue(row) }">
+              {{ formatDate(row.dueDate) }}
+            </span>
+            <span v-else>—</span>
+            <el-tag v-if="isOverdue(row)" size="small" type="danger" class="overdue-tag">
+              {{ $t('todo.overdue') }}
+            </el-tag>
+          </span>
           <span>{{ $t('common.createdAt') }}:{{ formatDateTime(row.createdAt) }}</span>
         </div>
 
@@ -361,28 +426,27 @@ onMounted(() => {
         </template>
       </el-table-column>
 
+      <el-table-column :label="$t('todo.colDueDate')" min-width="150" align="center">
+        <template #default="{ row }">
+          <span v-if="row.dueDate" class="due-date" :class="{ 'is-overdue': isOverdue(row) }">
+            {{ formatDate(row.dueDate) }}
+          </span>
+          <span v-else class="todo-empty-cell">—</span>
+          <el-tag v-if="isOverdue(row)" size="small" type="danger" class="overdue-tag">
+            {{ $t('todo.overdue') }}
+          </el-tag>
+        </template>
+      </el-table-column>
+
       <el-table-column :label="$t('todo.colTags')" min-width="120">
         <template #default="{ row }">
           <ColorTag v-for="tag in row.tags" :key="tag.id" :name="tag.name" :color="tag.color" class="tag-item" />
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('todo.colAttachment')" min-width="120" align="center" class-name="cell-attachment">
-        <template #default="{ row }">
-          <OssAttachmentPreview v-if="attachmentIds(row).length" :value="attachmentIds(row)" :size="36" :max="3" :radius="6" />
-          <span v-else class="todo-empty-cell">-</span>
-        </template>
-      </el-table-column>
-
       <el-table-column :label="$t('common.createdAt')" min-width="120" align="center">
         <template #default="{ row }">
           {{ formatDateTime(row.createdAt) }}
-        </template>
-      </el-table-column>
-
-      <el-table-column :label="$t('common.updatedAt')" min-width="120" align="center">
-        <template #default="{ row }">
-          {{ formatDateTime(row.updatedAt) }}
         </template>
       </el-table-column>
 
@@ -423,7 +487,13 @@ onMounted(() => {
       />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="min(640px, 94vw)" :show-close="false">
+    <el-dialog
+      v-model="dialogVisible"
+      class="todo-edit-dialog"
+      :title="dialogTitle"
+      width="min(640px, 94vw)"
+      :show-close="false"
+    >
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item :label="$t('todo.formTitle')" prop="title">
           <el-input
@@ -433,6 +503,18 @@ onMounted(() => {
             show-word-limit
             @keyup.enter="handleSubmit"
           />
+        </el-form-item>
+
+        <el-form-item :label="$t('todo.formDueDate')">
+          <el-date-picker
+            v-model="form.dueDate"
+            type="date"
+            value-format="YYYY-MM-DD"
+            clearable
+            style="width: 100%"
+            :placeholder="$t('todo.dueDatePlaceholder')"
+          />
+          <div class="due-date-hint">{{ $t('todo.dueDateHint') }}</div>
         </el-form-item>
 
         <el-form-item :label="$t('todo.formTags')">
@@ -516,6 +598,10 @@ onMounted(() => {
   width: 210px;
 }
 
+.due-select {
+  width: 210px;
+}
+
 /* 表单里的多选标签:选中项换成各自颜色的标签,多选时自动换行 */
 .tag-multiselect :deep(.el-select__selection) {
   flex-wrap: wrap;
@@ -543,24 +629,33 @@ onMounted(() => {
   color: var(--color-text-4);
 }
 
-/* 附件列:内容垂直居中(单元格比内容高时不再顶到上边) */
-:deep(.cell-attachment .cell) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.due-date {
+  color: var(--color-text-2);
 }
 
-/* 卡片里的备注与附件缩略图 */
+.due-date.is-overdue {
+  color: var(--el-color-danger);
+  font-weight: 500;
+}
+
+.overdue-tag {
+  margin-left: 6px;
+}
+
+.due-date-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-text-3);
+}
+
+/* 卡片里的备注 */
 .card-remark {
   margin-top: 6px;
   font-size: 13px;
   line-height: 20px;
   color: var(--color-text-2);
   word-break: break-word;
-}
-
-.card-attachment {
-  margin-top: 10px;
 }
 
 .tag-option {
@@ -572,8 +667,38 @@ onMounted(() => {
 @media (max-width: 768px) {
   .search-input,
   .tag-select,
-  .date-select {
+  .date-select,
+  .due-select {
     width: 100%;
+  }
+}
+</style>
+
+<style>
+/* 计划新增/编辑弹窗:与视口上下留白,内容超高时仅表单区域滚动 */
+.todo-edit-dialog.el-dialog {
+  display: flex;
+  max-height: 84vh;
+  margin: 8vh auto !important;
+  flex-direction: column;
+}
+
+.todo-edit-dialog .el-dialog__body {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+
+.todo-edit-dialog .el-dialog__header,
+.todo-edit-dialog .el-dialog__footer {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .todo-edit-dialog.el-dialog {
+    max-height: 90vh;
+    margin: 5vh auto !important;
   }
 }
 </style>

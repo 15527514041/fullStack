@@ -29,6 +29,9 @@ const boolQuery = z
   .enum(['true', 'false'])
   .transform((value) => value === 'true')
 
+// 只收日期(YYYY-MM-DD):日期字段落库为 DATE,带上时分秒反而容易踩时区
+const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD')
+
 // ====== auth ======
 
 const authSchemas = {
@@ -43,6 +46,10 @@ const authSchemas = {
 
 // ====== user(个人中心) ======
 
+const ledgerEntrySource = z.enum(['manual_day', 'manual_week', 'manual_month'], {
+  errorMap: () => ({ message: '账单维度不合法' })
+})
+
 // 修改密码:前端表单是「原密码 + 新密码 + 确认密码」,新密码两次必须一致
 // (前端已经比过一次,服务端再兜一层:接口是公开契约,不能只靠调用方守规矩)
 const userSchemas = {
@@ -56,7 +63,18 @@ const userSchemas = {
     .refine((data) => data.password === data.confirmPassword, {
       message: '两次输入的密码不一致',
       path: ['confirmPassword']
+    }),
+  updatePreferences: z
+    .object({
+      ledgerEntrySources: z
+        .array(ledgerEntrySource)
+        .min(1, '至少保留一个账单维度')
+        .max(3, '账单维度不合法')
+        .refine((values) => new Set(values).size === values.length, {
+          message: '账单维度不能重复'
+        })
     })
+    .strict()
 }
 
 // ====== todo ======
@@ -64,6 +82,7 @@ const userSchemas = {
 const todoSchemas = {
   create: z.object({
     title,
+    dueDate: dateOnly.nullable().optional(),
     remark: remark.optional(),
     attachmentOssIds: attachmentOssIds.optional(),
     tagIds: z.array(z.number().int().positive()).optional()
@@ -71,6 +90,7 @@ const todoSchemas = {
   update: z
     .object({
       title: title.optional(),
+      dueDate: dateOnly.nullable().optional(),
       remark: remark.optional(),
       attachmentOssIds: attachmentOssIds.optional(),
       completed: z.boolean().optional(),
@@ -81,15 +101,27 @@ const todoSchemas = {
     ...pageParams,
     keyword: z.string().trim().optional(),
     completed: boolQuery.optional(),
+    dueFrom: dateOnly.optional(),
+    dueTo: dateOnly.optional(),
+    dueDateMissing: boolQuery.optional(),
     tagId: z.coerce.number().int().positive().optional(),
     deleted: boolQuery.optional(),
     // 时间范围:待办的 createdAt 是时间戳,前端按用户本地时区算好 UTC 时刻再传,所以收 ISO 字符串
     from: z.string().datetime({ offset: true }).optional(),
     to: z.string().datetime({ offset: true }).optional()
-  }).refine((data) => !data.from || !data.to || data.from <= data.to, {
-    message: '开始时间不能晚于结束时间',
-    path: ['to']
   })
+    .refine((data) => !data.from || !data.to || data.from <= data.to, {
+      message: '开始时间不能晚于结束时间',
+      path: ['to']
+    })
+    .refine((data) => !data.dueFrom || !data.dueTo || data.dueFrom <= data.dueTo, {
+      message: '截止日期开始值不能晚于结束值',
+      path: ['dueTo']
+    })
+    .refine((data) => !data.dueDateMissing || (!data.dueFrom && !data.dueTo), {
+      message: '未设置截止日期不能与其他截止日期条件同时使用',
+      path: ['dueDateMissing']
+    })
 }
 
 // ====== tag ======
@@ -124,8 +156,6 @@ const tagSchemas = {
 
 // ====== 每日反思 / 每日规划 ======
 
-// 只收日期(YYYY-MM-DD):库里是 DATE 类型,带上时分秒反而容易踩时区
-const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD')
 const timeOfDay = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, '时间格式应为 HH:mm')
 // 星期不存库、也不进接口:它是 date 推导出来的,前端展示时自己算
 

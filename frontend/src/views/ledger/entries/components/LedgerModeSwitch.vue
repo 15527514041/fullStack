@@ -2,16 +2,19 @@
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import type { LedgerRecordSource } from '@/types'
-import { LEDGER_MODES } from '../constants'
+import type { LedgerModeMeta } from '../constants'
 
-const props = defineProps<{ source: LedgerRecordSource }>()
+const props = defineProps<{
+  source: LedgerRecordSource
+  modes: LedgerModeMeta[]
+}>()
 
 const router = useRouter()
 const { t } = useI18n()
 
 function switchMode(target: LedgerRecordSource): void {
   if (target === props.source) return
-  const mode = LEDGER_MODES.find((item) => item.source === target)
+  const mode = props.modes.find((item) => item.source === target)
   if (!mode) return
   // replace:切 tab 不堆历史记录,返回时回到进入列表页之前的页面
   router.replace({ name: mode.listRoute })
@@ -21,7 +24,7 @@ function switchMode(target: LedgerRecordSource): void {
 <template>
   <div class="ledger-mode-switch" role="tablist" :aria-label="t('ledger.entries.title')">
     <button
-      v-for="mode in LEDGER_MODES"
+      v-for="mode in modes"
       :key="mode.source"
       type="button"
       role="tab"

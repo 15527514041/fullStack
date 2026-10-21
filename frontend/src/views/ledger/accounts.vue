@@ -7,6 +7,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { createAccount, deleteAccount, getAccounts, updateAccount, updateAccountBalance } from '@/api/ledger'
 import { getDictionaries } from '@/api/dictionaries'
 import ColorDot from '@/components/ColorDot.vue'
+import InfoTipIcon from '@/components/InfoTipIcon.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTimeShort } from '@/utils/datetime'
 import { DICTIONARY_CREATE_VALUE, dictionaryTabRoute } from '@/utils/dictionary'
@@ -260,15 +261,24 @@ onMounted(async () => {
     <!-- 资金概览:一个带底色的卡片,只放这三个数(样式参考 client) -->
     <div class="asset-card">
       <div class="asset-item">
-        <div class="asset-label">{{ $t('ledger.accounts.totalAssets') }}</div>
+        <div class="asset-label">
+          <span>{{ $t('ledger.accounts.totalAssets') }}</span>
+          <InfoTipIcon :content="$t('ledger.accounts.totalAssetsTip')" />
+        </div>
         <div class="asset-value">{{ formatCents(totals.assets) }}</div>
       </div>
       <div class="asset-item">
-        <div class="asset-label">{{ $t('ledger.accounts.totalDebt') }}</div>
-        <div class="asset-value">{{ formatCents(totals.debt) }}</div>
+        <div class="asset-label">
+          <span>{{ $t('ledger.accounts.totalDebt') }}</span>
+          <InfoTipIcon :content="$t('ledger.accounts.totalDebtTip')" />
+        </div>
+        <div class="asset-value is-debt">{{ formatCents(totals.debt) }}</div>
       </div>
       <div class="asset-item">
-        <div class="asset-label">{{ $t('ledger.accounts.netAssets') }}</div>
+        <div class="asset-label">
+          <span>{{ $t('ledger.accounts.netAssets') }}</span>
+          <InfoTipIcon :content="$t('ledger.accounts.netAssetsTip')" />
+        </div>
         <div class="asset-value">{{ formatCents(totals.net) }}</div>
       </div>
     </div>
@@ -346,15 +356,7 @@ onMounted(async () => {
       <el-table-column :label="$t('ledger.accounts.colEnabled')" min-width="120" align="center">
         <template #header>
           <span class="th-tip">
-            <el-tooltip :content="$t('ledger.accounts.enabledTip')" placement="top">
-              <!-- 提示图标和 client 端「在途余额」那个一致:细线圆圈 + 感叹号,放在文字左边 -->
-              <svg class="th-tip-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path
-                  d="M16.4004 10C16.4004 6.46538 13.5346 3.59961 10 3.59961C6.46538 3.59961 3.59961 6.46538 3.59961 10C3.59961 13.5346 6.46538 16.4004 10 16.4004V18C5.58172 18 2 14.4183 2 10C2 5.58172 5.58172 2 10 2C14.4183 2 18 5.58172 18 10C18 14.4183 14.4183 18 10 18V16.4004C13.5346 16.4004 16.4004 13.5346 16.4004 10ZM10.0078 12.4004C10.4496 12.4004 10.8076 12.7584 10.8076 13.2002C10.8075 13.6419 10.4496 14 10.0078 14H10C9.55824 14 9.2003 13.6419 9.2002 13.2002C9.2002 12.7584 9.55817 12.4004 10 12.4004H10.0078ZM9.2002 10V6.7998C9.2003 6.35807 9.55824 6 10 6C10.4418 6 10.7997 6.35807 10.7998 6.7998V10C10.7998 10.4418 10.4418 10.7998 10 10.7998C9.55817 10.7998 9.2002 10.4418 9.2002 10Z"
-                  fill="currentColor"
-                />
-              </svg>
-            </el-tooltip>
+            <InfoTipIcon :content="$t('ledger.accounts.enabledTip')" />
             {{ $t('ledger.accounts.colEnabled') }}
           </span>
         </template>
@@ -454,7 +456,7 @@ onMounted(async () => {
       <div v-if="balanceTarget" class="balance-body">
         <div class="balance-dialog-name">{{ balanceTarget.name }}</div>
         <div class="balance-dialog-meta">
-          {{ $t('ledger.accounts.colUpdatedAt') }}:{{ formatDateTimeShort(balanceTarget.balanceUpdatedAt) }}
+          {{ $t('ledger.accounts.balanceUpdatedAtLabel') }}:{{ formatDateTimeShort(balanceTarget.balanceUpdatedAt) }}
         </div>
 
         <el-input-number
@@ -498,9 +500,16 @@ onMounted(async () => {
 }
 
 .asset-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 13px;
   line-height: 20px;
   color: rgba(255, 255, 255, 0.75);
+}
+
+.asset-label :deep(.info-tip) {
+  color: rgba(255, 255, 255, 0.62);
 }
 
 .asset-value {
@@ -509,6 +518,10 @@ onMounted(async () => {
   font-weight: 600;
   line-height: 34px;
   word-break: break-all;
+}
+
+.asset-value.is-debt {
+  color: #ffe0b8;
 }
 
 .account-name {
@@ -542,16 +555,6 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-}
-
-.th-tip-icon {
-  /* display: block 去掉 inline svg 坐在文字基线上下沉的那截空隙,和文字中线对齐 */
-  display: block;
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  color: var(--color-text-3);
-  cursor: pointer;
 }
 
 .field-tip {

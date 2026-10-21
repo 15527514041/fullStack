@@ -55,6 +55,8 @@ export interface TagItem extends Tag {
 export interface Todo {
   id: number
   title: string
+  /** 截止日期,格式 YYYY-MM-DD;未设置为 null */
+  dueDate?: string | null
   /** 备注:非必填 */
   remark?: string | null
   completed: boolean
@@ -83,6 +85,9 @@ export interface TodoQuery {
   pageSize?: number
   keyword?: string
   completed?: boolean
+  dueFrom?: string
+  dueTo?: string
+  dueDateMissing?: boolean
   tagId?: number
   deleted?: boolean
   /** 创建时间范围(ISO,按本地时区算好的起止时刻) */
@@ -236,6 +241,10 @@ export interface LedgerAccount {
 // ===== 记账:周期账单 =====
 /** 日 / 周 / 月三种账本来源 */
 export type LedgerRecordSource = 'manual_day' | 'manual_week' | 'manual_month'
+
+export interface LedgerPreferences {
+  ledgerEntrySources: LedgerRecordSource[]
+}
 export type LedgerItemType = 'INCOME' | 'EXPENSE'
 
 /** 明细里带出的账户快照字段 */

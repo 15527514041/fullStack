@@ -21,6 +21,11 @@ const icons: Record<string, IconDef> = {
     d:
       'M4 6h2v2H4V6zm4 0h12v2H8V6zM4 11h2v2H4v-2zm4 0h12v2H8v-2zM4 16h2v2H4v-2zm4 0h12v2H8v-2z'
   },
+  // 计划清单:清单文档 + 单个勾选标记,与任务列表图标区分
+  checklist: {
+    d:
+      'M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v16h12V4H6zm1.9 7.8 1.4-1.4 2 2 3.9-4 1.4 1.4-5.3 5.4-3.4-3.4zM8 8h8v2H8V8zm0 10h7v2H8v-2z'
+  },
   trash: {
     d: 'M9 3h6l1 2h4v2H4V5h4l1-2zM6 9h12l-1 11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 9z'
   },

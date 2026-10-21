@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getTodo } from '@/api/todo'
-import { formatDateTime } from '@/utils/datetime'
+import { formatDate, formatDateTime, toDateString } from '@/utils/datetime'
 import BackButton from '@/components/BackButton.vue'
 import OssAttachmentPreview from '@/components/OssAttachmentPreview.vue'
 import ColorTag from '@/components/ColorTag.vue'
@@ -21,6 +21,12 @@ const notFound = ref(false)
 
 const todoId = computed(() => Number(route.params.id))
 const attachmentIds = computed(() => (todo.value?.attachments || []).map((item) => item.ossId))
+const dueOverdue = computed(
+  () =>
+    Boolean(todo.value?.dueDate) &&
+    !todo.value?.completed &&
+    (todo.value?.dueDate as string) < toDateString(new Date())
+)
 // 无菜单栏时内容区已铺满,页面自己不留圆角,只保留左右留白
 const noSidebar = computed(() => route.meta.noSidebar === true)
 
@@ -73,6 +79,19 @@ onMounted(loadDetail)
           <span class="value">
             <el-tag :type="todo.completed ? 'success' : 'warning'">
               {{ todo.completed ? $t('todo.detailDone') : $t('todo.detailUndone') }}
+            </el-tag>
+          </span>
+        </div>
+
+        <div class="info-item">
+          <span class="label">{{ $t('todo.formDueDate') }}</span>
+          <span class="value">
+            <span v-if="todo.dueDate" class="due-date" :class="{ 'is-overdue': dueOverdue }">
+              {{ formatDate(todo.dueDate) }}
+            </span>
+            <span v-else class="empty-value">—</span>
+            <el-tag v-if="dueOverdue" size="small" type="danger" class="overdue-tag">
+              {{ $t('todo.overdue') }}
             </el-tag>
           </span>
         </div>
@@ -153,6 +172,15 @@ onMounted(loadDetail)
 
 .remark-value {
   white-space: pre-wrap;
+}
+
+.due-date.is-overdue {
+  color: var(--el-color-danger);
+  font-weight: 500;
+}
+
+.overdue-tag {
+  margin-left: 8px;
 }
 
 .empty-value {

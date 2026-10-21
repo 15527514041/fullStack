@@ -160,10 +160,7 @@ watch(() => props.recordId, load, { immediate: true })
 
       <div v-else-if="record" ref="detailRef" class="ledger-detail-layout">
         <aside class="ledger-detail-side">
-          <div
-            class="ledger-summary-card"
-            :class="{ 'is-two-columns': source === 'manual_day' }"
-          >
+          <div class="ledger-summary-card">
             <div class="ledger-summary-item">
               <span>{{ t('ledger.entries.colExpense') }}</span>
               <strong class="is-expense">{{ formatCents(record.expenseCents) }}</strong>
@@ -172,7 +169,7 @@ watch(() => props.recordId, load, { immediate: true })
               <span>{{ t('ledger.entries.colIncome') }}</span>
               <strong class="is-income">{{ formatCents(record.incomeCents) }}</strong>
             </div>
-            <div v-if="source !== 'manual_day'" class="ledger-summary-item">
+            <div class="ledger-summary-item">
               <span>{{ t('ledger.entries.colNet') }}</span>
               <strong :class="netClass">{{ formatCents(record.netCents) }}</strong>
             </div>
@@ -299,10 +296,6 @@ watch(() => props.recordId, load, { immediate: true })
   color: #fff;
 }
 
-.ledger-summary-card.is-two-columns {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
 .ledger-summary-item {
   display: flex;
   flex-direction: column;
@@ -419,10 +412,6 @@ watch(() => props.recordId, load, { immediate: true })
     gap: 10px;
     padding: 16px 18px;
     border-radius: 18px;
-  }
-
-  .ledger-summary-card.is-two-columns {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .ledger-summary-item {

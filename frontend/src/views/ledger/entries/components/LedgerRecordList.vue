@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { deleteLedgerRecord } from '@/api/ledger'
+import InfoTipIcon from '@/components/InfoTipIcon.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTimeShort } from '@/utils/datetime'
+import { LEDGER_DIMENSION_TIP } from '@/utils/ledgerPreferences'
 import { formatCents } from '@/utils/money'
 import type { LedgerRecordSource, LedgerRecordSummary } from '@/types'
 import { getModeMeta } from '../constants'
 import { useLedgerRecordList } from '../composables/useLedgerRecordList'
 import { formatPeriodLabel, type LedgerListPreset } from '../utils'
-import LedgerModeSwitch from './LedgerModeSwitch.vue'
 import LedgerPeriodLabel from './LedgerPeriodLabel.vue'
 import LedgerRecordMobileCard from './LedgerRecordMobileCard.vue'
 
@@ -22,6 +23,10 @@ const router = useRouter()
 const { t } = useI18n()
 const { isMobile } = useIsMobile()
 const meta = computed(() => getModeMeta(props.source))
+const dimensionTip = inject(
+  LEDGER_DIMENSION_TIP,
+  computed(() => ({ visible: false, content: '' }))
+)
 
 const {
   list,
@@ -102,13 +107,16 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
 
 <template>
   <div class="ledger-entries-view">
-    <!-- 维度和卡片平级,放在卡片外侧;卡片内只放标题、筛选和列表 -->
-    <LedgerModeSwitch :source="source" />
-
     <div class="list-page ledger-record-list">
       <div class="page-header">
         <div class="title-section">
-          <div class="page-title">{{ t(meta.titleKey) }}</div>
+          <div class="page-title-row">
+            <div class="page-title">{{ t(meta.titleKey) }}</div>
+            <InfoTipIcon
+              v-if="dimensionTip.visible"
+              :content="dimensionTip.content"
+            />
+          </div>
           <div class="page-subtitle">{{ t(meta.subtitleKey) }}</div>
         </div>
         <el-button type="primary" @click="openCreate">
@@ -176,12 +184,7 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
               <span class="ledger-total is-income">{{ formatCents(row.incomeCents) }}</span>
             </template>
           </el-table-column>
-          <el-table-column
-            v-if="meta.source !== 'manual_day'"
-            :label="t('ledger.entries.colNet')"
-            min-width="120"
-            align="left"
-          >
+          <el-table-column :label="t('ledger.entries.colNet')" min-width="120" align="left">
             <template #default="{ row }">
               <span class="ledger-total" :class="netClass(row.netCents)">
                 {{ formatCents(row.netCents) }}
@@ -254,6 +257,17 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
 
 .ledger-record-table :deep(.el-table__row) {
   cursor: pointer;
+}
+
+.page-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.page-title-row + .page-subtitle {
+  margin-top: 8px;
 }
 
 .range-field {

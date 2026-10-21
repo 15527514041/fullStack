@@ -54,6 +54,75 @@ test('列表返回分页结构', async () => {
   assert.strictEqual(res.body.list.length, 2)
 })
 
+test('计划截止日期可创建、更新、清空,并支持日期范围和未设置筛选', async () => {
+  const token = await registerAndLogin()
+  const auth = { Authorization: `Bearer ${token}` }
+
+  const dated = await request(app)
+    .post('/api/todos')
+    .set(auth)
+    .send({ title: '有截止日期', dueDate: '2026-10-20' })
+  assert.strictEqual(dated.status, 201)
+  assert.strictEqual(dated.body.dueDate, '2026-10-20')
+
+  const undated = await request(app)
+    .post('/api/todos')
+    .set(auth)
+    .send({ title: '无截止日期' })
+  assert.strictEqual(undated.body.dueDate, null)
+
+  const byRange = await request(app)
+    .get('/api/todos?dueFrom=2026-10-20&dueTo=2026-10-20')
+    .set(auth)
+  assert.strictEqual(byRange.body.total, 1)
+  assert.strictEqual(byRange.body.list[0].title, '有截止日期')
+
+  const missing = await request(app)
+    .get('/api/todos?dueDateMissing=true')
+    .set(auth)
+  assert.strictEqual(missing.body.total, 1)
+  assert.strictEqual(missing.body.list[0].title, '无截止日期')
+
+  const cleared = await request(app)
+    .patch(`/api/todos/${dated.body.id}`)
+    .set(auth)
+    .send({ dueDate: null })
+  assert.strictEqual(cleared.status, 200)
+  assert.strictEqual(cleared.body.dueDate, null)
+
+  const invalid = await request(app)
+    .post('/api/todos')
+    .set(auth)
+    .send({ title: '非法日期', dueDate: '2026/10/20' })
+  assert.strictEqual(invalid.status, 400)
+})
+
+test('逾期筛选可结合完成状态排除已完成计划', async () => {
+  const token = await registerAndLogin()
+  const auth = { Authorization: `Bearer ${token}` }
+
+  const pending = await request(app)
+    .post('/api/todos')
+    .set(auth)
+    .send({ title: '逾期未完成', dueDate: '2026-10-19' })
+  const completed = await request(app)
+    .post('/api/todos')
+    .set(auth)
+    .send({ title: '逾期已完成', dueDate: '2026-10-19' })
+  await request(app)
+    .patch(`/api/todos/${completed.body.id}`)
+    .set(auth)
+    .send({ completed: true })
+
+  assert.strictEqual(pending.status, 201)
+  const overdue = await request(app)
+    .get('/api/todos?dueTo=2026-10-19&completed=false')
+    .set(auth)
+
+  assert.strictEqual(overdue.body.total, 1)
+  assert.strictEqual(overdue.body.list[0].title, '逾期未完成')
+})
+
 test('用户之间数据隔离:看不到别人的 TODO', async () => {
   const aliceToken = await registerAndLogin('alice')
   const bobToken = await registerAndLogin('bob')
