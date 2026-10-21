@@ -203,7 +203,7 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
                 {{ t('ledger.entries.view') }}
               </el-button>
               <el-button link type="primary" @click.stop="openEdit(row)">
-                {{ t('common.edit') }}
+                {{ t('ledger.entries.update') }}
               </el-button>
               <el-button link type="danger" @click.stop="handleDelete(row)">
                 {{ t('common.delete') }}

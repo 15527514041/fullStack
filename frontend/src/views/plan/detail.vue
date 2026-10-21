@@ -9,7 +9,7 @@ import ActionIcon from '@/components/ActionIcon.vue'
 import BackButton from '@/components/BackButton.vue'
 import FileIcon from '@/components/FileIcon.vue'
 import { useImageExport } from '@/composables/useImageExport'
-import { formatDate, formatDateTime, formatDuration, formatWeekday } from '@/utils/datetime'
+import { formatDate, formatDateTime, formatDayHeading, formatDuration } from '@/utils/datetime'
 import type { DailyPlan } from '@/types'
 
 /**
@@ -149,7 +149,7 @@ onMounted(loadDetail)
           <div class="plan-date-line">
             <div class="plan-date-line__main">
               <span class="plan-date-line__label">{{ $t('plan.dateLabel') }}</span>
-              <span>{{ plan.date }} {{ formatWeekday(plan.date) }}</span>
+              <span>{{ formatDayHeading(plan.date) }}</span>
             </div>
             <span class="plan-date-line__created">
               {{ $t('common.createdAt') }}:{{ formatDateTime(plan.createdAt) }}
