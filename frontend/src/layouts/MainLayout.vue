@@ -57,7 +57,7 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
     {
       title: t('menu.tasksGroup'),
       items: [
-        { path: '/', title: t('menu.todoList'), icon: 'tasks' },
+        { path: '/', title: t('menu.todoList'), icon: 'checklist' },
         { path: '/trash', title: t('menu.trash'), icon: 'trash' }
       ]
     },

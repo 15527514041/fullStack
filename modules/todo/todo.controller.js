@@ -8,7 +8,7 @@ async function getTodos(req, res) {
 async function getTodo(req, res) {
   const todo = await todoService.getTodoById(req.validated.params.id, req.user.id)
   if (!todo) {
-    return res.status(404).json({ message: 'Todo not found' })
+    return res.status(404).json({ message: 'Checklist item not found' })
   }
   res.json(todo)
 }
