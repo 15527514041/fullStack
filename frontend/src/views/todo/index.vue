@@ -13,6 +13,7 @@ import { DICTIONARY_CREATE_VALUE, dictionaryTabRoute } from '@/utils/dictionary'
 import OssUploader from '@/components/OssUploader.vue'
 import ColorDot from '@/components/ColorDot.vue'
 import ColorTag from '@/components/ColorTag.vue'
+import MarkdownInput from '@/components/MarkdownInput.vue'
 import type { TagItem, Todo } from '@/types'
 
 const { t } = useI18n()
@@ -110,7 +111,7 @@ const formRef = ref<FormInstance>()
 const form = reactive({
   title: '',
   dueDate: '' as string | null,
-  remark: '',
+  description: '',
   attachmentOssIds: [] as string[],
   tagIds: [] as number[]
 })
@@ -179,19 +180,19 @@ function openAddDialog(): void {
   editingTodoId.value = null
   form.title = ''
   form.dueDate = ''
-  form.remark = ''
+  form.description = ''
   form.attachmentOssIds = []
   form.tagIds = []
   formRef.value?.clearValidate()
   dialogVisible.value = true
 }
 
-// 编辑复用同一个弹窗:回显内容、备注、附件与标签
+// 编辑复用同一个弹窗:回显标题、描述、附件与标签
 function openEditDialog(todo: Todo): void {
   editingTodoId.value = todo.id
   form.title = todo.title
   form.dueDate = todo.dueDate || ''
-  form.remark = todo.remark || ''
+  form.description = todo.description || ''
   form.attachmentOssIds = (todo.attachments || []).map((item) => item.ossId)
   form.tagIds = (todo.tags || []).map((tag) => tag.id)
   formRef.value?.clearValidate()
@@ -208,8 +209,8 @@ async function handleSubmit(): Promise<void> {
     const payload = {
       title: form.title.trim(),
       dueDate: form.dueDate || null,
-      // 备注空串统一传 null(后端也做了归一化)
-      remark: form.remark.trim() || null,
+      // 描述保存 Markdown 原文,空串统一传 null(后端也做了归一化)
+      description: form.description.trim() || null,
       attachmentOssIds: form.attachmentOssIds,
       tagIds: form.tagIds
     }
@@ -388,8 +389,6 @@ onMounted(() => {
           <el-switch v-model="row.completed" @change="handleToggle(row)" />
         </div>
 
-        <div v-if="row.remark" class="card-remark">{{ row.remark }}</div>
-
         <div v-if="row.tags && row.tags.length" class="card-tags">
           <ColorTag v-for="tag in row.tags" :key="tag.id" :name="tag.name" :color="tag.color" />
         </div>
@@ -508,6 +507,15 @@ onMounted(() => {
           />
         </el-form-item>
 
+        <el-form-item :label="$t('todo.formDescription')">
+          <MarkdownInput
+            v-model="form.description"
+            :rows="3"
+            :maxlength="2000"
+            :placeholder="$t('todo.descriptionPlaceholder')"
+          />
+        </el-form-item>
+
         <el-form-item :label="$t('todo.formDueDate')">
           <el-date-picker
             v-model="form.dueDate"
@@ -517,7 +525,6 @@ onMounted(() => {
             style="width: 100%"
             :placeholder="$t('todo.dueDatePlaceholder')"
           />
-          <div class="due-date-hint">{{ $t('todo.dueDateHint') }}</div>
         </el-form-item>
 
         <el-form-item :label="$t('todo.formTags')">
@@ -555,17 +562,6 @@ onMounted(() => {
               </span>
             </el-option>
           </el-select>
-        </el-form-item>
-
-        <el-form-item :label="$t('todo.formRemark')">
-          <el-input
-            v-model="form.remark"
-            type="textarea"
-            :rows="3"
-            :placeholder="$t('todo.remarkPlaceholder')"
-            maxlength="500"
-            show-word-limit
-          />
         </el-form-item>
 
         <el-form-item :label="$t('todo.formAttachment')">
@@ -647,22 +643,6 @@ onMounted(() => {
 
 .overdue-tag {
   margin-left: 6px;
-}
-
-.due-date-hint {
-  margin-top: 6px;
-  font-size: 12px;
-  line-height: 18px;
-  color: var(--color-text-3);
-}
-
-/* 卡片里的备注 */
-.card-remark {
-  margin-top: 6px;
-  font-size: 13px;
-  line-height: 20px;
-  color: var(--color-text-2);
-  word-break: break-word;
 }
 
 .tag-option {

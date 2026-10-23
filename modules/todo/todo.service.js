@@ -63,8 +63,8 @@ async function normalizeAttachmentIds(userId, ossIds) {
   return unique
 }
 
-// 备注:空字符串统一存 null
-function normalizeRemark(value) {
+// 描述:空字符串统一存 null;Markdown 原文不做额外处理
+function normalizeDescription(value) {
   if (value === undefined) return undefined
   const trimmed = typeof value === 'string' ? value.trim() : ''
   return trimmed || null
@@ -142,7 +142,7 @@ async function createTodo(data, userId) {
   const todo = await prisma.todo.create({
     data: {
       title: data.title,
-      remark: normalizeRemark(data.remark) ?? null,
+      description: normalizeDescription(data.description) ?? null,
       dueDate: toDateOnlyValue(data.dueDate),
       completed: data.completed ?? false,
       userId,
@@ -166,7 +166,7 @@ async function updateTodo(id, userId, data) {
 
   const payload = {}
   if (data.title !== undefined) payload.title = data.title
-  if (data.remark !== undefined) payload.remark = normalizeRemark(data.remark)
+  if (data.description !== undefined) payload.description = normalizeDescription(data.description)
   if (data.dueDate !== undefined) payload.dueDate = toDateOnlyValue(data.dueDate)
   if (data.attachmentOssIds !== undefined) {
     // 传空数组表示清空附件;整体替换(先删后建,顺序即数组顺序)

@@ -57,8 +57,8 @@ export interface Todo {
   title: string
   /** 截止日期,格式 YYYY-MM-DD;未设置为 null */
   dueDate?: string | null
-  /** 备注:非必填 */
-  remark?: string | null
+  /** 描述:非必填,保存 Markdown 原文 */
+  description?: string | null
   completed: boolean
   createdAt: string
   /** 最近一次更新时间 */

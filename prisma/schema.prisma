@@ -158,8 +158,8 @@ model Tag {
 model Todo {
   id          Int              @id @default(autoincrement())
   title       String
-  // 备注:非必填
-  remark      String?
+  // 描述:非必填,支持 Markdown 原文
+  description String?
   // 截止日期:只到日期,可选;不参与每日规划关联
   dueDate     DateTime?        @db.Date
   completed   Boolean          @default(false)

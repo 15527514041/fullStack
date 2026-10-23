@@ -12,7 +12,7 @@ const dictionarySortOrder = z.number().int().min(0).max(9999)
 const tagScope = z.enum(['TODO', 'ACCOUNTING'], {
   errorMap: () => ({ message: '标签域不合法' })
 })
-const remark = z.string().trim().max(500, '备注最多 500 个字符').nullable()
+const description = z.string().trim().max(2000, '描述最多 2000 个字符').nullable()
 // 附件传的是上传记录 id(uuid)数组;传空数组表示清空附件
 const attachmentOssIds = z.array(z.string().uuid('附件 ID 不合法')).max(9, '最多上传 9 个附件')
 const idParams = z.object({
@@ -83,7 +83,7 @@ const todoSchemas = {
   create: z.object({
     title,
     dueDate: dateOnly.nullable().optional(),
-    remark: remark.optional(),
+    description: description.optional(),
     attachmentOssIds: attachmentOssIds.optional(),
     tagIds: z.array(z.number().int().positive()).optional()
   }),
@@ -91,7 +91,7 @@ const todoSchemas = {
     .object({
       title: title.optional(),
       dueDate: dateOnly.nullable().optional(),
-      remark: remark.optional(),
+      description: description.optional(),
       attachmentOssIds: attachmentOssIds.optional(),
       completed: z.boolean().optional(),
       tagIds: z.array(z.number().int().positive()).optional()

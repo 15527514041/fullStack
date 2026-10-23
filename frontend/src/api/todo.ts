@@ -12,7 +12,7 @@ export function getTodo(id: number): Promise<Todo> {
 export interface CreateTodoPayload {
   title: string
   dueDate?: string | null
-  remark?: string | null
+  description?: string | null
   attachmentOssIds?: string[]
   tagIds?: number[]
 }
@@ -24,7 +24,7 @@ export function createTodo(data: CreateTodoPayload): Promise<Todo> {
 export interface UpdateTodoPayload {
   title?: string
   dueDate?: string | null
-  remark?: string | null
+  description?: string | null
   attachmentOssIds?: string[]
   completed?: boolean
   tagIds?: number[]
