@@ -385,6 +385,8 @@ export default {
       balanceHint: '账户余额为手动维护，不会自动同步金融平台数据',
       staleTip: '有 {count} 个账户超过 30 天没更新余额',
       editBalance: '更新余额',
+      hideAmounts: '隐藏金额',
+      showAmounts: '显示金额',
       dialogAdd: '新建账户',
       dialogEdit: '编辑账户',
       dialogBalance: '更新余额',

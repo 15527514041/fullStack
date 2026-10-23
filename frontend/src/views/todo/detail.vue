@@ -100,7 +100,9 @@ onMounted(loadDetail)
         <div class="info-item">
           <span class="label">{{ $t('todo.formDescription') }}</span>
           <div class="value">
-            <MarkdownText :value="todo.description" empty="-" />
+            <div class="description-card">
+              <MarkdownText :value="todo.description" empty="-" />
+            </div>
           </div>
         </div>
 
@@ -168,6 +170,15 @@ onMounted(loadDetail)
 
 .tag-item {
   margin-right: 6px;
+}
+
+.description-card {
+  min-height: 48px;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-bg-bottom);
+  line-height: 1.65;
 }
 
 .due-date.is-overdue {

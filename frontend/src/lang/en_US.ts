@@ -388,6 +388,8 @@ export default {
       balanceHint: 'Account balances are maintained manually and are not synced with financial platforms',
       staleTip: '{count} accounts have not been updated for over 30 days',
       editBalance: 'Update balance',
+      hideAmounts: 'Hide amounts',
+      showAmounts: 'Show amounts',
       dialogAdd: 'New account',
       dialogEdit: 'Edit account',
       dialogBalance: 'Update balance',
