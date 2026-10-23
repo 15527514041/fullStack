@@ -74,6 +74,34 @@ export function formatDayHeading(value?: string | null): string {
   return isEnglish ? `${formatWeekdayLong(value)}, ${date}` : `${date} ${formatWeekdayLong(value)}`
 }
 
+// 日期加天数:周复盘统一按本地日期运算,避免 UTC 把周一起点挪到前一天
+export function addDateDays(value: string, days: number): string {
+  const date = parseDateOnly(value)
+  date.setDate(date.getDate() + days)
+  return toDateString(date)
+}
+
+// 返回日期所在自然周的周一(本地时间);周日归到前一个周一
+export function weekStartOf(value: string | Date = new Date()): string {
+  const date = typeof value === 'string' ? parseDateOnly(value) : new Date(value)
+  const weekday = date.getDay()
+  date.setDate(date.getDate() + (weekday === 0 ? -6 : 1 - weekday))
+  return toDateString(date)
+}
+
+export function currentWeekStart(): string {
+  return weekStartOf(new Date())
+}
+
+export function previousWeekStart(): string {
+  return addDateDays(currentWeekStart(), -7)
+}
+
+// 周复盘标题:2026/10/19 - 2026/10/25
+export function formatWeekRange(weekStart: string, weekEnd = addDateDays(weekStart, 6)): string {
+  return `${formatDate(weekStart)} - ${formatDate(weekEnd)}`
+}
+
 // 用时:后端给分钟数,这里格式化成 1h30m / 2h / 45m(不四舍五入,避免看着少了 15 分钟)
 export function formatDuration(minutes?: number | null): string {
   if (minutes === null || minutes === undefined) return ''

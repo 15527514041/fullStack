@@ -70,6 +70,12 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'route.plans', requiresAuth: true }
       },
       {
+        path: 'weekly-reviews',
+        name: 'weekly-reviews',
+        component: () => import('@/views/weekly-review/index.vue'),
+        meta: { titleKey: 'route.weeklyReviews', requiresAuth: true }
+      },
+      {
         // 反思详情:展示某天的条目,新增/编辑走弹窗,靠 meta.noSidebar 隐藏菜单栏
         path: 'reflections/:id',
         name: 'reflection-detail',
@@ -95,6 +101,24 @@ const routes: RouteRecordRaw[] = [
         name: 'plan-edit',
         component: () => import('@/views/plan/edit.vue'),
         meta: { titleKey: 'route.planEdit', requiresAuth: true, noSidebar: true }
+      },
+      {
+        path: 'weekly-reviews/new',
+        name: 'weekly-review-new',
+        component: () => import('@/views/weekly-review/edit.vue'),
+        meta: { titleKey: 'route.weeklyReviewNew', requiresAuth: true, noSidebar: true }
+      },
+      {
+        path: 'weekly-reviews/:id',
+        name: 'weekly-review-detail',
+        component: () => import('@/views/weekly-review/detail.vue'),
+        meta: { titleKey: 'route.weeklyReviewDetail', requiresAuth: true, noSidebar: true }
+      },
+      {
+        path: 'weekly-reviews/:id/edit',
+        name: 'weekly-review-edit',
+        component: () => import('@/views/weekly-review/edit.vue'),
+        meta: { titleKey: 'route.weeklyReviewEdit', requiresAuth: true, noSidebar: true }
       },
       {
         path: 'ledger/accounts',

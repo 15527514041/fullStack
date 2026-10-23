@@ -196,6 +196,89 @@ export interface DateRangeQuery {
   to?: string
 }
 
+// ===== 个人成长:周复盘 =====
+export type WeeklyReviewStatus = 'DRAFT' | 'COMPLETED'
+
+export interface WeeklyReviewItem {
+  id?: number
+  content: string
+  sortOrder?: number
+}
+
+export interface WeeklyReviewMetrics {
+  planDays: number
+  todoTotal: number
+  todoCompleted: number
+  /** 没有待办时为 null,前端显示 -- */
+  todoCompletionRate: number | null
+  plannedMinutes: number
+  actualMinutes: number
+  reflectionDays: number
+  reflectionCount: number
+}
+
+export interface WeeklyReviewDay {
+  date: string
+  planId: number | null
+  reflectionId: number | null
+  todoTotal: number
+  todoCompleted: number
+  plannedMinutes: number
+  actualMinutes: number
+  reflectionCount: number
+  reflectionSummary: string | null
+}
+
+export interface WeeklyReviewContext {
+  weekStart: string
+  weekEnd: string
+  metrics: WeeklyReviewMetrics
+  days: WeeklyReviewDay[]
+  /** 新建页用它判断该周是否已有记录 */
+  existingReviewId?: number | null
+}
+
+export interface WeeklyReviewListItem {
+  id: number
+  weekStart: string
+  weekEnd: string
+  summary: string | null
+  status: WeeklyReviewStatus
+  completedAt: string | null
+  createdAt?: string
+  updatedAt?: string
+  metrics: WeeklyReviewMetrics
+  snapshotFrozen: boolean
+}
+
+export interface WeeklyReview extends WeeklyReviewListItem {
+  wins: WeeklyReviewItem[]
+  challenges: WeeklyReviewItem[]
+  learnings: WeeklyReviewItem[]
+  nextActions: WeeklyReviewItem[]
+  days: WeeklyReviewDay[]
+}
+
+export type WeeklyReviewItemInput = Pick<WeeklyReviewItem, 'content'>
+
+export interface WeeklyReviewPayload {
+  weekStart: string
+  summary?: string | null
+  wins?: WeeklyReviewItemInput[]
+  challenges?: WeeklyReviewItemInput[]
+  learnings?: WeeklyReviewItemInput[]
+  nextActions?: WeeklyReviewItemInput[]
+  status?: WeeklyReviewStatus
+}
+
+export interface WeeklyReviewQuery {
+  page?: number
+  pageSize?: number
+  status?: WeeklyReviewStatus
+  from?: string
+  to?: string
+}
+
 // ===== 记账:资产账户 =====
 export type DictionaryKind = 'ACCOUNT_KIND' | 'INCOME_CATEGORY' | 'EXPENSE_CATEGORY'
 
