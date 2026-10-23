@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { CircleClose } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { useIsMobile } from '@/composables/useIsMobile'
 import TimeRingSelect from './TimeRingSelect.vue'
 
 /**
- * 时间范围选择(公共组件):只读输入框 + 弹窗,弹窗里用 24 小时环形选择器
+ * 时间范围选择(公共组件):只读入口 + 弹窗,弹窗里可直接输入或用 24 小时环形选择器
  *
  * v-model 的值是 ['HH:mm', 'HH:mm'];传 null 表示没选(end < start 表示跨零点)
  * 用法:
@@ -39,6 +40,13 @@ function toMinutes(text?: string | null): number | null {
   return hour * 60 + minute
 }
 
+/** 弹窗内手动输入时兼容 H:mm,失焦后再统一补零为 HH:mm */
+function parseTimeInput(text: string): number | null {
+  const match = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(text.trim())
+  if (!match) return null
+  return Number(match[1]) * 60 + Number(match[2])
+}
+
 function toText(minutes: number): string {
   return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
 }
@@ -55,23 +63,107 @@ const displayText = computed(() => (selected.value ? `${toText(selected.value.st
 const visible = ref(false)
 const draftStart = ref(DEFAULT_START)
 const draftEnd = ref(DEFAULT_END)
+const draftStartText = ref(toText(DEFAULT_START))
+const draftEndText = ref(toText(DEFAULT_END))
+const startError = ref('')
+const endError = ref('')
+
+function setDraftRange(start: number, end: number): void {
+  draftStart.value = start
+  draftEnd.value = end
+  draftStartText.value = toText(start)
+  draftEndText.value = toText(end)
+  startError.value = ''
+  endError.value = ''
+}
 
 function open(): void {
   if (props.disabled) return
 
   const current = selected.value ?? { start: DEFAULT_START, end: DEFAULT_END }
-  draftStart.value = current.start
-  draftEnd.value = current.end
+  setDraftRange(current.start, current.end)
   visible.value = true
 }
 
 function confirm(): void {
+  const start = parseTimeInput(draftStartText.value)
+  const end = parseTimeInput(draftEndText.value)
+
+  startError.value = start === null ? t('timeRange.invalidFormat') : ''
+  endError.value = end === null ? t('timeRange.invalidFormat') : ''
+  if (start === null || end === null) {
+    ElMessage.warning(startError.value || endError.value)
+    return
+  }
+
+  if (start === end) {
+    endError.value = t('timeRange.sameTime')
+    ElMessage.warning(endError.value)
+    return
+  }
+
+  setDraftRange(start, end)
   emit('update:modelValue', [toText(draftStart.value), toText(draftEnd.value)])
   visible.value = false
 }
 
 function clear(): void {
   emit('update:modelValue', null)
+}
+
+function handleTimeInput(side: 'start' | 'end', value: string): void {
+  if (side === 'start') {
+    draftStartText.value = value
+    const minutes = parseTimeInput(value)
+    if (minutes !== null) {
+      draftStart.value = minutes
+      startError.value = ''
+    }
+    return
+  }
+
+  draftEndText.value = value
+  const minutes = parseTimeInput(value)
+  if (minutes !== null) {
+    draftEnd.value = minutes
+    endError.value = ''
+  }
+}
+
+function normalizeTimeField(side: 'start' | 'end'): void {
+  if (side === 'start') {
+    const minutes = parseTimeInput(draftStartText.value)
+    if (minutes === null) {
+      startError.value = t('timeRange.invalidFormat')
+      return
+    }
+    draftStart.value = minutes
+    draftStartText.value = toText(minutes)
+    startError.value = ''
+    return
+  }
+
+  const minutes = parseTimeInput(draftEndText.value)
+  if (minutes === null) {
+    endError.value = t('timeRange.invalidFormat')
+    return
+  }
+  draftEnd.value = minutes
+  draftEndText.value = toText(minutes)
+  endError.value = ''
+}
+
+function updateFromRing(side: 'start' | 'end', value: number): void {
+  if (side === 'start') {
+    draftStart.value = value
+    draftStartText.value = toText(value)
+    startError.value = ''
+    return
+  }
+
+  draftEnd.value = value
+  draftEndText.value = toText(value)
+  endError.value = ''
 }
 
 /** 结束时间小于开始时间 = 跨零点,结束时算「次日」 */
@@ -123,14 +215,38 @@ const dialogWidth = computed(() => (isMobile.value ? 'calc(100vw - 32px)' : '420
       <div class="time-range-picker__cards">
         <div class="time-card">
           <div class="time-card__label">{{ t('timeRange.start') }}</div>
-          <div class="time-card__value">{{ toText(draftStart) }}</div>
-          <div class="time-card__hint">{{ t('timeRange.sameDay') }}</div>
+          <el-input
+            class="time-card__input"
+            :model-value="draftStartText"
+            maxlength="5"
+            placeholder="HH:mm"
+            :aria-label="t('timeRange.start')"
+            :aria-invalid="Boolean(startError)"
+            @update:model-value="handleTimeInput('start', $event)"
+            @blur="normalizeTimeField('start')"
+            @keydown.enter.prevent="confirm"
+          />
+          <div class="time-card__hint" :class="{ 'is-error': startError }" role="status">
+            {{ startError || t('timeRange.sameDay') }}
+          </div>
         </div>
 
         <div class="time-card">
           <div class="time-card__label">{{ t('timeRange.end') }}</div>
-          <div class="time-card__value">{{ toText(draftEnd) }}</div>
-          <div class="time-card__hint">{{ crossesMidnight ? t('timeRange.nextDay') : t('timeRange.sameDay') }}</div>
+          <el-input
+            class="time-card__input"
+            :model-value="draftEndText"
+            maxlength="5"
+            placeholder="HH:mm"
+            :aria-label="t('timeRange.end')"
+            :aria-invalid="Boolean(endError)"
+            @update:model-value="handleTimeInput('end', $event)"
+            @blur="normalizeTimeField('end')"
+            @keydown.enter.prevent="confirm"
+          />
+          <div class="time-card__hint" :class="{ 'is-error': endError }" role="status">
+            {{ endError || (crossesMidnight ? t('timeRange.nextDay') : t('timeRange.sameDay')) }}
+          </div>
         </div>
       </div>
 
@@ -139,8 +255,8 @@ const dialogWidth = computed(() => (isMobile.value ? 'calc(100vw - 32px)' : '420
         class="time-range-picker__ring"
         :start="draftStart"
         :end="draftEnd"
-        @update:start="draftStart = $event"
-        @update:end="draftEnd = $event"
+        @update:start="updateFromRing('start', $event)"
+        @update:end="updateFromRing('end', $event)"
       />
 
       <!-- 底部:总时长 -->
@@ -212,20 +328,46 @@ const dialogWidth = computed(() => (isMobile.value ? 'calc(100vw - 32px)' : '420
   color: var(--color-text-3);
 }
 
-.time-card__value {
+.time-card__input {
   margin-top: 2px;
+}
+
+.time-card__input :deep(.el-input__wrapper) {
+  min-height: 40px;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.time-card__input :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px var(--color-border) inset;
+}
+
+.time-card__input :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+}
+
+.time-card__input :deep(.el-input__inner) {
+  height: 40px;
   font-size: 24px;
   font-weight: 600;
-  line-height: 32px;
+  line-height: 40px;
   color: var(--color-text-1);
   /* 等宽数字:拖动时数字跳动不会带着整行抖 */
   font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 .time-card__hint {
+  min-height: 18px;
   font-size: 12px;
   line-height: 18px;
   color: var(--color-text-4);
+}
+
+.time-card__hint.is-error {
+  color: var(--el-color-danger);
 }
 
 /* 环形选择器 */

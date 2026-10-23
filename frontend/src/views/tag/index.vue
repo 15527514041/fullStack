@@ -352,7 +352,7 @@ watch(
         </div>
       </div>
 
-      <el-table v-else :data="rows" :row-class-name="rowClassName">
+      <el-table v-else :data="rows" :row-class-name="rowClassName" class="table-align-left">
         <el-table-column :label="$t('dictionary.name')" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="dict-name">
@@ -362,11 +362,11 @@ watch(
           </template>
         </el-table-column>
 
-        <el-table-column :label="usageColumnLabel" min-width="150" align="center">
+        <el-table-column :label="usageColumnLabel" min-width="150" align="left">
           <template #default="{ row }">{{ rowUsage(row) }}</template>
         </el-table-column>
 
-        <el-table-column :label="$t('dictionary.status')" min-width="150" align="center">
+        <el-table-column :label="$t('dictionary.status')" min-width="150" align="left">
           <template #default="{ row }">
             <el-switch
               v-model="row.enabled"
@@ -375,11 +375,11 @@ watch(
           </template>
         </el-table-column>
 
-        <el-table-column :label="$t('common.createdAt')" min-width="150" align="center">
+        <el-table-column :label="$t('common.createdAt')" min-width="150" align="left">
           <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
         </el-table-column>
 
-        <el-table-column :label="$t('common.actions')" min-width="150" align="center">
+        <el-table-column :label="$t('common.actions')" min-width="150" align="left">
           <template #default="{ row }">
             <el-button link type="primary" @click="openEditDialog(row)">{{ $t('common.edit') }}</el-button>
             <el-button link type="danger" @click="handleDelete(row)">{{ $t('common.delete') }}</el-button>

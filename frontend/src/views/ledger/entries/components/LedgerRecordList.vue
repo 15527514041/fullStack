@@ -164,7 +164,7 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
           />
         </div>
 
-        <el-table v-else :data="list" class="ledger-record-table" @row-click="openDetail">
+        <el-table v-else :data="list" class="ledger-record-table table-align-left" @row-click="openDetail">
           <el-table-column :label="t(meta.periodColumnKey)" min-width="120">
             <template #default="{ row }">
               <LedgerPeriodLabel
@@ -191,18 +191,18 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
               </span>
             </template>
           </el-table-column>
-          <el-table-column :label="t('ledger.entries.colItemCount')" min-width="120" align="center">
+          <el-table-column :label="t('ledger.entries.colItemCount')" min-width="120" align="left">
             <template #default="{ row }">
               {{ t('ledger.entries.itemCount', { count: row.itemCount }) }}
             </template>
           </el-table-column>
-          <el-table-column :label="t('ledger.entries.colUpdatedAt')" min-width="120" align="center">
+          <el-table-column :label="t('ledger.entries.colUpdatedAt')" min-width="120" align="left">
             <template #default="{ row }">{{ formatDateTimeShort(row.updatedAt) }}</template>
           </el-table-column>
           <el-table-column
             :label="t('ledger.entries.colActions')"
             width="170"
-            align="center"
+            align="left"
             fixed="right"
             class-name="table-actions"
           >

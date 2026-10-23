@@ -123,6 +123,7 @@ export default {
   },
   todo: {
     title: 'Checklist',
+    subtitle: 'Store goals that span days or stages to track mid- and long-term progress',
     searchPlaceholder: 'Search checklist',
     tagFilterPlaceholder: 'Filter by tag',
     dateFilterPlaceholder: 'Filter by date range',
@@ -279,7 +280,7 @@ export default {
   },
   plan: {
     title: 'Daily Plan',
-    subtitle: 'One plan per day: todos, planned work and what actually happened',
+    subtitle: 'One time plan per day, recording scheduled and actual execution',
     addButton: 'Write',
     empty: 'No plan in this period yet',
     todoCount: 'Todo {count}',
@@ -347,6 +348,8 @@ export default {
     placeholder: 'Select time',
     start: 'Start',
     end: 'End',
+    invalidFormat: 'Enter a valid time, e.g. 6:30 or 06:30',
+    sameTime: 'Start and end times cannot be the same',
     sameDay: 'Same day',
     nextDay: 'Next day',
     total: 'Duration',

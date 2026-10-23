@@ -123,6 +123,7 @@ export default {
   },
   todo: {
     title: '计划清单',
+    subtitle: '存放跨天、跨阶段目标，用于跟踪中长期事项进度',
     searchPlaceholder: '搜索计划',
     tagFilterPlaceholder: '按标签筛选',
     dateFilterPlaceholder: '按时间范围筛选',
@@ -276,7 +277,7 @@ export default {
   },
   plan: {
     title: '每日规划',
-    subtitle: '每天一份,记录待办、计划与实际的完成情况',
+    subtitle: '每天一份时间规划，记录计划时段与实际执行情况',
     addButton: '写规划',
     empty: '这段时间还没有规划,点「写规划」新建一份',
     todoCount: '待办 {count}',
@@ -344,6 +345,8 @@ export default {
     placeholder: '选择时间',
     start: '起始',
     end: '结束',
+    invalidFormat: '请输入有效时间，如 6:30 或 06:30',
+    sameTime: '起始和结束时间不能相同',
     sameDay: '当天',
     nextDay: '次日',
     total: '总时长',

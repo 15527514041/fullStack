@@ -313,7 +313,10 @@ onMounted(() => {
 <template>
   <div class="list-page">
     <div class="page-header">
-      <div class="page-title">{{ $t('todo.title') }}</div>
+      <div>
+        <div class="page-title">{{ $t('todo.title') }}</div>
+        <div class="page-subtitle">{{ $t('todo.subtitle') }}</div>
+      </div>
       <el-button type="primary" @click="openAddDialog">
         <el-icon><Plus /></el-icon>
         {{ $t('todo.addButton') }}
@@ -414,19 +417,19 @@ onMounted(() => {
     </div>
 
     <el-table v-else :data="todos">
-      <el-table-column :label="$t('todo.colDone')" min-width="120" align="center">
+      <el-table-column :label="$t('todo.colDone')" width="80" align="left">
         <template #default="{ row }">
           <el-switch v-model="row.completed" @change="handleToggle(row)" />
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('todo.colTitle')" min-width="120" show-overflow-tooltip>
+      <el-table-column :label="$t('todo.colTitle')" min-width="120" align="left" show-overflow-tooltip>
         <template #default="{ row }">
           <span :class="{ 'todo-done': row.completed }">{{ row.title }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('todo.colDueDate')" min-width="150" align="center">
+      <el-table-column :label="$t('todo.colDueDate')" min-width="150" align="left">
         <template #default="{ row }">
           <span v-if="row.dueDate" class="due-date" :class="{ 'is-overdue': isOverdue(row) }">
             {{ formatDate(row.dueDate) }}
@@ -438,13 +441,13 @@ onMounted(() => {
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('todo.colTags')" min-width="120">
+      <el-table-column :label="$t('todo.colTags')" min-width="120" align="left">
         <template #default="{ row }">
           <ColorTag v-for="tag in row.tags" :key="tag.id" :name="tag.name" :color="tag.color" class="tag-item" />
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('common.createdAt')" min-width="120" align="center">
+      <el-table-column :label="$t('common.createdAt')" min-width="120" align="left">
         <template #default="{ row }">
           {{ formatDateTime(row.createdAt) }}
         </template>
@@ -453,7 +456,7 @@ onMounted(() => {
       <el-table-column
         :label="$t('common.actions')"
         width="170"
-        align="center"
+        align="left"
         fixed="right"
         class-name="table-actions"
       >
@@ -619,6 +622,10 @@ onMounted(() => {
   margin-right: 6px;
 }
 
+/* 操作列表头与按钮行统一左对齐(覆盖公共表格样式的居中 flex) */
+:deep(.el-table .table-actions .cell) {
+  justify-content: flex-start;
+}
 
 .todo-done {
   color: #909399;

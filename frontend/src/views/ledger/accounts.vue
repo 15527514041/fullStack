@@ -262,22 +262,22 @@ onMounted(async () => {
     <div class="asset-card">
       <div class="asset-item">
         <div class="asset-label">
-          <span>{{ $t('ledger.accounts.totalAssets') }}</span>
           <InfoTipIcon :content="$t('ledger.accounts.totalAssetsTip')" />
+          <span>{{ $t('ledger.accounts.totalAssets') }}</span>
         </div>
         <div class="asset-value">{{ formatCents(totals.assets) }}</div>
       </div>
       <div class="asset-item">
         <div class="asset-label">
-          <span>{{ $t('ledger.accounts.totalDebt') }}</span>
           <InfoTipIcon :content="$t('ledger.accounts.totalDebtTip')" />
+          <span>{{ $t('ledger.accounts.totalDebt') }}</span>
         </div>
         <div class="asset-value is-debt">{{ formatCents(totals.debt) }}</div>
       </div>
       <div class="asset-item">
         <div class="asset-label">
-          <span>{{ $t('ledger.accounts.netAssets') }}</span>
           <InfoTipIcon :content="$t('ledger.accounts.netAssetsTip')" />
+          <span>{{ $t('ledger.accounts.netAssets') }}</span>
         </div>
         <div class="asset-value">{{ formatCents(totals.net) }}</div>
       </div>
@@ -318,7 +318,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <el-table v-else :data="accounts" :row-class-name="rowClassName">
+    <el-table v-else :data="accounts" :row-class-name="rowClassName" class="table-align-left">
       <!-- 名字是主标识,给最大的一块;超长省略号 + hover 显示全名 -->
       <el-table-column :label="$t('ledger.accounts.colName')" min-width="120" show-overflow-tooltip>
         <template #default="{ row }">
@@ -349,11 +349,11 @@ onMounted(async () => {
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('ledger.accounts.colUpdatedAt')" min-width="120" align="center">
+      <el-table-column :label="$t('ledger.accounts.colUpdatedAt')" min-width="120" align="left">
         <template #default="{ row }">{{ formatDateTimeShort(row.balanceUpdatedAt) }}</template>
       </el-table-column>
 
-      <el-table-column :label="$t('ledger.accounts.colEnabled')" min-width="120" align="center">
+      <el-table-column :label="$t('ledger.accounts.colEnabled')" min-width="120" align="left">
         <template #header>
           <span class="th-tip">
             <InfoTipIcon :content="$t('ledger.accounts.enabledTip')" />
@@ -368,7 +368,7 @@ onMounted(async () => {
       <el-table-column
         :label="$t('common.actions')"
         width="184"
-        align="center"
+        align="left"
         fixed="right"
         class-name="table-actions"
       >
