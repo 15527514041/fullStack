@@ -239,6 +239,80 @@ const planSchemas = {
   query: dateRange
 }
 
+// ===== 个人成长:周复盘 =====
+
+const validDateOnly = dateOnly.refine((value) => {
+  const date = new Date(`${value}T00:00:00.000Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+}, '日期不合法')
+
+// 周复盘固定按周一到周日;weekEnd 由服务端根据 weekStart 推导
+const weekStartDate = validDateOnly.refine((value) => {
+  return new Date(`${value}T00:00:00.000Z`).getUTCDay() === 1
+}, '周复盘的开始日期必须是周一')
+
+const weeklyReviewSummary = z.string().trim().max(500, '本周总结最多 500 个字符').nullable()
+const weeklyReviewItem = z.object({
+  content: z.string().trim().min(1, '复盘内容不能为空').max(500, '单条复盘内容最多 500 个字符')
+})
+const weeklyReviewItems = z.array(weeklyReviewItem).max(10, '每个分区最多 10 条')
+const weeklyReviewStatus = z.enum(['DRAFT', 'COMPLETED'], {
+  errorMap: () => ({ message: '周复盘状态不合法' })
+})
+
+function hasWeeklyReviewContent(data) {
+  return Boolean(data.summary?.trim()) ||
+    ['wins', 'challenges', 'learnings', 'nextActions'].some((field) => data[field]?.length)
+}
+
+const weeklyReviewSchemas = {
+  create: z
+    .object({
+      weekStart: weekStartDate,
+      summary: weeklyReviewSummary.optional(),
+      status: weeklyReviewStatus.default('DRAFT'),
+      wins: weeklyReviewItems.optional(),
+      challenges: weeklyReviewItems.optional(),
+      learnings: weeklyReviewItems.optional(),
+      nextActions: weeklyReviewItems.optional()
+    })
+    .refine(hasWeeklyReviewContent, {
+      message: '至少填写一项复盘内容',
+      path: ['summary']
+    })
+    .refine((data) => data.status !== 'COMPLETED' || Boolean(data.summary?.trim()), {
+      message: '完成复盘前请填写本周总结',
+      path: ['summary']
+    }),
+  update: z
+    .object({
+      summary: weeklyReviewSummary.optional(),
+      // 新增和编辑页都可以直接完成;已完成记录继续编辑时保留完成状态和原快照
+      status: z.literal('COMPLETED', {
+        errorMap: () => ({ message: '只能将草稿标记为完成' })
+      }).optional(),
+      wins: weeklyReviewItems.optional(),
+      challenges: weeklyReviewItems.optional(),
+      learnings: weeklyReviewItems.optional(),
+      nextActions: weeklyReviewItems.optional()
+    })
+    .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' }),
+  query: z
+    .object({
+      ...pageParams,
+      status: weeklyReviewStatus.optional(),
+      from: validDateOnly.optional(),
+      to: validDateOnly.optional()
+    })
+    .refine((data) => !data.from || !data.to || data.from <= data.to, {
+      message: '开始日期不能晚于结束日期',
+      path: ['to']
+    }),
+  context: z.object({
+    weekStart: weekStartDate
+  })
+}
+
 // ====== 记账:资产账户 ======
 
 const accountName = z.string().trim().min(1, '账户名不能为空').max(20, '账户名最多 20 个字符')
@@ -406,6 +480,7 @@ module.exports = {
   tagSchemas,
   reflectionSchemas,
   planSchemas,
+  weeklyReviewSchemas,
   accountSchemas,
   recordSchemas,
   dictionarySchemas,
