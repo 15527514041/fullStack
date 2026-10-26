@@ -434,7 +434,6 @@ watch(
           </section>
 
           <template v-for="section in sections" :key="section.field">
-            <div class="weekly-form__divider" />
             <section class="weekly-form__section">
               <div class="weekly-form__head">
                 <div>
@@ -545,6 +544,10 @@ watch(
   min-width: 0;
 }
 
+.weekly-form__section + .weekly-form__section {
+  margin-top: 20px;
+}
+
 .weekly-form__head {
   display: flex;
   flex-wrap: wrap;
@@ -567,13 +570,6 @@ watch(
   color: var(--color-text-3);
   font-size: 12px;
   line-height: 18px;
-}
-
-.weekly-form__divider {
-  height: 3px;
-  margin: 20px 0;
-  border-radius: 999px;
-  background: var(--color-border);
 }
 
 .weekly-form__period-picker {
@@ -600,8 +596,8 @@ watch(
     padding-top: 18px;
   }
 
-  .weekly-form__divider {
-    margin: 16px 0;
+  .weekly-form__section + .weekly-form__section {
+    margin-top: 16px;
   }
 
   .weekly-form__period-picker {
