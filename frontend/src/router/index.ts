@@ -89,6 +89,12 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'route.planNew', requiresAuth: true, noSidebar: true }
       },
       {
+        path: 'plans/calendar',
+        name: 'plan-calendar',
+        component: () => import('@/views/plan/calendar.vue'),
+        meta: { titleKey: 'route.planCalendar', requiresAuth: true, noSidebar: true }
+      },
+      {
         // 详情页:只读展示 + 卡片外侧的编辑/删除
         path: 'plans/:id',
         name: 'plan-detail',

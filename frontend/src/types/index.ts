@@ -180,6 +180,24 @@ export interface DailyPlanListItem {
   updatedAt?: string
 }
 
+/** 年度视图:只返回有规划的日期,前端据此补全全年格子 */
+export interface PlanCalendarDay {
+  id: number
+  date: string
+  todoCount: number
+}
+
+export interface PlanCalendarSummary {
+  planDays: number
+  todoTotal: number
+}
+
+export interface PlanCalendarResult {
+  year: number
+  summary: PlanCalendarSummary
+  days: PlanCalendarDay[]
+}
+
 export interface PlanPayload {
   date: string
   todos?: Array<{ name: string; completed?: boolean }>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowRight, Plus } from '@element-plus/icons-vue'
+import { ArrowRight, Calendar, Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { getPlans } from '@/api/plan'
 import { useDateRangeTabs, type DateRangeTab } from '@/composables/useDateRangeTabs'
@@ -50,6 +50,10 @@ function openCreate(): void {
   router.push({ name: 'plan-new' })
 }
 
+function openCalendar(): void {
+  router.push({ name: 'plan-calendar' })
+}
+
 function openDetail(row: DailyPlanListItem): void {
   router.push({ name: 'plan-detail', params: { id: row.id } })
 }
@@ -62,9 +66,14 @@ function openDetail(row: DailyPlanListItem): void {
         <div class="main-title">{{ $t('plan.title') }}</div>
         <div class="subtitle">{{ $t('plan.subtitle') }}</div>
       </div>
-      <el-button type="primary" class="add-button" @click="openCreate">
-        <el-icon><Plus /></el-icon>{{ $t('plan.addButton') }}
-      </el-button>
+      <div class="header-actions">
+        <el-button class="calendar-button" @click="openCalendar">
+          <el-icon><Calendar /></el-icon>{{ $t('plan.yearView') }}
+        </el-button>
+        <el-button type="primary" class="add-button" @click="openCreate">
+          <el-icon><Plus /></el-icon>{{ $t('plan.addButton') }}
+        </el-button>
+      </div>
     </div>
 
     <div class="feed-filter">
@@ -104,9 +113,37 @@ function openDetail(row: DailyPlanListItem): void {
 </template>
 
 <style scoped>
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calendar-button {
+  height: 40px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.calendar-button .el-icon {
+  margin-right: 6px;
+}
+
 /* 今日 / 明日:橙色胶囊,和列表里其它计数胶囊(绿色)区分开 */
 .feed-card .pill--day {
   background: var(--color-warning-1);
   color: var(--color-warning-6);
+}
+
+@media (max-width: 768px) {
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions .calendar-button,
+  .feed-head .header-actions .add-button {
+    flex: 1;
+    width: auto;
+  }
 }
 </style>
