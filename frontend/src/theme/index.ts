@@ -60,6 +60,21 @@ function getDarkColor(color: string, level: number): string {
   return rgbToHex(hexToRgb(color).map((value) => Math.floor(value * (1 - level))))
 }
 
+function writeLogoVariables(root: HTMLElement, primary: string, mode: ThemeMode): void {
+  const isDark = mode === 'dark'
+  const logoColors: Record<string, string> = {
+    '--logo-main-light': getLightColor(primary, isDark ? 0.16 : 0.1),
+    '--logo-main-dark': getDarkColor(primary, isDark ? 0.25 : 0.3),
+    '--logo-soft-light': getLightColor(primary, isDark ? 0.44 : 0.58),
+    '--logo-soft-dark': getLightColor(primary, isDark ? 0.28 : 0.42),
+    '--logo-dot': getLightColor(primary, isDark ? 0.12 : 0.02)
+  }
+
+  for (const [cssVariable, value] of Object.entries(logoColors)) {
+    root.style.setProperty(cssVariable, value)
+  }
+}
+
 function writeExtendedVariables(root: HTMLElement, config: ThemeConfig): void {
   const variableMap: Array<[string, string, string]> = [
     ['--color-brand-secondary', 'brand', 'secondary'],
@@ -134,6 +149,7 @@ function applyColorTheme(colorTheme: ColorThemeKey, mode: ThemeMode): void {
   const primary = config.brand.primary
   const primaryRgb = hexToRgb(primary)
 
+  writeLogoVariables(root, primary, mode)
   writeExtendedVariables(root, config)
 
   root.dataset.colorTheme = colorTheme
