@@ -60,6 +60,35 @@ function getDarkColor(color: string, level: number): string {
   return rgbToHex(hexToRgb(color).map((value) => Math.floor(value * (1 - level))))
 }
 
+function writeLogoVariables(root: HTMLElement, config: ThemeConfig, mode: ThemeMode): void {
+  const primary = config.brand.primary
+  const isDark = mode === 'dark'
+  const generatedLogoColors: Record<string, string> = {
+    '--c-main-light': getLightColor(primary, isDark ? 0.22 : 0.14),
+    '--c-main-dark': getDarkColor(primary, isDark ? 0.18 : 0.24),
+    '--c-soft-light': getLightColor(primary, isDark ? 0.48 : 0.6),
+    '--c-soft-dark': getLightColor(primary, isDark ? 0.34 : 0.46),
+    '--c-dot': getLightColor(primary, isDark ? 0.18 : 0.08)
+  }
+
+  for (const [cssVariable, value] of Object.entries(generatedLogoColors)) {
+    root.style.setProperty(cssVariable, value)
+  }
+
+  const logoVariableMap: Array<[string, string]> = [
+    ['--c-main-light', 'main-light'],
+    ['--c-main-dark', 'main-dark'],
+    ['--c-soft-light', 'soft-light'],
+    ['--c-soft-dark', 'soft-dark'],
+    ['--c-dot', 'dot']
+  ]
+
+  for (const [cssVariable, key] of logoVariableMap) {
+    const override = config.logo?.[key]
+    if (override) root.style.setProperty(cssVariable, override)
+  }
+}
+
 function writeExtendedVariables(root: HTMLElement, config: ThemeConfig): void {
   const variableMap: Array<[string, string, string]> = [
     ['--color-brand-secondary', 'brand', 'secondary'],
@@ -123,7 +152,7 @@ function writeExtendedVariables(root: HTMLElement, config: ThemeConfig): void {
   }
 
   for (const [cssVariable, section, key] of variableMap) {
-    const value = config[section as keyof ThemeConfig][key]
+    const value = config[section as Exclude<keyof ThemeConfig, 'logo'>][key]
     if (value) root.style.setProperty(cssVariable, value)
   }
 }
@@ -134,6 +163,7 @@ function applyColorTheme(colorTheme: ColorThemeKey, mode: ThemeMode): void {
   const primary = config.brand.primary
   const primaryRgb = hexToRgb(primary)
 
+  writeLogoVariables(root, config, mode)
   writeExtendedVariables(root, config)
 
   root.dataset.colorTheme = colorTheme
