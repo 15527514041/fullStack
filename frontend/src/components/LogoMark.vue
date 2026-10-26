@@ -12,7 +12,7 @@ withDefaults(defineProps<{ size?: number }>(), { size: 36 })
     :width="size"
     :height="size"
     role="img"
-    aria-label="Confluo"
+    aria-label="Confluo 汇流"
   >
     <defs>
       <radialGradient id="confluo-logo-main" cx="0.5" cy="0.5" r="0.8">

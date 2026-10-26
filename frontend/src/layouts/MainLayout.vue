@@ -192,7 +192,10 @@ onUnmounted(() => {
           <MenuIcon name="menu" :size="22" />
         </div>
         <div class="logo-mark"><LogoMark /></div>
-        <span v-if="isMobile || !collapsed" class="logo-text">Confluo</span>
+        <span v-if="isMobile || !collapsed" class="logo-text">
+          <span class="logo-text-en">Confluo</span>
+          <span class="logo-text-zh">汇流</span>
+        </span>
       </div>
 
       <div class="navbar-right">
@@ -351,11 +354,21 @@ onUnmounted(() => {
 }
 
 .logo-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.3px;
   color: var(--color-text-1);
   white-space: nowrap;
+}
+
+.logo-text-zh {
+  color: var(--color-text-2);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
 }
 
 .navbar-right {
@@ -714,7 +727,12 @@ onUnmounted(() => {
   }
 
   .logo-text {
-    font-size: 17px;
+    gap: 5px;
+    font-size: 16px;
+  }
+
+  .logo-text-zh {
+    font-size: 14px;
   }
 
   .navbar-right {
@@ -765,6 +783,12 @@ onUnmounted(() => {
 
   .menu-group-title {
     padding: 12px 16px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-text-zh {
+    display: none;
   }
 }
 </style>

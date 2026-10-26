@@ -270,7 +270,7 @@ router.beforeEach((to) => {
 // 同步页面标题(切语言时由 App.vue 再调一次)
 export function syncDocumentTitle(): void {
   const to = router.currentRoute.value
-  const base = 'Confluo'
+  const base = 'Confluo 汇流'
   const key = typeof to.meta.titleKey === 'string' ? to.meta.titleKey : ''
   document.title = key ? `${i18n.global.t(key)} - ${base}` : base
 }

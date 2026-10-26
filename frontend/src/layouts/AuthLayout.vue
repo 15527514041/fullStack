@@ -10,7 +10,10 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
     <header class="navbar">
       <div class="navbar-left">
         <div class="logo-mark"><LogoMark /></div>
-        <span class="logo-text">Confluo</span>
+        <span class="logo-text">
+          <span class="logo-text-en">Confluo</span>
+          <span class="logo-text-zh">汇流</span>
+        </span>
       </div>
 
       <div class="navbar-right">
@@ -71,11 +74,21 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
 }
 
 .logo-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.3px;
   color: var(--color-text-1);
   white-space: nowrap;
+}
+
+.logo-text-zh {
+  color: var(--color-text-2);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
 }
 
 .auth-main {
@@ -96,7 +109,12 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
   }
 
   .logo-text {
-    font-size: 17px;
+    gap: 5px;
+    font-size: 16px;
+  }
+
+  .logo-text-zh {
+    font-size: 14px;
   }
 }
 </style>
