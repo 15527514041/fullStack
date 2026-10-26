@@ -1,8 +1,18 @@
 import { request } from './request'
-import type { DailyReflection, DateRangeQuery, PagedResult, ReflectionPayload } from '@/types'
+import type {
+  DailyReflection,
+  DateRangeQuery,
+  PagedResult,
+  ReflectionCalendarResult,
+  ReflectionPayload
+} from '@/types'
 
 export function getReflections(params?: DateRangeQuery): Promise<PagedResult<DailyReflection>> {
   return request<PagedResult<DailyReflection>>({ url: '/reflections', method: 'get', params })
+}
+
+export function getReflectionCalendar(year: number): Promise<ReflectionCalendarResult> {
+  return request<ReflectionCalendarResult>({ url: '/reflections/calendar', method: 'get', params: { year } })
 }
 
 export function getReflection(id: number): Promise<DailyReflection> {

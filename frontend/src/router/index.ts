@@ -76,6 +76,12 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'route.weeklyReviews', requiresAuth: true }
       },
       {
+        path: 'reflections/calendar',
+        name: 'reflection-calendar',
+        component: () => import('@/views/reflection/calendar.vue'),
+        meta: { titleKey: 'route.reflectionCalendar', requiresAuth: true, noSidebar: true }
+      },
+      {
         // 反思详情:展示某天的条目,新增/编辑走弹窗,靠 meta.noSidebar 隐藏菜单栏
         path: 'reflections/:id',
         name: 'reflection-detail',
