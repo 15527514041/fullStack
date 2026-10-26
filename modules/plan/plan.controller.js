@@ -4,6 +4,10 @@ async function getPlans(req, res) {
   res.json(await planService.listPlans(req.user.id, req.validated.query))
 }
 
+async function getPlanCalendar(req, res) {
+  res.json(await planService.getPlanCalendar(req.user.id, req.validated.query.year))
+}
+
 async function getPlan(req, res) {
   const record = await planService.getPlanById(req.validated.params.id, req.user.id)
   if (!record) {
@@ -27,6 +31,7 @@ async function deletePlan(req, res) {
 
 module.exports = {
   getPlans,
+  getPlanCalendar,
   getPlan,
   createPlan,
   updatePlan,

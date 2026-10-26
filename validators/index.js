@@ -236,7 +236,11 @@ const planSchemas = {
       notes: planNoteList.optional()
     })
     .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' }),
-  query: dateRange
+  query: dateRange,
+  // 年度热力图只接受一个明确的年份;页面可切换的范围由前端动态限制为近三年
+  calendarQuery: z.object({
+    year: z.coerce.number().int('年份必须是整数').min(1900, '年份不合法').max(9999, '年份不合法')
+  })
 }
 
 // ===== 个人成长:周复盘 =====
