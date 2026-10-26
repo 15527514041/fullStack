@@ -65,11 +65,11 @@ const icon = computed(() => (props.name === 'file' ? null : STROKE_ICONS[props.n
     fill="none"
     aria-hidden="true"
   >
-    <rect width="40" height="40" rx="6" fill="var(--color-sec-1, #99EED1)" />
-    <rect x="8" y="8" width="10" height="3" fill="var(--color-sec-4, #DDFFF3)" />
-    <rect x="8" y="15" width="24" height="3" fill="var(--color-sec-4, #DDFFF3)" />
-    <rect x="8" y="22" width="24" height="3" fill="var(--color-sec-4, #DDFFF3)" />
-    <rect x="8" y="29" width="24" height="3" fill="var(--color-sec-4, #DDFFF3)" />
+    <rect width="40" height="40" rx="6" fill="var(--color-sec-1)" />
+    <rect x="8" y="8" width="10" height="3" fill="var(--color-sec-4)" />
+    <rect x="8" y="15" width="24" height="3" fill="var(--color-sec-4)" />
+    <rect x="8" y="22" width="24" height="3" fill="var(--color-sec-4)" />
+    <rect x="8" y="29" width="24" height="3" fill="var(--color-sec-4)" />
   </svg>
 
   <svg

@@ -136,6 +136,24 @@ export interface ReflectionPayload {
   items: ReflectionItem[]
 }
 
+/** 反思年度视图:只返回有反思的日期 */
+export interface ReflectionCalendarDay {
+  id: number
+  date: string
+  itemCount: number
+}
+
+export interface ReflectionCalendarSummary {
+  reflectionDays: number
+  reflectionTotal: number
+}
+
+export interface ReflectionCalendarResult {
+  year: number
+  summary: ReflectionCalendarSummary
+  days: ReflectionCalendarDay[]
+}
+
 // ===== 个人成长:每日规划 =====
 /** 明细类型:待办 / 计划完成 / 实际完成 / 随写备注 */
 export type PlanItemKind = 'TODO' | 'PLANNED' | 'ACTUAL' | 'NOTE'
@@ -178,6 +196,24 @@ export interface DailyPlanListItem {
   noteCount: number
   createdAt?: string
   updatedAt?: string
+}
+
+/** 年度视图:只返回有规划的日期,前端据此补全全年格子 */
+export interface PlanCalendarDay {
+  id: number
+  date: string
+  todoCount: number
+}
+
+export interface PlanCalendarSummary {
+  planDays: number
+  todoTotal: number
+}
+
+export interface PlanCalendarResult {
+  year: number
+  summary: PlanCalendarSummary
+  days: PlanCalendarDay[]
 }
 
 export interface PlanPayload {

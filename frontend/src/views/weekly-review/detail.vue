@@ -205,7 +205,7 @@ watch(detailId, loadDetail, { immediate: true })
             {{ $t('weeklyReview.frozenNote') }}
           </div>
 
-          <section class="weekly-detail__summary-section">
+          <section class="weekly-detail__section weekly-detail__summary-section">
             <h3 class="weekly-detail__title">{{ $t('weeklyReview.summary') }}</h3>
             <MarkdownText
               class="weekly-detail__summary"
@@ -215,8 +215,7 @@ watch(detailId, loadDetail, { immediate: true })
           </section>
 
           <template v-for="section in sections" :key="section.key">
-            <div class="weekly-detail__divider" />
-            <section>
+            <section class="weekly-detail__section">
               <h3 class="weekly-detail__title">{{ section.title }}</h3>
               <div v-if="section.items.length" class="weekly-detail__items">
                 <div
@@ -224,7 +223,6 @@ watch(detailId, loadDetail, { immediate: true })
                   :key="item.id ?? index"
                   class="weekly-detail__item"
                 >
-                  <span class="form-row-index">{{ index + 1 }}</span>
                   <MarkdownText class="weekly-detail__content" :value="item.content" />
                 </div>
               </div>
@@ -310,6 +308,10 @@ watch(detailId, loadDetail, { immediate: true })
   margin-top: 0;
 }
 
+.weekly-detail__section + .weekly-detail__section {
+  margin-top: 20px;
+}
+
 .weekly-detail__title {
   margin: 0 0 10px;
   color: var(--color-text-1);
@@ -321,13 +323,6 @@ watch(detailId, loadDetail, { immediate: true })
   padding: 12px 16px;
   border-radius: 16px;
   background: var(--color-bg-bottom);
-}
-
-.weekly-detail__divider {
-  height: 3px;
-  margin: 20px 0;
-  border-radius: 999px;
-  background: var(--color-border);
 }
 
 .weekly-detail__items {
@@ -343,11 +338,6 @@ watch(detailId, loadDetail, { immediate: true })
   padding: 12px 14px;
   border-radius: 14px;
   background: var(--color-bg-bottom);
-}
-
-.weekly-detail__item .form-row-index {
-  flex-shrink: 0;
-  margin-top: 0;
 }
 
 .weekly-detail__content {
@@ -372,6 +362,10 @@ watch(detailId, loadDetail, { immediate: true })
 
   .weekly-detail {
     padding-top: 18px;
+  }
+
+  .weekly-detail__section + .weekly-detail__section {
+    margin-top: 16px;
   }
 
 }

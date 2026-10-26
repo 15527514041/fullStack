@@ -46,9 +46,9 @@ function switchMode(target: LedgerRecordSource): void {
   gap: 4px;
   padding: 4px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--color-bg-card);
   border: 1px solid var(--color-border);
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  box-shadow: var(--shadow-control);
 }
 
 .mode-tab {
@@ -77,13 +77,13 @@ function switchMode(target: LedgerRecordSource): void {
 
 .mode-tab.is-active {
   background: var(--el-color-primary);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(11, 176, 109, 0.28);
+  color: var(--color-on-brand);
+  box-shadow: var(--shadow-brand);
 }
 
 .mode-tab.is-active:hover {
   background: var(--el-color-primary);
-  color: #fff;
+  color: var(--color-on-brand);
 }
 
 .mode-tab:focus-visible {

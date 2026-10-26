@@ -184,7 +184,8 @@ async function updateTodo(id, userId, data) {
 
   const updated = await prisma.todo.update({
     where: { id },
-    data: payload,
+    // 标签、附件等关联写入也属于一次编辑,父记录时间要同步刷新
+    data: { ...payload, updatedAt: new Date() },
     include: todoInclude
   })
   return toTodoDTO(updated)

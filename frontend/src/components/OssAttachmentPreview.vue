@@ -149,8 +149,8 @@ const boxStyle = computed(() => ({
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.45);
-  color: #fff;
+  background: var(--color-backdrop);
+  color: var(--color-on-brand);
   font-size: 13px;
   font-weight: 600;
 }

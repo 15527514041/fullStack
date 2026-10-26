@@ -165,6 +165,43 @@ async function listPlans(userId, query) {
   }
 }
 
+async function getPlanCalendar(userId, year) {
+  const plans = await prisma.dailyPlan.findMany({
+    where: {
+      userId,
+      date: {
+        gte: toDateValue(`${year}-01-01`),
+        lte: toDateValue(`${year}-12-31`)
+      }
+    },
+    select: {
+      id: true,
+      date: true,
+      // 热力强度只由待办条数决定;计划、实际、备注不参与统计
+      items: {
+        where: { kind: 'TODO' },
+        select: { id: true }
+      }
+    },
+    orderBy: { date: 'asc' }
+  })
+
+  const days = plans.map((plan) => ({
+    id: plan.id,
+    date: toDateString(plan.date),
+    todoCount: plan.items.length
+  }))
+
+  return {
+    year,
+    summary: {
+      planDays: days.length,
+      todoTotal: days.reduce((total, day) => total + day.todoCount, 0)
+    },
+    days
+  }
+}
+
 async function getPlanById(id, userId) {
   const record = await prisma.dailyPlan.findFirst({
     where: { id, userId },
@@ -218,6 +255,7 @@ async function updatePlan(id, userId, data) {
       return tx.dailyPlan.update({
         where: { id },
         data: {
+          updatedAt: new Date(),
           ...(data.date === undefined ? {} : { date: toDateValue(data.date) }),
           items: { create: buildItems(data) }
         },
@@ -247,6 +285,7 @@ async function deletePlan(id, userId) {
 
 module.exports = {
   listPlans,
+  getPlanCalendar,
   getPlanById,
   createPlan,
   updatePlan,

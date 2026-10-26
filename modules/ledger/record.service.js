@@ -268,7 +268,8 @@ async function updateRecord(userId, recordId, data) {
     await tx.ledgerItem.deleteMany({ where: { recordId } })
     return tx.ledgerRecord.update({
       where: { id: recordId },
-      data: { items: { create: items } },
+      // 明细变更不会自动刷新父记录;显式更新时间,列表才能反映本次编辑
+      data: { updatedAt: new Date(), items: { create: items } },
       include: recordDetailInclude
     })
   })

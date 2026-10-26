@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Check } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { getPreferences, updatePreferences } from '@/api/preferences'
+import { COLOR_THEMES, type ColorThemeKey, type ColorThemeOption } from '@/theme/config'
+import { useTheme } from '@/theme'
 import {
   DEFAULT_LEDGER_ENTRY_SOURCES,
   normalizeLedgerEntrySources
@@ -11,9 +14,11 @@ import {
 import type { LedgerRecordSource } from '@/types'
 
 const { t } = useI18n()
+const { colorTheme, isDark, setColorTheme: applyColorTheme } = useTheme()
 
 const loading = ref(true)
 const saving = ref(false)
+const draftColorTheme = ref<ColorThemeKey>(colorTheme.value)
 const savedSources = ref<LedgerRecordSource[]>([...DEFAULT_LEDGER_ENTRY_SOURCES])
 const draftSources = ref<LedgerRecordSource[]>([...DEFAULT_LEDGER_ENTRY_SOURCES])
 
@@ -38,12 +43,22 @@ const options = computed<Array<{
     description: t('preferences.dimensionMonthDescription')
   }
 ])
+const themeOptions = computed(() => Object.values(COLOR_THEMES))
 
 const dirty = computed(
   () =>
     draftSources.value.length !== savedSources.value.length ||
     draftSources.value.some((source) => !savedSources.value.includes(source))
 )
+const themeDirty = computed(() => draftColorTheme.value !== colorTheme.value)
+const hasUnsavedChanges = computed(() => dirty.value || themeDirty.value)
+
+// 其他标签页保存配色时同步草稿；当前页已有未保存选择时保留用户草稿。
+watch(colorTheme, (theme, previousTheme) => {
+  if (draftColorTheme.value === previousTheme) {
+    draftColorTheme.value = theme
+  }
+})
 
 function applySources(sources: LedgerRecordSource[]): void {
   const normalized = normalizeLedgerEntrySources(sources)
@@ -55,6 +70,25 @@ function handleSourcesChange(values: Array<string | number | boolean>): void {
     values.filter((value): value is LedgerRecordSource => typeof value === 'string')
   )
   draftSources.value = selected
+}
+
+function themeSwatchStyle(option: ColorThemeOption): Record<string, string> {
+  const config = isDark.value ? option.dark : option.light
+  return {
+    '--theme-swatch-primary': config.brand.primary,
+    '--theme-swatch-soft': config.brand['1'],
+    '--theme-swatch-secondary': config.brand.secondary
+  }
+}
+
+function handleColorThemeChange(theme: ColorThemeKey): void {
+  draftColorTheme.value = theme
+}
+
+function saveColorTheme(): void {
+  if (!themeDirty.value) return
+  applyColorTheme(draftColorTheme.value)
+  ElMessage.success(t('preferences.themeSaved'))
 }
 
 async function load(): Promise<void> {
@@ -90,7 +124,7 @@ async function save(): Promise<void> {
 }
 
 onBeforeRouteLeave(async () => {
-  if (!dirty.value) return true
+  if (!hasUnsavedChanges.value) return true
   try {
     await ElMessageBox.confirm(t('preferences.discardConfirm'), t('common.tip'), {
       type: 'warning',
@@ -116,59 +150,134 @@ onMounted(load)
       </div>
     </div>
 
-    <div class="info-card preferences-card">
-      <div class="section-title">{{ $t('preferences.ledgerDimensionsTitle') }}</div>
-      <p class="preferences-hint">{{ $t('preferences.ledgerDimensionsHint') }}</p>
+    <div class="preferences-content">
+      <div class="info-card preferences-card">
+        <div class="section-title">{{ $t('preferences.themeTitle') }}</div>
+        <p class="preferences-hint">{{ $t('preferences.themeHint') }}</p>
 
-      <el-skeleton v-if="loading" :rows="3" animated />
-      <template v-else>
-        <el-checkbox-group
-          v-model="draftSources"
-          class="preference-options"
-          :disabled="saving"
-          @change="handleSourcesChange"
-        >
-          <el-checkbox
-            v-for="option in options"
-            :key="option.source"
-            :value="option.source"
-            class="preference-option"
+        <div class="theme-options" role="radiogroup" :aria-label="$t('preferences.themeTitle')">
+          <button
+            v-for="option in themeOptions"
+            :key="option.key"
+            type="button"
+            role="radio"
+            class="theme-option"
+            :class="{ 'is-active': draftColorTheme === option.key }"
+            :aria-checked="draftColorTheme === option.key"
+            :style="themeSwatchStyle(option)"
+            @click="handleColorThemeChange(option.key)"
           >
-            <span class="preference-option__content">
-              <span class="preference-option__title">{{ option.label }}</span>
-              <span class="preference-option__description">{{ option.description }}</span>
+            <span class="theme-option__preview" aria-hidden="true">
+              <span class="theme-option__swatch theme-option__swatch--soft" />
+              <span class="theme-option__swatch theme-option__swatch--secondary" />
+              <span class="theme-option__swatch theme-option__swatch--primary" />
             </span>
-          </el-checkbox>
-        </el-checkbox-group>
-
-        <p v-if="!draftSources.length" class="preferences-validation">
-          {{ $t('preferences.keepOne') }}
-        </p>
+            <span class="theme-option__meta">
+              <span class="theme-option__name">{{ $t(option.labelKey) }}</span>
+              <span class="theme-option__client">{{ option.clientName }}</span>
+            </span>
+            <el-icon v-if="draftColorTheme === option.key" class="theme-option__check">
+              <Check />
+            </el-icon>
+          </button>
+        </div>
 
         <div class="preferences-actions">
-          <span v-if="dirty" class="preferences-dirty">{{ $t('preferences.unsaved') }}</span>
-          <el-button
-            type="primary"
-            :disabled="!dirty || !draftSources.length"
-            :loading="saving"
-            @click="save"
-          >
+          <span v-if="themeDirty" class="preferences-dirty">{{ $t('preferences.unsaved') }}</span>
+          <el-button type="primary" :disabled="!themeDirty" @click="saveColorTheme">
             {{ $t('common.save') }}
           </el-button>
         </div>
-      </template>
+      </div>
+
+      <div class="info-card preferences-card">
+        <div class="section-title">{{ $t('preferences.ledgerDimensionsTitle') }}</div>
+        <p class="preferences-hint">{{ $t('preferences.ledgerDimensionsHint') }}</p>
+
+        <el-skeleton v-if="loading" :rows="3" animated />
+        <template v-else>
+          <el-checkbox-group
+            v-model="draftSources"
+            class="preference-options"
+            :disabled="saving"
+            @change="handleSourcesChange"
+          >
+            <el-checkbox
+              v-for="option in options"
+              :key="option.source"
+              :value="option.source"
+              class="preference-option"
+            >
+              <span class="preference-option__content">
+                <span class="preference-option__title">{{ option.label }}</span>
+                <span class="preference-option__description">{{ option.description }}</span>
+              </span>
+            </el-checkbox>
+          </el-checkbox-group>
+
+          <p v-if="!draftSources.length" class="preferences-validation">
+            {{ $t('preferences.keepOne') }}
+          </p>
+
+          <div class="preferences-actions">
+            <span v-if="dirty" class="preferences-dirty">{{ $t('preferences.unsaved') }}</span>
+            <el-button
+              type="primary"
+              :disabled="!dirty || !draftSources.length"
+              :loading="saving"
+              @click="save"
+            >
+              {{ $t('common.save') }}
+            </el-button>
+          </div>
+        </template>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .preferences-page {
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.preferences-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: -12px -8px -14px -12px;
+  padding: 12px 8px 14px 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-scrollbar-thumb) transparent;
+}
+
+.preferences-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.preferences-content::-webkit-scrollbar-thumb {
+  border-radius: 999px;
 }
 
 .preferences-card {
   width: 100%;
-  padding-bottom: 28px;
+  padding-bottom: 22px;
+  flex: none;
+  border: none;
+  border-radius: 24px;
+  background: var(--color-bg-card-1);
+  box-shadow: var(--shadow-card);
+}
+
+.preferences-card .section-title {
+  padding: 24px 0 8px;
 }
 
 .preferences-hint {
@@ -176,6 +285,104 @@ onMounted(load)
   font-size: 13px;
   line-height: 21px;
   color: var(--color-text-3);
+}
+
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.theme-option {
+  position: relative;
+  min-height: 82px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-bg-bottom);
+  color: var(--color-text-1);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.theme-option:hover {
+  border-color: var(--theme-swatch-primary);
+}
+
+.theme-option.is-active {
+  border-color: var(--theme-swatch-primary);
+  background: var(--color-bg-bottom);
+  box-shadow: 0 0 0 1px var(--theme-swatch-primary);
+}
+
+.theme-option:focus-visible {
+  outline: 2px solid var(--theme-swatch-primary);
+  outline-offset: 2px;
+}
+
+.theme-option__preview {
+  position: relative;
+  width: 48px;
+  height: 34px;
+  flex-shrink: 0;
+}
+
+.theme-option__swatch {
+  position: absolute;
+  top: 4px;
+  width: 26px;
+  height: 26px;
+  border: 3px solid var(--color-bg-card);
+  border-radius: 50%;
+}
+
+.theme-option__swatch--soft {
+  left: 0;
+  background: var(--theme-swatch-soft);
+}
+
+.theme-option__swatch--secondary {
+  left: 11px;
+  background: var(--theme-swatch-secondary);
+}
+
+.theme-option__swatch--primary {
+  left: 22px;
+  background: var(--theme-swatch-primary);
+}
+
+.theme-option__meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.theme-option__name {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--color-text-1);
+}
+
+.theme-option__client {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-text-3);
+}
+
+.theme-option__check {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--theme-swatch-primary);
 }
 
 .preference-options {
@@ -226,7 +433,7 @@ onMounted(load)
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 20px;
 }
 
 .preferences-validation {
@@ -248,8 +455,19 @@ onMounted(load)
 }
 
 @media (max-width: 768px) {
+  .preferences-page {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .preferences-content {
+    gap: 12px;
+    margin: -10px -6px -12px -10px;
+    padding: 10px 6px 12px 10px;
+  }
+
   .preferences-card {
-    padding-bottom: 22px;
+    padding-bottom: 18px;
   }
 
   .preferences-actions {
@@ -257,6 +475,10 @@ onMounted(load)
   }
 
   .preference-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .theme-options {
     grid-template-columns: minmax(0, 1fr);
   }
 }

@@ -1,8 +1,19 @@
 import { request } from './request'
-import type { DailyPlan, DailyPlanListItem, DateRangeQuery, PagedResult, PlanPayload } from '@/types'
+import type {
+  DailyPlan,
+  DailyPlanListItem,
+  DateRangeQuery,
+  PagedResult,
+  PlanCalendarResult,
+  PlanPayload
+} from '@/types'
 
 export function getPlans(params?: DateRangeQuery): Promise<PagedResult<DailyPlanListItem>> {
   return request<PagedResult<DailyPlanListItem>>({ url: '/plans', method: 'get', params })
+}
+
+export function getPlanCalendar(year: number): Promise<PlanCalendarResult> {
+  return request<PlanCalendarResult>({ url: '/plans/calendar', method: 'get', params: { year } })
 }
 
 export function getPlan(id: number): Promise<DailyPlan> {

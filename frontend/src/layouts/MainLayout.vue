@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n'
 import MenuIcon from '@/components/MenuIcon.vue'
 import LogoMark from '@/components/LogoMark.vue'
 import LangSelect from '@/components/LangSelect.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import ChangePasswordDialog from '@/components/ChangePasswordDialog.vue'
 import PasswordChangedDialog from '@/components/PasswordChangedDialog.vue'
 import { useOssUrl } from '@/composables/useOssUrl'
@@ -195,6 +196,7 @@ onUnmounted(() => {
       </div>
 
       <div class="navbar-right">
+        <ThemeToggle />
         <LangSelect />
 
         <!-- 语言切换与个人头像之间的分隔线(参考 client) -->
@@ -372,7 +374,7 @@ onUnmounted(() => {
   height: 32px;
   margin: 0 8px;
   flex-shrink: 0;
-  background-color: #f1f1f1;
+  background-color: var(--color-divider);
 }
 
 /* 右上角用户触发区(参考 client:头像 + 昵称 + 下箭头) */
@@ -481,7 +483,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   background: var(--color-bg-card);
-  box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sidebar);
   transition: width 0.3s;
   overflow: hidden;
   z-index: 5;
@@ -583,7 +585,7 @@ onUnmounted(() => {
 }
 
 .sidebar-toggle:hover {
-  background: rgba(0, 0, 0, 0.025);
+  background: var(--color-hover-subtle);
 }
 
 .sidebar.is-collapse .sidebar-toggle {
@@ -641,7 +643,7 @@ onUnmounted(() => {
   transform: translateY(calc(-100% - 12px));
   transition: transform 0.28s ease;
   border-radius: 0 0 18px 18px;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-mobile);
   z-index: 9;
 }
 
@@ -687,7 +689,7 @@ onUnmounted(() => {
   bottom: 0;
   left: 0;
   z-index: 8;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--color-overlay);
   animation: mask-fade-in 0.2s ease;
 }
 
@@ -774,7 +776,7 @@ onUnmounted(() => {
   --el-popover-border-radius: 24px;
   --el-popover-bg-color: var(--color-bg-card);
   --el-popover-border-color: transparent;
-  --el-box-shadow-light: 0 0 8px 1px rgba(0, 0, 0, 0.08);
+  --el-box-shadow-light: var(--shadow-card);
 }
 
 .user-dropdown-popper.el-popover .el-popper__arrow {

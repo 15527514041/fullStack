@@ -1,0 +1,272 @@
+/*
+ * 默认绿色主题的静态回退值与深色模式派生变量。
+ *
+ * 三套完整色板统一维护在 src/theme/config.ts，应用启动和切换配色时
+ * 会通过 CSS 变量覆盖这里的绿色回退值。
+ */
+:root {
+  color-scheme: light;
+
+  /* 品牌色 */
+  --color-brand-1: #e7f8f1;
+  --color-brand-2: #b6ebd5;
+  --color-brand-3: #76d1ab;
+  --color-brand-4: #0dd782;
+  --color-brand-5: #047546;
+  --color-brand-6: #03a05e;
+  --color-brand-7: #05462b;
+  --color-brand-secondary: #003411;
+  --color-brand-accent: #ff7d00;
+
+  /* 辅助色 */
+  --color-sec-1: #99eed1;
+  --color-sec-2: #7edcf0;
+  --color-sec-3: #ffea8d;
+  --color-sec-4: #ddfff3;
+  --color-sec-5: #d7f8ff;
+  --color-sec-6: #fff6cc;
+  --color-sec-7: #ebbafe;
+  --color-sec-8: #ffcad6;
+  --color-sec-9: #ffed76;
+  --color-sec-10: #231aea;
+
+  /* 辅助色序列 */
+  --color-sub-1: #e6f2eb;
+  --color-sub-2: #bfdbcb;
+  --color-sub-3: #7fb897;
+  --color-sub-4: #3d8c5e;
+  --color-sub-5: #00280d;
+  --color-sub-6: #003411;
+  --color-sub-7: #001a08;
+  --color-sub-secondary: #003411;
+  --color-sub-white: #ffffff;
+  --color-sub-black: #000000;
+
+  /* 功能色 */
+  --color-success-1: #e8ffef;
+  --color-success-2: #bcfbd0;
+  --color-success-3: #96ecb1;
+  --color-success-5: #00e19b;
+  --color-success-6: #00cb8d;
+  --color-success-7: #009b60;
+  --color-warning-1: #fff6ed;
+  --color-warning-2: #ffe4ba;
+  --color-warning-3: #ffcf8b;
+  --color-warning-5: #d38313;
+  --color-warning-6: #eb9825;
+  --color-warning-7: #a5660f;
+  --color-danger-1: #ffefeb;
+  --color-danger-2: #fdcdc5;
+  --color-danger-3: #fbaca3;
+  --color-danger-5: #f76560;
+  --color-danger-6: #f53f3f;
+  --color-danger-7: #cb272d;
+  --color-wait-1: #395bff;
+  --color-wait-2: #ecf4ff;
+
+  /* 中性色 */
+  --color-text-1: #131c27;
+  --color-text-2: #364b60;
+  --color-text-3: #949ba6;
+  --color-text-4: #caced4;
+  --color-bg-card: #ffffff;
+  --color-bg-card-1: #ffffff;
+  --color-bg-bottom: #f6f6f6;
+  --color-border: #eceef2;
+  --color-divider: #f1f1f1;
+  --color-scrollbar-track: #f1f1f1;
+  --color-scrollbar-thumb: #c0c0c0;
+  --color-hover-subtle: rgba(0, 0, 0, 0.025);
+  --color-overlay: rgba(0, 0, 0, 0.35);
+  --color-backdrop: rgba(0, 0, 0, 0.45);
+
+  /* 固定落在品牌/功能色背景上的文字 */
+  --color-on-brand: #ffffff;
+  --color-on-brand-secondary: rgba(255, 255, 255, 0.75);
+  --color-on-brand-muted: rgba(255, 255, 255, 0.62);
+  --color-on-warning-soft: #ffe0b8;
+  --color-on-success-soft: #d9ffe5;
+  --color-on-danger-soft: #ffe0e0;
+
+  /* 阴影 */
+  --shadow-card: 0 0 8px 1px rgba(0, 0, 0, 0.08);
+  --shadow-card-lg: 0 0 10px 0 rgba(0, 0, 0, 0.08);
+  --shadow-sidebar: 0 0 8px 0 rgba(0, 0, 0, 0.1);
+  --shadow-mobile: 0 12px 24px rgba(0, 0, 0, 0.12);
+  --shadow-bottom: 0 -1px 21.4px 0 rgba(0, 0, 0, 0.1);
+  --shadow-control: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-inset-control: inset 0 0 0 1px rgba(16, 24, 40, 0.08);
+  --shadow-brand: 0 2px 8px rgba(11, 176, 109, 0.28);
+  --shadow-nav-action: 0 2px 8px rgba(229, 136, 136, 0.1);
+  --shadow-handle: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.16));
+
+  /* Element Plus 基础变量 */
+  --el-color-primary: var(--color-brand-6);
+  --el-color-secondary: var(--color-brand-secondary);
+  --el-color-accent: var(--color-brand-accent);
+  --el-color-primary-light-1: #1ca96e;
+  --el-color-primary-light-2: #35b37e;
+  --el-color-primary-light-3: #4ebc8e;
+  --el-color-primary-light-4: #67c69e;
+  --el-color-primary-light-5: #81cfae;
+  --el-color-primary-light-6: #9ad9be;
+  --el-color-primary-light-7: #b3e2ce;
+  --el-color-primary-light-8: #ccecde;
+  --el-color-primary-light-9: #e5f5ee;
+  --el-color-primary-dark-1: #039056;
+  --el-color-primary-dark-2: #02804b;
+  --el-color-primary-dark-3: #027043;
+  --el-color-primary-dark-4: #02603a;
+  --el-color-primary-dark-5: #025032;
+  --el-color-primary-dark-6: #024029;
+  --el-color-primary-dark-7: #023020;
+  --el-color-primary-dark-8: #012017;
+  --el-color-primary-dark-9: #01100d;
+  --el-color-success: var(--color-success-6);
+  --el-color-warning: var(--color-warning-6);
+  --el-color-danger: var(--color-danger-6);
+  --el-color-error: var(--color-danger-6);
+  --el-color-info: #86909c;
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #f6f6f6;
+  --el-bg-color-overlay: #ffffff;
+  --el-fill-color-blank: #ffffff;
+  --el-fill-color-light: #f6f6f6;
+  --el-text-color-primary: var(--color-text-1);
+  --el-text-color-regular: var(--color-text-2);
+  --el-text-color-secondary: var(--color-text-3);
+  --el-border-color: var(--color-border);
+  --el-border-color-light: var(--color-border);
+  --el-box-shadow-light: var(--shadow-card);
+}
+
+html.dark {
+  color-scheme: dark;
+
+  /* 色值与 client 的 THEME_CONFIG_MAP.Vero.dark 保持一致 */
+  --color-brand-1: #163529;
+  --color-brand-2: #163b2c;
+  --color-brand-3: #1a543d;
+  --color-brand-4: #1e7050;
+  --color-brand-5: #3dd79a;
+  --color-brand-6: #23b57b;
+  --color-brand-7: #4acd97;
+  --color-brand-secondary: #1c7c3c;
+  --color-brand-accent: #ff7d00;
+
+  --color-sec-1: #59c4b0;
+  --color-sec-2: #53b9d6;
+  --color-sec-3: #e6c868;
+  --color-sec-4: #82e7cf;
+  --color-sec-5: #86def7;
+  --color-sec-6: #eed892;
+  --color-sec-7: #ebbafe;
+  --color-sec-8: #ffcad6;
+  --color-sec-9: #ffed76;
+  --color-sec-10: #231aea;
+
+  --color-sub-1: #0a271c;
+  --color-sub-2: #063b14;
+  --color-sub-3: #064319;
+  --color-sub-4: #07481d;
+  --color-sub-5: #339956;
+  --color-sub-6: #1c7c3c;
+  --color-sub-7: #4cc472;
+  --color-sub-secondary: #1c7c3c;
+
+  --color-success-1: #004d35;
+  --color-success-2: #00875d;
+  --color-success-3: #1c7b5e;
+  --color-success-5: #00f1a6;
+  --color-success-6: #00e19b;
+  --color-success-7: #00a666;
+  --color-warning-1: #3a2c10;
+  --color-warning-2: #74501d;
+  --color-warning-3: #b37a30;
+  --color-warning-5: #d38313;
+  --color-warning-6: #eb9825;
+  --color-warning-7: #a5660f;
+  --color-danger-1: #3a1a1a;
+  --color-danger-2: #793737;
+  --color-danger-3: #b35050;
+  --color-danger-5: #f76560;
+  --color-danger-6: #f53f3f;
+  --color-danger-7: #cb272d;
+  --color-wait-1: #3d91ff;
+  --color-wait-2: #17275a;
+
+  --color-text-1: #ffffff;
+  --color-text-2: #bcc4cd;
+  --color-text-3: #878d95;
+  --color-text-4: #52575f;
+  --color-bg-card: #181818;
+  --color-bg-card-1: #222222;
+  --color-bg-bottom: #0a0a0a;
+  --color-border: #2a2a2a;
+  --color-divider: rgba(197, 197, 210, 0.3);
+  --color-scrollbar-track: #111111;
+  --color-scrollbar-thumb: #3b3b3b;
+  --color-hover-subtle: rgba(255, 255, 255, 0.035);
+  --color-overlay: rgba(0, 0, 0, 0.62);
+  --color-backdrop: rgba(0, 0, 0, 0.72);
+
+  --shadow-card: 0 0 12px 1px rgba(0, 0, 0, 0.3);
+  --shadow-card-lg: 0 0 14px 0 rgba(0, 0, 0, 0.32);
+  --shadow-sidebar: 0 0 10px 0 rgba(0, 0, 0, 0.34);
+  --shadow-mobile: 0 12px 28px rgba(0, 0, 0, 0.42);
+  --shadow-bottom: 0 -1px 21.4px 0 rgba(0, 0, 0, 0.36);
+  --shadow-control: 0 1px 2px rgba(0, 0, 0, 0.22);
+  --shadow-inset-control: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --shadow-brand: 0 2px 10px rgba(3, 160, 94, 0.32);
+  --shadow-nav-action: 0 2px 8px rgba(229, 136, 136, 0.1);
+  --shadow-handle: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+
+  --el-color-primary: #23b57b;
+  --el-color-secondary: var(--color-brand-secondary);
+  --el-color-accent: var(--color-brand-accent);
+  --el-color-primary-light-1: #1fa26e;
+  --el-color-primary-light-2: #1c9062;
+  --el-color-primary-light-3: #187e56;
+  --el-color-primary-light-4: #156c49;
+  --el-color-primary-light-5: #115a3d;
+  --el-color-primary-light-6: #0e4831;
+  --el-color-primary-light-7: #0a3624;
+  --el-color-primary-light-8: #062418;
+  --el-color-primary-light-9: #03120c;
+  --el-color-primary-dark-1: #1fa26e;
+  --el-color-primary-dark-2: #1c9062;
+  --el-color-primary-dark-3: #187e56;
+  --el-color-primary-dark-4: #156c49;
+  --el-color-primary-dark-5: #115a3d;
+  --el-color-primary-dark-6: #0e4831;
+  --el-color-primary-dark-7: #0a3624;
+  --el-color-primary-dark-8: #062418;
+  --el-color-primary-dark-9: #03120c;
+  --el-color-success: var(--color-success-6);
+  --el-color-warning: var(--color-warning-6);
+  --el-color-danger: var(--color-danger-6);
+  --el-color-error: var(--color-danger-6);
+  --el-color-info: #86909c;
+  --el-bg-color: var(--color-bg-card);
+  --el-bg-color-page: var(--color-bg-bottom);
+  --el-bg-color-overlay: var(--color-bg-card);
+  --el-fill-color-blank: var(--color-bg-card);
+  --el-fill-color: #2a2a2a;
+  --el-fill-color-light: var(--color-bg-bottom);
+  --el-fill-color-lighter: #161616;
+  --el-fill-color-dark: #303030;
+  --el-fill-color-darker: #363636;
+  --el-text-color-primary: var(--color-text-1);
+  --el-text-color-regular: var(--color-text-2);
+  --el-text-color-secondary: var(--color-text-3);
+  --el-text-color-placeholder: #686d75;
+  --el-text-color-disabled: #52575f;
+  --el-border-color: var(--color-border);
+  --el-border-color-light: #262626;
+  --el-border-color-lighter: #222222;
+  --el-border-color-extra-light: #1d1d1d;
+  --el-border-color-dark: #343434;
+  --el-border-color-darker: #414141;
+  --el-mask-color: rgba(0, 0, 0, 0.72);
+  --el-box-shadow-light: var(--shadow-card);
+}

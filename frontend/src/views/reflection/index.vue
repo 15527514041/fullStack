@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowRight, Plus } from '@element-plus/icons-vue'
+import { ArrowRight, Calendar, Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { createReflection, getReflections } from '@/api/reflection'
@@ -39,6 +39,10 @@ function summary(row: DailyReflection): string {
 
 function openCreate(): void {
   dialogVisible.value = true
+}
+
+function openCalendar(): void {
+  router.push({ name: 'reflection-calendar' })
 }
 
 function openEdit(row: DailyReflection): void {
@@ -86,9 +90,14 @@ async function handleSubmit(payload: ReflectionSubmitPayload): Promise<void> {
         <div class="main-title">{{ $t('reflection.title') }}</div>
         <div class="subtitle">{{ $t('reflection.subtitle') }}</div>
       </div>
-      <el-button type="primary" class="add-button" @click="openCreate">
-        <el-icon><Plus /></el-icon>{{ $t('reflection.addButton') }}
-      </el-button>
+      <div class="header-actions">
+        <el-button class="calendar-button" @click="openCalendar">
+          <el-icon><Calendar /></el-icon>{{ $t('reflection.yearView') }}
+        </el-button>
+        <el-button type="primary" class="add-button" @click="openCreate">
+          <el-icon><Plus /></el-icon>{{ $t('reflection.addButton') }}
+        </el-button>
+      </div>
     </div>
 
     <div class="feed-filter">
@@ -129,3 +138,33 @@ async function handleSubmit(payload: ReflectionSubmitPayload): Promise<void> {
     <ReflectionFormDialog v-model:visible="dialogVisible" :loading="submitting" @submit="handleSubmit" />
   </div>
 </template>
+
+<style scoped>
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calendar-button {
+  height: 40px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.calendar-button .el-icon {
+  margin-right: 6px;
+}
+
+@media (max-width: 768px) {
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions .calendar-button,
+  .feed-head .header-actions .add-button {
+    flex: 1;
+    width: auto;
+  }
+}
+</style>

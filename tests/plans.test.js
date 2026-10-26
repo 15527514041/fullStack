@@ -197,6 +197,76 @@ test('列表只返回三类计数,按日期倒序;from/to 过滤生效', async (
   assert.strictEqual(range.body.list[0].date, '2026-10-09')
 })
 
+test('年度日历只统计当前用户的规划与待办条数', async () => {
+  const token = await registerAndLogin()
+  const otherToken = await registerAndLogin('bob')
+  const auth = (tokenValue, req) => req.set('Authorization', `Bearer ${tokenValue}`)
+
+  // 年外记录不应进入结果
+  await auth(token, request(app).post('/api/plans')).send({
+    date: '2025-12-31',
+    todos: [{ name: '去年最后一天' }]
+  })
+
+  // 只有计划/备注、没有待办的规划也必须保留,待办数为 0
+  await auth(token, request(app).post('/api/plans')).send({
+    date: '2026-01-01',
+    planned: [{ name: '新年计划', startTime: '09:00', endTime: '10:00' }],
+    notes: [{ name: '新年第一天' }]
+  })
+  await auth(token, request(app).post('/api/plans')).send({
+    date: '2026-06-15',
+    todos: [{ name: '待办 1' }, { name: '待办 2', completed: true }],
+    planned: [{ name: '安排', startTime: '09:00', endTime: '10:00' }],
+    actual: [{ name: '执行', startTime: '09:00', endTime: '10:00' }]
+  })
+  await auth(token, request(app).post('/api/plans')).send({
+    date: '2026-12-31',
+    todos: [{ name: '年末待办' }]
+  })
+  await auth(token, request(app).post('/api/plans')).send({
+    date: '2027-01-01',
+    todos: [{ name: '明年第一天' }]
+  })
+
+  // 其他用户的同年规划不能混入
+  await auth(otherToken, request(app).post('/api/plans')).send({
+    date: '2026-03-01',
+    todos: [{ name: '别人的待办 1' }, { name: '别人的待办 2' }]
+  })
+
+  const calendar = await auth(token, request(app).get('/api/plans/calendar?year=2026'))
+
+  assert.strictEqual(calendar.status, 200)
+  assert.strictEqual(calendar.body.year, 2026)
+  assert.deepStrictEqual(calendar.body.summary, {
+    planDays: 3,
+    todoTotal: 3
+  })
+  assert.deepStrictEqual(
+    calendar.body.days.map(({ date, todoCount }) => ({ date, todoCount })),
+    [
+      { date: '2026-01-01', todoCount: 0 },
+      { date: '2026-06-15', todoCount: 2 },
+      { date: '2026-12-31', todoCount: 1 }
+    ]
+  )
+  calendar.body.days.forEach((day) => assert.strictEqual(typeof day.id, 'number'))
+})
+
+test('年度日历校验年份与登录状态', async () => {
+  const token = await registerAndLogin()
+  const auth = (req) => req.set('Authorization', `Bearer ${token}`)
+
+  const missingYear = await auth(request(app).get('/api/plans/calendar'))
+  assert.strictEqual(missingYear.status, 400)
+
+  const invalidYear = await auth(request(app).get('/api/plans/calendar?year=2026.5'))
+  assert.strictEqual(invalidYear.status, 400)
+
+  assert.strictEqual((await request(app).get('/api/plans/calendar?year=2026')).status, 401)
+})
+
 test('待办可以勾选完成(completed),计划/实际/备注恒为 false', async () => {
   const token = await registerAndLogin()
   const auth = (req) => req.set('Authorization', `Bearer ${token}`)
@@ -280,6 +350,7 @@ test('只传计划的某一类时只替换该类,其它两类保持不动', asyn
   const auth = (req) => req.set('Authorization', `Bearer ${token}`)
 
   const created = await auth(request(app).post('/api/plans')).send(payload)
+  await new Promise((resolve) => setTimeout(resolve, 10))
 
   const patched = await auth(request(app).patch(`/api/plans/${created.body.id}`)).send({
     planned: [{ name: '改成下午写周报', startTime: '14:00', endTime: '15:00' }]
@@ -290,6 +361,7 @@ test('只传计划的某一类时只替换该类,其它两类保持不动', asyn
     patched.body.planned.map((item) => item.name),
     ['改成下午写周报']
   )
+  assert.ok(new Date(patched.body.updatedAt) > new Date(created.body.updatedAt))
   assert.strictEqual(patched.body.planned[0].durationMinutes, 60)
   // 待办与实际完成没被碰
   assert.deepStrictEqual(

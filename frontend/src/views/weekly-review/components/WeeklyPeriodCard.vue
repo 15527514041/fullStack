@@ -31,7 +31,7 @@ withDefaults(
   padding: 20px 30px;
   border-radius: 30px;
   background: var(--color-bg-card-1);
-  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card-lg);
 }
 
 .weekly-period-card__copy {

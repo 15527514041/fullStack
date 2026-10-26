@@ -293,7 +293,7 @@ watch(() => props.recordId, load, { immediate: true })
   padding: 24px 30px;
   border-radius: 24px;
   background: var(--color-brand-6);
-  color: #fff;
+  color: var(--color-on-brand);
 }
 
 .ledger-summary-item {
@@ -305,7 +305,7 @@ watch(() => props.recordId, load, { immediate: true })
 
 .ledger-summary-item span {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--color-on-brand-secondary);
 }
 
 .ledger-summary-item strong {
@@ -313,22 +313,22 @@ watch(() => props.recordId, load, { immediate: true })
   font-size: 24px;
   font-weight: 600;
   line-height: 1.3;
-  color: #fff;
+  color: var(--color-on-brand);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .ledger-summary-item strong.is-expense {
-  color: #ffe0e0;
+  color: var(--color-on-danger-soft);
 }
 
 .ledger-summary-item strong.is-income,
 .ledger-summary-item strong.is-positive {
-  color: #d9ffe5;
+  color: var(--color-on-success-soft);
 }
 
 .ledger-summary-item strong.is-negative {
-  color: #ffe0e0;
+  color: var(--color-on-danger-soft);
 }
 
 .ledger-detail-meta {

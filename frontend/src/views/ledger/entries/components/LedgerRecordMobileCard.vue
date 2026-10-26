@@ -63,7 +63,7 @@ const netClass = computed(() => {
   border: 1px solid transparent;
   border-radius: 18px;
   background: var(--color-bg-card-1);
-  box-shadow: 0 0 8px 1px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   cursor: pointer;
 }
 

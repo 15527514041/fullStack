@@ -103,7 +103,7 @@ async function handleSubmit(): Promise<void> {
   display: flex;
   align-items: flex-start;
   padding: 80px 20px 40px;
-  background: #fff;
+  background: var(--el-bg-color);
   overflow-y: auto;
 }
 

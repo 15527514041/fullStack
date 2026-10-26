@@ -72,7 +72,7 @@ function handleLanguageChange(lang: LanguageType): void {
   transform: translateY(-2px);
   border-radius: 12px;
   background: var(--el-border-color-light);
-  box-shadow: 0 2px 8px rgba(229, 136, 136, 0.1);
+  box-shadow: var(--shadow-nav-action);
 }
 
 .flag-icon {
@@ -103,7 +103,7 @@ function handleLanguageChange(lang: LanguageType): void {
   background: var(--color-bg-card);
   border: 1px solid transparent;
   border-radius: 24px;
-  box-shadow: 0 0 8px 1px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 

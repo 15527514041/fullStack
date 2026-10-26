@@ -1567,7 +1567,7 @@ onMounted(load)
   padding: 22px 26px;
   border-radius: 24px;
   background: var(--color-brand-6);
-  color: #fff;
+  color: var(--color-on-brand);
 }
 
 .ledger-stats-grid {
@@ -1585,26 +1585,26 @@ onMounted(load)
 
 .ledger-stat span {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--color-on-brand-secondary);
 }
 
 .ledger-stat strong {
   overflow: hidden;
   font-size: 24px;
   font-weight: 600;
-  color: #fff;
+  color: var(--color-on-brand);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .ledger-stat strong.is-expense,
 .ledger-stat strong.is-negative {
-  color: #ffe0e0;
+  color: var(--color-on-danger-soft);
 }
 
 .ledger-stat strong.is-income,
 .ledger-stat strong.is-positive {
-  color: #d9ffe5;
+  color: var(--color-on-success-soft);
 }
 
 @media (max-width: 768px) {
