@@ -37,6 +37,20 @@ enum DailyPlanItemKind {
   NOTE // 随写备注:只有内容
 }
 
+// 周复盘状态:草稿阶段实时汇总每日数据,完成时冻结快照
+enum WeeklyReviewStatus {
+  DRAFT
+  COMPLETED
+}
+
+// 周复盘的四个固定内容区
+enum WeeklyReviewItemKind {
+  WIN // 做得好的
+  CHALLENGE // 挑战与卡点
+  LEARNING // 本周收获
+  NEXT_ACTION // 下周行动
+}
+
 // 用户级字典:账户类型、支出分类、收入分类都由用户自己维护
 enum DictionaryKind {
   ACCOUNT_KIND
@@ -71,6 +85,7 @@ model User {
   uploads            Upload[]
   reflections        DailyReflection[]
   plans              DailyPlan[]
+  weeklyReviews      WeeklyReview[]
   ledgerAccounts     LedgerAccount[]
   ledgerRecords      LedgerRecord[]
   // 用户希望显示的账单维度;至少一项,由接口校验
@@ -158,8 +173,8 @@ model Tag {
 model Todo {
   id          Int              @id @default(autoincrement())
   title       String
-  // 备注:非必填
-  remark      String?
+  // 描述:非必填,支持 Markdown 原文
+  description String?
   // 截止日期:只到日期,可选;不参与每日规划关联
   dueDate     DateTime?        @db.Date
   completed   Boolean          @default(false)
@@ -240,6 +255,39 @@ model DailyPlanItem {
   createdAt DateTime          @default(now())
 
   @@index([planId, kind])
+}
+
+// ===== 个人成长:周复盘 =====
+// 一个用户每个自然周只能有一条复盘;weekStart 固定为周一,weekEnd 由服务层推导
+model WeeklyReview {
+  id          Int                @id @default(autoincrement())
+  userId      Int
+  weekStart   DateTime           @db.Date
+  // 草稿可以为空;完成复盘时要求填写本周总结
+  summary     String?
+  status      WeeklyReviewStatus @default(DRAFT)
+  // 完成时由服务端写入统计与七天摘要;完成后即使每日数据变化也保持原快照
+  snapshot    Json?
+  completedAt DateTime?
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       WeeklyReviewItem[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([userId, weekStart])
+  @@index([userId, status, weekStart])
+}
+
+model WeeklyReviewItem {
+  id        Int                  @id @default(autoincrement())
+  review    WeeklyReview         @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reviewId  Int
+  kind      WeeklyReviewItemKind
+  content   String
+  sortOrder Int                  @default(0)
+  createdAt DateTime             @default(now())
+
+  @@index([reviewId, kind, sortOrder])
 }
 
 // ===== 记账:资产账户 =====

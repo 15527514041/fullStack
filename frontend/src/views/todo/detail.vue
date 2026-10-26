@@ -6,6 +6,7 @@ import { formatDate, formatDateTime, toDateString } from '@/utils/datetime'
 import BackButton from '@/components/BackButton.vue'
 import OssAttachmentPreview from '@/components/OssAttachmentPreview.vue'
 import ColorTag from '@/components/ColorTag.vue'
+import MarkdownText from '@/components/MarkdownText.vue'
 import type { Todo } from '@/types'
 
 /**
@@ -97,19 +98,20 @@ onMounted(loadDetail)
         </div>
 
         <div class="info-item">
+          <span class="label">{{ $t('todo.formDescription') }}</span>
+          <div class="value">
+            <div class="description-card">
+              <MarkdownText :value="todo.description" empty="-" />
+            </div>
+          </div>
+        </div>
+
+        <div class="info-item">
           <span class="label">{{ $t('todo.formTags') }}</span>
           <span class="value">
             <template v-if="todo.tags && todo.tags.length">
               <ColorTag v-for="tag in todo.tags" :key="tag.id" :name="tag.name" :color="tag.color" class="tag-item" />
             </template>
-            <span v-else class="empty-value">-</span>
-          </span>
-        </div>
-
-        <div class="info-item">
-          <span class="label">{{ $t('todo.formRemark') }}</span>
-          <span class="value">
-            <span v-if="todo.remark" class="remark-value">{{ todo.remark }}</span>
             <span v-else class="empty-value">-</span>
           </span>
         </div>
@@ -170,8 +172,13 @@ onMounted(loadDetail)
   margin-right: 6px;
 }
 
-.remark-value {
-  white-space: pre-wrap;
+.description-card {
+  min-height: 48px;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-bg-bottom);
+  line-height: 1.65;
 }
 
 .due-date.is-overdue {

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+// Element Plus 周视图按 Day.js locale 计算周起点，中文下周一为一周第一天
+import 'dayjs/locale/zh-cn.js'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import en from 'element-plus/es/locale/lang/en'
 import { syncDocumentTitle } from '@/router'

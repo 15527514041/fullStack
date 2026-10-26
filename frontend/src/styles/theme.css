@@ -430,6 +430,23 @@ body {
   font-weight: 500;
 }
 
+/* 固定列表头必须遮挡滚动内容:不透明底色 + 高于普通表头的层级 */
+.el-table .el-table__header-wrapper th.el-table-fixed-column--left,
+.el-table .el-table__header-wrapper th.el-table-fixed-column--right {
+  z-index: calc(var(--el-table-index) + 3);
+  background-color: var(--el-table-bg-color);
+}
+
+/* 可复用:表格表头、内容和操作按钮统一左对齐 */
+.el-table.table-align-left th.el-table__cell,
+.el-table.table-align-left td.el-table__cell {
+  text-align: left;
+}
+
+.el-table.table-align-left .table-actions .cell {
+  justify-content: flex-start;
+}
+
 .el-table td.el-table__cell {
   padding: 14px 0;
 }

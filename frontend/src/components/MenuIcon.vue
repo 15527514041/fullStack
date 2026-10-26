@@ -74,6 +74,11 @@ const icons: Record<string, IconDef> = {
     d:
       'M8 2v2h8V2h2v2h1a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h1V2h2zm11 8H5v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9zM5 7v1h14V7a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1zm3 5h3v3H8v-3z'
   },
+  // 周复盘:周度汇总面板 + 三根柱状线
+  review: {
+    d:
+      'M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm1 2v14h14V5H5zm2 9h2v3H7v-3zm4-5h2v8h-2V9zm4 3h2v5h-2v-5z'
+  },
   // 钥匙 + 重置箭头(个人中心 - 修改密码,取自 client 的 reset-password)
   password: {
     d:

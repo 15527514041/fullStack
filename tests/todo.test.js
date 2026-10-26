@@ -97,6 +97,23 @@ test('计划截止日期可创建、更新、清空,并支持日期范围和未�
   assert.strictEqual(invalid.status, 400)
 })
 
+test('计划描述允许 2000 个字符,超过上限返回 400', async () => {
+  const token = await registerAndLogin()
+  const auth = { Authorization: `Bearer ${token}` }
+
+  const atLimit = await request(app)
+    .post('/api/todos')
+    .set(auth)
+    .send({ title: '描述上限', description: 'x'.repeat(2000) })
+  assert.strictEqual(atLimit.status, 201)
+
+  const overLimit = await request(app)
+    .post('/api/todos')
+    .set(auth)
+    .send({ title: '描述超限', description: 'x'.repeat(2001) })
+  assert.strictEqual(overLimit.status, 400)
+})
+
 test('逾期筛选可结合完成状态排除已完成计划', async () => {
   const token = await registerAndLogin()
   const auth = { Authorization: `Bearer ${token}` }
@@ -175,7 +192,7 @@ test('软删除后列表消失,恢复后回来', async () => {
   assert.strictEqual(res.body.total, 1)
 })
 
-test('创建 TODO 可带备注与多个附件(附件必须是自己上传的)', async () => {
+test('创建 TODO 可带描述与多个附件(附件必须是自己上传的)', async () => {
   const aliceToken = await registerAndLogin('alice')
   const bobToken = await registerAndLogin('bob')
 
@@ -207,14 +224,18 @@ test('创建 TODO 可带备注与多个附件(附件必须是自己上传的)', 
     data: { key: 'private/todos/test-bob.png', visibility: 'PRIVATE', mime: 'image/png', size: 789, uploaderId: bob.id }
   })
 
-  // 1) 带备注 + 两个自己的附件 → 201,按 sortOrder 顺序返回
+  // 1) 带 Markdown 描述 + 两个自己的附件 → 201,按 sortOrder 顺序返回
   const created = await request(app)
     .post('/api/todos')
     .set('Authorization', `Bearer ${aliceToken}`)
-    .send({ title: '带附件', remark: '记得买牛奶', attachmentOssIds: [aliceUpload1.id, aliceUpload2.id] })
+    .send({
+      title: '带附件',
+      description: '**记得**买牛奶',
+      attachmentOssIds: [aliceUpload1.id, aliceUpload2.id]
+    })
 
   assert.strictEqual(created.status, 201)
-  assert.strictEqual(created.body.remark, '记得买牛奶')
+  assert.strictEqual(created.body.description, '**记得**买牛奶')
   assert.deepStrictEqual(
     created.body.attachments.map((item) => item.ossId),
     [aliceUpload1.id, aliceUpload2.id]
@@ -238,14 +259,14 @@ test('创建 TODO 可带备注与多个附件(附件必须是自己上传的)', 
   assert.strictEqual(denied.status, 400)
   assert.strictEqual(denied.body.message, '附件不存在')
 
-  // 3) 更新备注 + 把附件替换成 1 个
+  // 3) 更新描述 + 把附件替换成 1 个
   const updated = await request(app)
     .patch(`/api/todos/${created.body.id}`)
     .set('Authorization', `Bearer ${aliceToken}`)
-    .send({ remark: '改一下', attachmentOssIds: [aliceUpload2.id] })
+    .send({ description: '改一下', attachmentOssIds: [aliceUpload2.id] })
 
   assert.strictEqual(updated.status, 200)
-  assert.strictEqual(updated.body.remark, '改一下')
+  assert.strictEqual(updated.body.description, '改一下')
   assert.deepStrictEqual(
     updated.body.attachments.map((item) => item.ossId),
     [aliceUpload2.id]
@@ -260,11 +281,11 @@ test('创建 TODO 可带备注与多个附件(附件必须是自己上传的)', 
   assert.strictEqual(cleared.status, 200)
   assert.deepStrictEqual(cleared.body.attachments, [])
 
-  // 5) 备注传空字符串 → 存 null
-  const remarkCleared = await request(app)
+  // 5) 描述传空白字符串 → 存 null
+  const descriptionCleared = await request(app)
     .patch(`/api/todos/${created.body.id}`)
     .set('Authorization', `Bearer ${aliceToken}`)
-    .send({ remark: '   ' })
-  assert.strictEqual(remarkCleared.status, 200)
-  assert.strictEqual(remarkCleared.body.remark, null)
+    .send({ description: '   ' })
+  assert.strictEqual(descriptionCleared.status, 200)
+  assert.strictEqual(descriptionCleared.body.description, null)
 })

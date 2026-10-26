@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { createAccount, deleteAccount, getAccounts, updateAccount, updateAccountBalance } from '@/api/ledger'
 import { getDictionaries } from '@/api/dictionaries'
+import AmountVisibilityIcon from '@/components/AmountVisibilityIcon.vue'
 import ColorDot from '@/components/ColorDot.vue'
 import InfoTipIcon from '@/components/InfoTipIcon.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
@@ -22,6 +23,17 @@ const router = useRouter()
 const accounts = ref<LedgerAccount[]>([])
 const accountKinds = ref<DictionaryItem[]>([])
 const loading = ref(false)
+// 金额隐私开关只保存在当前页面状态,刷新后默认遮挡
+const amountsVisible = ref(false)
+const MASKED_AMOUNT = '******'
+
+function formatAmount(cents: number): string {
+  return amountsVisible.value ? formatCents(cents) : MASKED_AMOUNT
+}
+
+const amountToggleLabel = computed(() =>
+  t(amountsVisible.value ? 'ledger.accounts.hideAmounts' : 'ledger.accounts.showAmounts')
+)
 
 // 停用的账户整体淡化(表格版),它不参与资产汇总,数据还在
 function rowClassName(data: { row: LedgerAccount }): string {
@@ -239,7 +251,20 @@ onMounted(async () => {
   <div class="list-page">
     <div class="page-header">
       <div class="title-section">
-        <div class="page-title">{{ $t('ledger.accounts.title') }}</div>
+        <div class="page-title title-line">
+          <span>{{ $t('ledger.accounts.title') }}</span>
+          <el-tooltip :content="amountToggleLabel" placement="top">
+            <button
+              type="button"
+              class="amount-visibility-toggle"
+              :aria-label="amountToggleLabel"
+              :aria-pressed="!amountsVisible"
+              @click="amountsVisible = !amountsVisible"
+            >
+              <AmountVisibilityIcon :visible="amountsVisible" :size="18" />
+            </button>
+          </el-tooltip>
+        </div>
         <div class="page-subtitle">{{ $t('ledger.accounts.balanceHint') }}</div>
       </div>
       <el-button type="primary" @click="openAddDialog">
@@ -262,24 +287,24 @@ onMounted(async () => {
     <div class="asset-card">
       <div class="asset-item">
         <div class="asset-label">
-          <span>{{ $t('ledger.accounts.totalAssets') }}</span>
           <InfoTipIcon :content="$t('ledger.accounts.totalAssetsTip')" />
+          <span>{{ $t('ledger.accounts.totalAssets') }}</span>
         </div>
-        <div class="asset-value">{{ formatCents(totals.assets) }}</div>
+        <div class="asset-value">{{ formatAmount(totals.assets) }}</div>
       </div>
       <div class="asset-item">
         <div class="asset-label">
-          <span>{{ $t('ledger.accounts.totalDebt') }}</span>
           <InfoTipIcon :content="$t('ledger.accounts.totalDebtTip')" />
+          <span>{{ $t('ledger.accounts.totalDebt') }}</span>
         </div>
-        <div class="asset-value is-debt">{{ formatCents(totals.debt) }}</div>
+        <div class="asset-value is-debt">{{ formatAmount(totals.debt) }}</div>
       </div>
       <div class="asset-item">
         <div class="asset-label">
-          <span>{{ $t('ledger.accounts.netAssets') }}</span>
           <InfoTipIcon :content="$t('ledger.accounts.netAssetsTip')" />
+          <span>{{ $t('ledger.accounts.netAssets') }}</span>
         </div>
-        <div class="asset-value">{{ formatCents(totals.net) }}</div>
+        <div class="asset-value">{{ formatAmount(totals.net) }}</div>
       </div>
     </div>
 
@@ -296,7 +321,7 @@ onMounted(async () => {
         </div>
 
         <div class="account-balance" :class="{ 'is-negative': row.balanceCents < 0 }">
-          {{ formatCents(row.balanceCents) }}
+          {{ formatAmount(row.balanceCents) }}
         </div>
 
         <div class="card-meta">
@@ -318,7 +343,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <el-table v-else :data="accounts" :row-class-name="rowClassName">
+    <el-table v-else :data="accounts" :row-class-name="rowClassName" class="table-align-left">
       <!-- 名字是主标识,给最大的一块;超长省略号 + hover 显示全名 -->
       <el-table-column :label="$t('ledger.accounts.colName')" min-width="120" show-overflow-tooltip>
         <template #default="{ row }">
@@ -338,7 +363,7 @@ onMounted(async () => {
       <el-table-column :label="$t('ledger.accounts.colBalance')" min-width="120" align="left">
         <template #default="{ row }">
           <span class="account-balance" :class="{ 'is-negative': row.balanceCents < 0 }">
-            {{ formatCents(row.balanceCents) }}
+            {{ formatAmount(row.balanceCents) }}
           </span>
         </template>
       </el-table-column>
@@ -349,11 +374,11 @@ onMounted(async () => {
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('ledger.accounts.colUpdatedAt')" min-width="120" align="center">
+      <el-table-column :label="$t('ledger.accounts.colUpdatedAt')" min-width="120" align="left">
         <template #default="{ row }">{{ formatDateTimeShort(row.balanceUpdatedAt) }}</template>
       </el-table-column>
 
-      <el-table-column :label="$t('ledger.accounts.colEnabled')" min-width="120" align="center">
+      <el-table-column :label="$t('ledger.accounts.colEnabled')" min-width="120" align="left">
         <template #header>
           <span class="th-tip">
             <InfoTipIcon :content="$t('ledger.accounts.enabledTip')" />
@@ -368,7 +393,7 @@ onMounted(async () => {
       <el-table-column
         :label="$t('common.actions')"
         width="184"
-        align="center"
+        align="left"
         fixed="right"
         class-name="table-actions"
       >
@@ -483,6 +508,37 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.amount-visibility-toggle {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-3);
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.amount-visibility-toggle:hover {
+  background: var(--color-brand-1);
+  color: var(--color-brand-6);
+}
+
+.amount-visibility-toggle:focus-visible {
+  outline: 2px solid var(--color-brand-2);
+  outline-offset: 1px;
+}
+
 .stale-alert {
   margin-bottom: 12px;
 }

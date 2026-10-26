@@ -21,7 +21,7 @@ const accountSelect = {
   updatedAt: true
 }
 
-// 备注:空字符串统一存 null(和 todo 的 remark 一个处理)
+// 备注:空字符串统一存 null
 function normalizeNote(value) {
   if (value === undefined) return undefined
   const trimmed = typeof value === 'string' ? value.trim() : ''
