@@ -171,6 +171,11 @@ const dateRange = z
     path: ['to']
   })
 
+// 年度热力图只接受一个明确的年份;页面可切换的范围由前端动态限制为近三年
+const calendarQuery = z.object({
+  year: z.coerce.number().int('年份必须是整数').min(1900, '年份不合法').max(9999, '年份不合法')
+})
+
 const reflectionItem = z.object({
   experience: z.string().trim().min(1, '描述经过不能为空').max(500, '描述经过最多 500 字'),
   reason: z.string().trim().max(500, '分析原因最多 500 字').nullish(),
@@ -186,7 +191,8 @@ const reflectionSchemas = {
       items: reflectionItems.optional()
     })
     .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' }),
-  query: dateRange
+  query: dateRange,
+  calendarQuery
 }
 
 // 时间范围:起止都必填,且结束必须晚于开始(HH:mm 字符串直接比大小即可)
@@ -237,10 +243,7 @@ const planSchemas = {
     })
     .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' }),
   query: dateRange,
-  // 年度热力图只接受一个明确的年份;页面可切换的范围由前端动态限制为近三年
-  calendarQuery: z.object({
-    year: z.coerce.number().int('年份必须是整数').min(1900, '年份不合法').max(9999, '年份不合法')
-  })
+  calendarQuery
 }
 
 // ===== 个人成长:周复盘 =====

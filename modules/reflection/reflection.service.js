@@ -89,6 +89,40 @@ async function listReflections(userId, query) {
   return { list: list.map(toReflectionDTO), total, page, pageSize }
 }
 
+async function getReflectionCalendar(userId, year) {
+  const reflections = await prisma.dailyReflection.findMany({
+    where: {
+      userId,
+      date: {
+        gte: toDateValue(`${year}-01-01`),
+        lte: toDateValue(`${year}-12-31`)
+      }
+    },
+    select: {
+      id: true,
+      date: true,
+      // 热力强度只由当天反思条数决定
+      items: { select: { id: true } }
+    },
+    orderBy: { date: 'asc' }
+  })
+
+  const days = reflections.map((reflection) => ({
+    id: reflection.id,
+    date: toDateString(reflection.date),
+    itemCount: reflection.items.length
+  }))
+
+  return {
+    year,
+    summary: {
+      reflectionDays: days.length,
+      reflectionTotal: days.reduce((total, day) => total + day.itemCount, 0)
+    },
+    days
+  }
+}
+
 async function getReflectionById(id, userId) {
   const record = await prisma.dailyReflection.findFirst({
     where: { id, userId },
@@ -170,6 +204,7 @@ async function deleteReflection(id, userId) {
 
 module.exports = {
   listReflections,
+  getReflectionCalendar,
   getReflectionById,
   createReflection,
   updateReflection,

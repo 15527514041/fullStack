@@ -4,6 +4,10 @@ async function getReflections(req, res) {
   res.json(await reflectionService.listReflections(req.user.id, req.validated.query))
 }
 
+async function getReflectionCalendar(req, res) {
+  res.json(await reflectionService.getReflectionCalendar(req.user.id, req.validated.query.year))
+}
+
 async function getReflection(req, res) {
   const record = await reflectionService.getReflectionById(req.validated.params.id, req.user.id)
   if (!record) {
@@ -27,6 +31,7 @@ async function deleteReflection(req, res) {
 
 module.exports = {
   getReflections,
+  getReflectionCalendar,
   getReflection,
   createReflection,
   updateReflection,

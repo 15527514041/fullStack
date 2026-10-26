@@ -138,6 +138,72 @@ test('列表按日期倒序,from/to 过滤与 total 正确', async () => {
   assert.strictEqual(reversed.status, 400)
 })
 
+test('年度日历只统计当前用户的反思天数和反思条数', async () => {
+  const token = await registerAndLogin()
+  const otherToken = await registerAndLogin('bob')
+  const auth = (tokenValue, req) => req.set('Authorization', `Bearer ${tokenValue}`)
+
+  // 年外记录不应进入结果
+  await auth(token, request(app).post('/api/reflections')).send({
+    date: '2025-12-31',
+    items: [{ experience: '去年的最后一条' }]
+  })
+
+  await auth(token, request(app).post('/api/reflections')).send({
+    date: '2026-01-01',
+    items: [{ experience: '新年第一条' }, { experience: '新年第二条' }]
+  })
+  await auth(token, request(app).post('/api/reflections')).send({
+    date: '2026-06-15',
+    items: [
+      { experience: '六月一' },
+      { experience: '六月二' },
+      { experience: '六月三' }
+    ]
+  })
+  await auth(token, request(app).post('/api/reflections')).send({
+    date: '2026-12-31',
+    items: [{ experience: '年末反思' }]
+  })
+  await auth(token, request(app).post('/api/reflections')).send({
+    date: '2027-01-01',
+    items: [{ experience: '明年的反思' }]
+  })
+
+  // 其他用户的同年数据不能混入
+  await auth(otherToken, request(app).post('/api/reflections')).send({
+    date: '2026-03-01',
+    items: [{ experience: '别人的反思一' }, { experience: '别人的反思二' }]
+  })
+
+  const calendar = await auth(token, request(app).get('/api/reflections/calendar?year=2026'))
+
+  assert.strictEqual(calendar.status, 200)
+  assert.strictEqual(calendar.body.year, 2026)
+  assert.deepStrictEqual(calendar.body.summary, {
+    reflectionDays: 3,
+    reflectionTotal: 6
+  })
+  assert.deepStrictEqual(
+    calendar.body.days.map(({ date, itemCount }) => ({ date, itemCount })),
+    [
+      { date: '2026-01-01', itemCount: 2 },
+      { date: '2026-06-15', itemCount: 3 },
+      { date: '2026-12-31', itemCount: 1 }
+    ]
+  )
+  calendar.body.days.forEach((day) => assert.strictEqual(typeof day.id, 'number'))
+})
+
+test('年度反思日历校验年份与登录状态', async () => {
+  const token = await registerAndLogin()
+  const auth = (req) => req.set('Authorization', `Bearer ${token}`)
+
+  assert.strictEqual((await auth(request(app).get('/api/reflections/calendar'))).status, 400)
+  assert.strictEqual((await auth(request(app).get('/api/reflections/calendar?year=2026.5'))).status, 400)
+  assert.strictEqual((await request(app).get('/api/reflections/calendar?year=2026')).status, 401)
+})
+
 test('别人的反思看不到也改不了(404),未登录返回 401', async () => {
   const aliceToken = await registerAndLogin('alice')
   const bobToken = await registerAndLogin('bob')
