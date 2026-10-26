@@ -84,6 +84,7 @@ test('更新反思:items 整体替换并重排序号,改日期撞已有返回 40
     date: '2026-10-08',
     items: [{ experience: '旧的一' }, { experience: '旧的二' }]
   })
+  await new Promise((resolve) => setTimeout(resolve, 10))
 
   // 只改 items:旧的整条被换掉,序号按新数组重排
   const replaced = await auth(request(app).patch(`/api/reflections/${first.body.id}`)).send({
@@ -94,6 +95,7 @@ test('更新反思:items 整体替换并重排序号,改日期撞已有返回 40
   assert.strictEqual(replaced.body.items[0].experience, '新的只有一条')
   assert.strictEqual(replaced.body.items[0].sortOrder, 0)
   assert.strictEqual(replaced.body.date, '2026-10-08')
+  assert.ok(new Date(replaced.body.updatedAt) > new Date(first.body.updatedAt))
 
   // 另一天已经有记录,把它改成同一天要 409
   const second = await auth(request(app).post('/api/reflections')).send({

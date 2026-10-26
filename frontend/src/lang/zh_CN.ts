@@ -443,7 +443,7 @@ export default {
       colKind: '账户类型',
       colBalance: '余额',
       colNote: '备注',
-      colUpdatedAt: '更新时间',
+      colUpdatedAt: '余额更新时间',
       balanceUpdatedAtLabel: '上次更新余额',
       colEnabled: '启用',
       colActions: '操作',

@@ -446,7 +446,7 @@ export default {
       colKind: 'Account type',
       colBalance: 'Balance',
       colNote: 'Note',
-      colUpdatedAt: 'Updated at',
+      colUpdatedAt: 'Balance updated at',
       balanceUpdatedAtLabel: 'Balance updated',
       colEnabled: 'Enabled',
       colActions: 'Actions',

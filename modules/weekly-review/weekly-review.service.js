@@ -346,6 +346,7 @@ async function updateWeeklyReview(id, userId, data) {
     return tx.weeklyReview.update({
       where: { id },
       data: {
+        updatedAt: new Date(),
         ...(data.summary === undefined ? {} : { summary: data.summary || null }),
         ...(isCompleting
           ? { status: 'COMPLETED', completedAt: new Date(), snapshot: context }

@@ -173,6 +173,28 @@ test('能更新自己的 TODO,改别人的返回 404', async () => {
   assert.strictEqual(denied.status, 404) // 查不到=不暴露别人的数据存在
 })
 
+test('只更新标签、附件等关联数据也会刷新更新时间', async () => {
+  const token = await registerAndLogin()
+  const auth = { Authorization: `Bearer ${token}` }
+  const created = await request(app)
+    .post('/api/todos')
+    .set(auth)
+    .send({ title: '关联数据更新' })
+  const tags = await request(app).get('/api/tags?scope=TODO').set(auth)
+  const tagId = tags.body[0].id
+
+  await new Promise((resolve) => setTimeout(resolve, 10))
+
+  const updated = await request(app)
+    .patch(`/api/todos/${created.body.id}`)
+    .set(auth)
+    .send({ tagIds: [tagId], attachmentOssIds: [] })
+
+  assert.strictEqual(updated.status, 200)
+  assert.deepStrictEqual(updated.body.tags.map((tag) => tag.id), [tagId])
+  assert.ok(new Date(updated.body.updatedAt) > new Date(created.body.updatedAt))
+})
+
 test('软删除后列表消失,恢复后回来', async () => {
   const token = await registerAndLogin()
   const created = await request(app)

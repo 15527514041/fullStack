@@ -231,6 +231,7 @@ test('编辑草稿只替换传入分区,空数组可清空分区', async () => {
     weekStart: '2026-10-19',
     wins: [{ content: '亮点一' }, { content: '亮点二' }]
   })
+  await new Promise((resolve) => setTimeout(resolve, 10))
 
   const patched = await auth(
     request(app).patch(`/api/weekly-reviews/${created.body.id}`)
@@ -245,6 +246,7 @@ test('编辑草稿只替换传入分区,空数组可清空分区', async () => {
     patched.body.challenges.map((item) => item.content),
     ['只改卡点']
   )
+  assert.ok(new Date(patched.body.updatedAt) > new Date(created.body.updatedAt))
   assert.strictEqual(patched.body.challenges[0].sortOrder, 0)
 
   const cleared = await auth(

@@ -218,6 +218,7 @@ async function updatePlan(id, userId, data) {
       return tx.dailyPlan.update({
         where: { id },
         data: {
+          updatedAt: new Date(),
           ...(data.date === undefined ? {} : { date: toDateValue(data.date) }),
           items: { create: buildItems(data) }
         },

@@ -140,6 +140,7 @@ async function updateReflection(id, userId, data) {
       return tx.dailyReflection.update({
         where: { id },
         data: {
+          updatedAt: new Date(),
           ...(data.date === undefined ? {} : { date: toDateValue(data.date) }),
           ...(data.items === undefined ? {} : { items: { create: buildItems(data.items) } })
         },

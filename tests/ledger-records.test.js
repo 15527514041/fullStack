@@ -237,6 +237,47 @@ test('编辑整条记录:整体替换明细、周期和来源保持不变', asyn
   assert.strictEqual(emptyItems.status, 400)
 })
 
+test('编辑日、周、月账单都会刷新更新时间,列表返回最新值', async () => {
+  const token = await registerAndLogin()
+  const cats = await getCategoryIds(token)
+  const account = await createAccount(token)
+  const cases = [
+    { source: 'manual_day', periodStart: '2026-10-20' },
+    { source: 'manual_week', periodStart: '2026-10-19' },
+    { source: 'manual_month', periodStart: '2026-10-01' }
+  ]
+
+  for (const testCase of cases) {
+    const created = await createRecord(token, {
+      ...testCase,
+      items: [item(account.body.id, cats.EXPENSE.FOOD, { amountCents: 1000 })]
+    })
+    assert.strictEqual(created.status, 201)
+
+    // 保证重新保存前后的时间戳有可观测差异
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    const updated = await request(app)
+      .patch(`/api/ledger/records/${created.body.id}`)
+      .set(auth(token))
+      .send({
+        items: [item(account.body.id, cats.EXPENSE.FOOD, { amountCents: 2000 })]
+      })
+
+    assert.strictEqual(updated.status, 200)
+    assert.ok(
+      new Date(updated.body.updatedAt) > new Date(created.body.updatedAt),
+      `${testCase.source} 编辑后应刷新更新时间`
+    )
+
+    const list = await request(app)
+      .get(`/api/ledger/records?source=${testCase.source}&from=${testCase.periodStart}&to=${testCase.periodStart}`)
+      .set(auth(token))
+    assert.strictEqual(list.status, 200)
+    assert.strictEqual(list.body.list[0].updatedAt, updated.body.updatedAt)
+  }
+})
+
 test('列表只返回周期摘要,按周期倒序,支持分页和日期范围', async () => {
   const token = await registerAndLogin()
   const cats = await getCategoryIds(token)

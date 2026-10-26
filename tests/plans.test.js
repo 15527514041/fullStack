@@ -280,6 +280,7 @@ test('只传计划的某一类时只替换该类,其它两类保持不动', asyn
   const auth = (req) => req.set('Authorization', `Bearer ${token}`)
 
   const created = await auth(request(app).post('/api/plans')).send(payload)
+  await new Promise((resolve) => setTimeout(resolve, 10))
 
   const patched = await auth(request(app).patch(`/api/plans/${created.body.id}`)).send({
     planned: [{ name: '改成下午写周报', startTime: '14:00', endTime: '15:00' }]
@@ -290,6 +291,7 @@ test('只传计划的某一类时只替换该类,其它两类保持不动', asyn
     patched.body.planned.map((item) => item.name),
     ['改成下午写周报']
   )
+  assert.ok(new Date(patched.body.updatedAt) > new Date(created.body.updatedAt))
   assert.strictEqual(patched.body.planned[0].durationMinutes, 60)
   // 待办与实际完成没被碰
   assert.deepStrictEqual(
