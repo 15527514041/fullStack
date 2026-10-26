@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // 品牌 Logo 使用内联 SVG，才能继承页面上的主题 CSS 变量。
-// 颜色集中在 --logo-* 语义变量中，由 theme/index.ts 根据品牌主色和深浅色模式生成。
+// 颜色集中在 --c-* 语义变量中，由 theme/index.ts 根据主题和深浅色模式写入。
 withDefaults(defineProps<{ size?: number }>(), { size: 36 })
 </script>
 
@@ -16,12 +16,12 @@ withDefaults(defineProps<{ size?: number }>(), { size: 36 })
   >
     <defs>
       <radialGradient id="confluo-logo-main" cx="0.5" cy="0.5" r="0.8">
-        <stop offset="0%" stop-color="var(--logo-main-light)" />
-        <stop offset="100%" stop-color="var(--logo-main-dark)" />
+        <stop offset="0%" stop-color="var(--c-main-light)" />
+        <stop offset="100%" stop-color="var(--c-main-dark)" />
       </radialGradient>
       <radialGradient id="confluo-logo-soft" cx="0.5" cy="0.5" r="0.8">
-        <stop offset="0%" stop-color="var(--logo-soft-light)" />
-        <stop offset="100%" stop-color="var(--logo-soft-dark)" />
+        <stop offset="0%" stop-color="var(--c-soft-light)" />
+        <stop offset="100%" stop-color="var(--c-soft-dark)" />
       </radialGradient>
     </defs>
     <path
@@ -38,7 +38,7 @@ withDefaults(defineProps<{ size?: number }>(), { size: 36 })
     />
     <path
       d="M 124.490 98.016 C 124.144 98.575, 123.496 98.806, 123.048 98.530 C 120.619 97.028, 114 106.150, 114 111 C 114 114.723, 117.048 119.867, 120.530 122.018 C 126.108 125.466, 132.498 124.813, 137.192 120.316 C 144.126 113.673, 142.473 103.344, 133.806 99.148 C 129.012 96.827, 125.489 96.399, 124.490 98.016"
-      fill="var(--logo-dot)"
+      fill="var(--c-dot)"
     />
   </svg>
 </template>

@@ -22,11 +22,11 @@
    * Logo 语义色。默认值与绿色浅色主题一致；
    * 其它主题色及深浅模式由 src/theme/index.ts 基于品牌主色动态覆盖。
    */
-  --logo-main-light: #12b875;
-  --logo-main-dark: #036c40;
-  --logo-soft-light: #9cdabf;
-  --logo-soft-dark: #76cba3;
-  --logo-dot: #0ea765;
+  --c-main-light: #10b757;
+  --c-main-dark: #06913f;
+  --c-soft-light: #8bd9b2;
+  --c-soft-dark: #76cf9e;
+  --c-dot: #22c23b;
 
   /* 辅助色 */
   --color-sec-1: #99eed1;
@@ -167,11 +167,11 @@ html.dark {
   /*
    * 深色主题下提高 Logo 主渐变与柔光部分的明度，避免在深色导航栏中发灰。
    */
-  --logo-main-light: #39c88b;
-  --logo-main-dark: #198259;
-  --logo-soft-light: #7bd8b2;
-  --logo-soft-dark: #53c696;
-  --logo-dot: #35c287;
+  --c-main-light: #10b757;
+  --c-main-dark: #06913f;
+  --c-soft-light: #8bd9b2;
+  --c-soft-dark: #76cf9e;
+  --c-dot: #22c23b;
 
   --color-sec-1: #59c4b0;
   --color-sec-2: #53b9d6;

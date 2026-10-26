@@ -6,6 +6,7 @@ interface ThemeSection {
 
 export interface ThemeConfig {
   brand: ThemeSection
+  logo?: ThemeSection
   sec: ThemeSection
   sub: ThemeSection
   functional: ThemeSection
@@ -116,6 +117,14 @@ export const COLOR_THEMES: Record<ColorThemeKey, ColorThemeOption> = {
         '5': '#047546',
         '7': '#05462B'
       },
+      // 绿色 Logo 使用独立的鲜绿渐变，和品牌界面主色分开控制。
+      logo: {
+        'main-light': '#10B757',
+        'main-dark': '#06913F',
+        'soft-light': '#8BD9B2',
+        'soft-dark': '#76CF9E',
+        dot: '#22C23B'
+      },
       sub: {
         secondary: '#003411',
         white: '#FFFFFF',
@@ -165,6 +174,14 @@ export const COLOR_THEMES: Record<ColorThemeKey, ColorThemeOption> = {
         '4': '#1E7050',
         '5': '#3DD79A',
         '7': '#4ACD97'
+      },
+      // 深色模式保持同一套绿色 Logo 色值。
+      logo: {
+        'main-light': '#10B757',
+        'main-dark': '#06913F',
+        'soft-light': '#8BD9B2',
+        'soft-dark': '#76CF9E',
+        dot: '#22C23B'
       },
       sub: {
         secondary: '#1C7C3C',
