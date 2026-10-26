@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import LogoMark from '@/components/LogoMark.vue'
 import LangSelect from '@/components/LangSelect.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 </script>
 
 <template>
@@ -13,6 +14,7 @@ import LangSelect from '@/components/LangSelect.vue'
       </div>
 
       <div class="navbar-right">
+        <ThemeToggle />
         <LangSelect />
       </div>
     </header>
@@ -30,7 +32,7 @@ import LangSelect from '@/components/LangSelect.vue'
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .navbar {

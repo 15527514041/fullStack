@@ -624,7 +624,7 @@ onMounted(() => {
 }
 
 .todo-done {
-  color: #909399;
+  color: var(--color-text-3);
   text-decoration: line-through;
 }
 

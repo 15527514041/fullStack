@@ -261,7 +261,7 @@ function handleKeydown(which: 'start' | 'end', event: KeyboardEvent): void {
 
 /* 表盘:纯白底 + 浅灰小刻度,数字在刻度内侧 */
 .time-ring__dial {
-  fill: #fff;
+  fill: var(--color-bg-card);
   stroke: var(--color-border);
   stroke-width: 1;
 }
@@ -319,10 +319,10 @@ function handleKeydown(which: 'start' | 'end', event: KeyboardEvent): void {
 
 /* 滑块:白心 + 主色描边;hover / 聚焦时略微放大 */
 .time-ring__handle {
-  fill: #fff;
+  fill: var(--color-bg-card);
   stroke: var(--color-brand-6);
   stroke-width: 2.5;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.16));
+  filter: var(--shadow-handle);
 }
 
 .time-ring__hit {

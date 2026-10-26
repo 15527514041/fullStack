@@ -34,6 +34,8 @@ export default {
   navbar: {
     defaultUser: '用户',
     language: '语言',
+    darkMode: '切换深色模式',
+    lightMode: '切换浅色模式',
     menu: '菜单',
     changeAvatar: '更换头像',
     changePassword: '修改密码',
@@ -231,7 +233,13 @@ export default {
   },
   preferences: {
     title: '偏好设置',
-    subtitle: '管理账单记录的显示方式。',
+    subtitle: '管理界面主题与账单记录的显示方式。',
+    themeTitle: '主题配色',
+    themeHint: '选择界面的品牌配色，点击保存后才会应用。配色会与深色/浅色模式组合，并保存在当前浏览器。',
+    themeGreen: '绿色',
+    themeBlue: '蓝色',
+    themeGold: '金色',
+    themeSaved: '主题配色已保存',
     ledgerDimensionsTitle: '账单维度设置',
     ledgerDimensionsHint: '选择展示的账单维度，至少保留一项。隐藏仅收起入口，不会改动历史数据；各维度账单相互独立、互不联动。',
     dimensionDay: '日维度账单',

@@ -7,55 +7,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/*
-  主题:Vero 绿色(取自 client 项目 src/utils/theme.ts 的 THEME_CONFIG_MAP.Vero)
-  primary #03A05E;浅色色阶按 client 的 getLightColor 公式计算
-*/
 :root {
-  /* 主色 + Element Plus 色阶 */
-  --el-color-primary: #03a05e;
-  --el-color-primary-light-3: #4ebc8e;
-  --el-color-primary-light-5: #81cfae;
-  --el-color-primary-light-7: #b3e2ce;
-  --el-color-primary-light-8: #ccecde;
-  --el-color-primary-light-9: #e5f5ee;
-  --el-color-primary-dark-2: #02804b;
-
-  /* 品牌色阶(Brand-1 ~ Brand-7) */
-  --color-brand-1: #e7f8f1;
-  --color-brand-2: #b6ebd5;
-  --color-brand-3: #69e6b2;
-  --color-brand-4: #0dd782;
-  --color-brand-5: #047546;
-  --color-brand-6: #03a05e;
-  --color-brand-7: #05462b;
-
-  /* 功能色 */
-  --el-color-success: #00cb8d;
-  --el-color-warning: #eb9825;
-  --el-color-danger: #f53f3f;
-  --el-color-error: #f53f3f;
-  --el-color-info: #86909c;
-
-  /* 功能色色阶(client 的 -1 / -6 两档,标签等组件用) */
-  --color-success-1: #e8ffef;
-  --color-success-6: #00cb8d;
-  --color-warning-1: #fff6ed;
-  --color-warning-6: #eb9825;
-  --color-danger-1: #ffefeb;
-  --color-danger-6: #f53f3f;
-
-  /* 中性色 */
-  --color-text-1: #131c27;
-  --color-text-2: #364b60;
-  --color-text-3: #949ba6;
-  --color-text-4: #caced4;
-  --color-sub-2: #bfdbcb;
-  --color-bg-card: #ffffff;
-  --color-bg-card-1: #ffffff;
-  --color-bg-bottom: #f6f6f6;
-  --color-border: #eceef2;
-
   /* 圆角 */
   --el-border-radius-base: 12px;
 }
@@ -96,11 +48,11 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background-color: #f1f1f1;
+  background-color: var(--color-scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #c0c0c0;
+  background-color: var(--color-scrollbar-thumb);
   border-radius: 3px;
 }
 
@@ -109,7 +61,7 @@ body {
   border-radius: 30px !important;
   padding: 30px !important;
   background: var(--color-bg-card) !important;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.08) !important;
+  box-shadow: var(--shadow-card) !important;
   border: none !important;
 }
 
@@ -161,7 +113,7 @@ body {
   border: none;
   border-radius: 14px;
   background: var(--color-bg-card);
-  box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   font-size: 14px;
   line-height: 20px;
   color: var(--color-text-1);
@@ -205,7 +157,7 @@ body {
   border: 1px solid transparent;
   border-radius: 24px;
   background: var(--color-bg-card);
-  box-shadow: 0 0 8px 1px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
@@ -580,7 +532,7 @@ body {
   border: 1px solid var(--color-border);
   border-radius: 14px;
   background: var(--color-bg-card);
-  box-shadow: 0 2px 8px rgba(19, 28, 39, 0.04);
+  box-shadow: var(--shadow-control);
 }
 
 .card-head {
@@ -835,7 +787,7 @@ body {
 }
 
 .el-select__selected-item .el-icon.el-tag__close:hover {
-  color: #fff !important;
+  color: var(--color-on-brand) !important;
 }
 
 /* --- 单选 el-radio:20px 圆圈,选中态为圆环 --- */
@@ -1131,7 +1083,7 @@ body {
   border: 1px solid transparent;
   border-radius: 24px;
   background: var(--color-bg-card-1);
-  box-shadow: 0 0 8px 1px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   cursor: pointer;
   transition: border-color 0.3s ease;
 }
@@ -1310,7 +1262,7 @@ body {
   padding: 0 30px 24px;
   border-radius: 30px;
   background: var(--color-bg-card-1);
-  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card-lg);
 }
 
 .section-title {
@@ -1333,7 +1285,7 @@ body {
   gap: 12px;
   padding: 16px 20px;
   background: var(--color-bg-card-1);
-  box-shadow: 0 -1px 21.4px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-bottom);
 }
 
 .detail-actions .el-button {
@@ -1500,7 +1452,7 @@ body {
   /* 一条记录一张白卡片(和 .info-card 同款圆角与阴影);内容用 __body/__field 竖排 */
   border-radius: 30px;
   background: var(--color-bg-card-1);
-  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card-lg);
   padding: 20px 24px;
 }
 

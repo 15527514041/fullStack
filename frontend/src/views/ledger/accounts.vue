@@ -552,7 +552,7 @@ onMounted(async () => {
   padding: 24px 30px;
   border-radius: 24px;
   background: var(--color-brand-6);
-  color: #fff;
+  color: var(--color-on-brand);
 }
 
 .asset-label {
@@ -561,11 +561,11 @@ onMounted(async () => {
   gap: 4px;
   font-size: 13px;
   line-height: 20px;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--color-on-brand-secondary);
 }
 
 .asset-label :deep(.info-tip) {
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--color-on-brand-muted);
 }
 
 .asset-value {
@@ -577,7 +577,7 @@ onMounted(async () => {
 }
 
 .asset-value.is-debt {
-  color: #ffe0b8;
+  color: var(--color-on-warning-soft);
 }
 
 .account-name {

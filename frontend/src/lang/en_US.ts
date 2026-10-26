@@ -34,6 +34,8 @@ export default {
   navbar: {
     defaultUser: 'User',
     language: 'Language',
+    darkMode: 'Switch to Dark Mode',
+    lightMode: 'Switch to Light Mode',
     menu: 'Menu',
     changeAvatar: 'Change avatar',
     changePassword: 'Change password',
@@ -234,7 +236,13 @@ export default {
   },
   preferences: {
     title: 'Preferences',
-    subtitle: 'Manage how your ledger records are displayed.',
+    subtitle: 'Manage the interface theme and how your ledger records are displayed.',
+    themeTitle: 'Theme palette',
+    themeHint: 'Choose a palette and click Save to apply it. The palette works with light and dark modes and is saved in this browser.',
+    themeGreen: 'Green',
+    themeBlue: 'Blue',
+    themeGold: 'Gold',
+    themeSaved: 'Theme palette saved',
     ledgerDimensionsTitle: 'Ledger dimension settings',
     ledgerDimensionsHint: 'Choose the ledger dimensions to display and keep at least one. Hiding a dimension only removes its entry without changing historical data; each dimension remains independent.',
     dimensionDay: 'Daily entries',

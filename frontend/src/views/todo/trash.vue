@@ -148,11 +148,11 @@ onMounted(loadTrash)
 .tip {
   margin-bottom: 16px;
   font-size: 13px;
-  color: #909399;
+  color: var(--color-text-3);
 }
 
 .title {
-  color: #606266;
+  color: var(--color-text-2);
 }
 
 .tag-item {
