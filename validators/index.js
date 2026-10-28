@@ -14,7 +14,7 @@ const tagScope = z.enum(['TODO', 'ACCOUNTING'], {
 })
 const description = z.string().trim().max(2000, '描述最多 2000 个字符').nullable()
 // 附件传的是上传记录 id(uuid)数组;传空数组表示清空附件
-const attachmentOssIds = z.array(z.string().uuid('附件 ID 不合法')).max(9, '最多上传 9 个附件')
+const attachmentOssIds = z.array(z.string().uuid('附件 ID 不合法')).max(2, '最多上传 2 个附件')
 const idParams = z.object({
   id: z.coerce.number().int().positive('ID 必须是正整数')
 })

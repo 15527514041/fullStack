@@ -269,6 +269,17 @@ test('创建 TODO 可带描述与多个附件(附件必须是自己上传的)', 
   assert.strictEqual(created.body.attachments[0].originalName, '设计稿.png')
   assert.strictEqual(created.body.attachments[1].mime, 'application/pdf')
 
+  // 最多 2 个附件
+  const tooMany = await request(app)
+    .post('/api/todos')
+    .set('Authorization', `Bearer ${aliceToken}`)
+    .send({
+      title: '附件太多',
+      attachmentOssIds: [aliceUpload1.id, aliceUpload2.id, aliceUpload1.id]
+    })
+  assert.strictEqual(tooMany.status, 400)
+  assert.strictEqual(tooMany.body.message, '最多上传 2 个附件')
+
   // 列表接口同样返回附件
   const list = await request(app).get('/api/todos').set('Authorization', `Bearer ${aliceToken}`)
   assert.strictEqual(list.body.list[0].attachments.length, 2)

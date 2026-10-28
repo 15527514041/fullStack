@@ -569,7 +569,7 @@ onMounted(() => {
             v-model="form.attachmentOssIds"
             folder="todos"
             visibility="PRIVATE"
-            :limit="9"
+            :limit="2"
             :max-size-mb="10"
           />
         </el-form-item>
