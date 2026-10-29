@@ -38,6 +38,13 @@ interface MenuItem {
   disabled?: boolean
 }
 
+// 首页是全局入口,不挂在任何分类下
+const homeMenu = computed<MenuItem>(() => ({
+  path: '/',
+  title: t('menu.home'),
+  icon: 'overview'
+}))
+
 // 菜单按"分类"组织:分类标题是纯文本(参考 client),后续加模块只需加一组
 const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
   const groups = [
@@ -51,7 +58,7 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
     {
       title: t('menu.tasksGroup'),
       items: [
-        { path: '/', title: t('menu.todoList'), icon: 'checklist' },
+        { path: '/todos', title: t('menu.todoList'), icon: 'checklist' },
         { path: '/trash', title: t('menu.trash'), icon: 'trash' }
       ]
     },
@@ -83,6 +90,7 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
 const activeMenu = computed(() => {
   // 账单记录有选择页、列表、详情、编辑等多个子路由,统一高亮侧栏入口
   if (route.path.startsWith('/ledger/entries')) return '/ledger/entries'
+  if (route.path.startsWith('/todos')) return '/todos'
   return route.path === '' ? '/' : route.path
 })
 const sidebarWidth = computed(() => (collapsed.value ? collapsedWidth : expandedWidth))
@@ -275,6 +283,13 @@ onUnmounted(() => {
           class="sidebar-menu"
           popper-class="app-tooltip"
         >
+          <el-menu-item :index="homeMenu.path" class="home-menu-item">
+            <MenuIcon :name="homeMenu.icon" :size="22" />
+            <template #title>
+              <span class="menu-title">{{ homeMenu.title }}</span>
+            </template>
+          </el-menu-item>
+
           <template v-for="group in menus" :key="group.title">
             <div class="menu-group-title">{{ group.title }}</div>
             <el-menu-item
@@ -539,6 +554,11 @@ onUnmounted(() => {
   font-weight: 500;
   /* 用内阴影做右侧 4px 色条:视觉与 border 一致,但不占布局宽度(折叠时图标保持水平居中) */
   box-shadow: inset -4px 0 0 0 var(--el-color-primary);
+}
+
+/* 首页独立置顶,与下面的业务分类留出呼吸空间,但不增加分类标题 */
+.sidebar-menu :deep(.home-menu-item) {
+  margin-bottom: 8px;
 }
 
 /* 分类标题:纯提示文本,不可点击 */

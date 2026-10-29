@@ -3,7 +3,6 @@ const weeklyReviewService = require('../weekly-review/weekly-review.service')
 
 const FOCUS_LIMIT = 5
 const TIMELINE_LIMIT = 5
-const STALE_ACCOUNT_DAYS = 30
 
 function toDateValue(date) {
   return new Date(`${date}T00:00:00.000Z`)
@@ -23,34 +22,6 @@ function startOfWeek(date) {
   const start = toDateValue(date)
   const offset = (start.getUTCDay() + 6) % 7
   return toDateString(addDays(start, -offset))
-}
-
-function startOfMonth(date) {
-  return `${date.slice(0, 7)}-01`
-}
-
-function endOfMonth(date) {
-  const value = toDateValue(date)
-  return toDateString(new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth() + 1, 0)))
-}
-
-function getLedgerPeriod(source, date) {
-  if (source === 'manual_week') {
-    const periodStart = startOfWeek(date)
-    return {
-      periodStart,
-      periodEnd: toDateString(addDays(toDateValue(periodStart), 6))
-    }
-  }
-
-  if (source === 'manual_month') {
-    return {
-      periodStart: startOfMonth(date),
-      periodEnd: endOfMonth(date)
-    }
-  }
-
-  return { periodStart: date, periodEnd: date }
 }
 
 function toMinutes(time) {
@@ -226,44 +197,14 @@ async function getWeeklyReview(userId, date) {
   }
 }
 
-async function getFinance(userId, date) {
-  const [user, accounts] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { ledgerEntrySources: true }
-    }),
-    prisma.ledgerAccount.findMany({
-      where: { userId, enabled: true },
-      select: {
-        balanceCents: true,
-        balanceUpdatedAt: true
-      }
-    })
-  ])
-
-  // 首页只读取用户配置的第一个账单维度,不把三个独立账本相加
-  const source = user?.ledgerEntrySources?.[0] ?? 'manual_day'
-  const period = getLedgerPeriod(source, date)
-  const record = await prisma.ledgerRecord.findUnique({
-    where: {
-      userId_source_periodStart: {
-        userId,
-        source,
-        periodStart: toDateValue(period.periodStart)
-      }
-    },
-    select: {
-      id: true,
-      items: {
-        select: { type: true, amountCents: true }
-      }
-    }
+async function getFinance(userId) {
+  const accounts = await prisma.ledgerAccount.findMany({
+    where: { userId, enabled: true },
+    select: { balanceCents: true }
   })
 
   let totalAssetsCents = 0
   let totalDebtCents = 0
-  let staleAccountCount = 0
-  const staleBefore = Date.now() - STALE_ACCOUNT_DAYS * 24 * 60 * 60 * 1000
 
   for (const account of accounts) {
     if (account.balanceCents >= 0) {
@@ -271,30 +212,12 @@ async function getFinance(userId, date) {
     } else {
       totalDebtCents -= account.balanceCents
     }
-    if (account.balanceUpdatedAt.getTime() < staleBefore) {
-      staleAccountCount += 1
-    }
-  }
-
-  let incomeCents = 0
-  let expenseCents = 0
-  for (const item of record?.items ?? []) {
-    if (item.type === 'INCOME') incomeCents += item.amountCents
-    else expenseCents += item.amountCents
   }
 
   return {
     totalAssetsCents,
     totalDebtCents,
-    netAssetsCents: totalAssetsCents - totalDebtCents,
-    staleAccountCount,
-    source,
-    periodStart: period.periodStart,
-    periodEnd: period.periodEnd,
-    recordId: record?.id ?? null,
-    incomeCents,
-    expenseCents,
-    netCents: incomeCents - expenseCents
+    netAssetsCents: totalAssetsCents - totalDebtCents
   }
 }
 
@@ -304,7 +227,7 @@ async function getOverview(userId, date) {
     getPlan(userId, date),
     getReflection(userId, date),
     getWeeklyReview(userId, date),
-    getFinance(userId, date)
+    getFinance(userId)
   ])
 
   return {

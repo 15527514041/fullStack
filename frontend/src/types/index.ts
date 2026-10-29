@@ -459,3 +459,61 @@ export interface UserListResult {
   page: number
   pageSize: number
 }
+
+// ===== 首页总览 =====
+
+export interface OverviewTodo {
+  id: number
+  title: string
+  dueDate: string
+  completed: boolean
+  tags: Array<Pick<Tag, 'id' | 'name' | 'color'>>
+}
+
+export interface OverviewTimelineItem {
+  id: number
+  name: string
+  startTime: string
+  endTime: string
+  important: boolean
+  durationMinutes: number | null
+}
+
+export interface OverviewData {
+  date: string
+  tasks: {
+    dueToday: number
+    overdue: number
+    focus: OverviewTodo[]
+  }
+  plan: {
+    id: number | null
+    todoTotal: number
+    todoCompleted: number
+    plannedCount: number
+    actualCount: number
+    noteCount: number
+    plannedMinutes: number
+    actualMinutes: number
+    timeline: OverviewTimelineItem[]
+  }
+  reflection: {
+    id: number | null
+    itemCount: number
+    updatedAt: string | null
+  }
+  weeklyReview: {
+    weekStart: string
+    weekEnd: string
+    existingReviewId: number | null
+    status: WeeklyReviewStatus | null
+    summary: string | null
+    completedAt: string | null
+    metrics: WeeklyReviewMetrics
+  }
+  finance: {
+    totalAssetsCents: number
+    totalDebtCents: number
+    netAssetsCents: number
+  }
+}

@@ -25,15 +25,6 @@ async function createAccount(token, { name, kind = 'WECHAT', balanceCents = 0 })
     .send({ name, kindId: kindItem?.id, balanceCents })
 }
 
-async function getCategories(token) {
-  const [income, expense] = await Promise.all([
-    request(app).get('/api/dictionaries?kind=INCOME_CATEGORY').set(auth(token)),
-    request(app).get('/api/dictionaries?kind=EXPENSE_CATEGORY').set(auth(token))
-  ])
-  const asMap = (items) => Object.fromEntries(items.map((item) => [item.code, item.id]))
-  return { income: asMap(income.body), expense: asMap(expense.body) }
-}
-
 beforeEach(async () => {
   // Todo -> User 是 Restrict,必须显式清掉;其它业务记录会随用户级联删除
   await prisma.ledgerRecord.deleteMany()
@@ -95,19 +86,11 @@ test('没有业务数据时返回稳定的零值结构', async () => {
   assert.deepStrictEqual(res.body.finance, {
     totalAssetsCents: 0,
     totalDebtCents: 0,
-    netAssetsCents: 0,
-    staleAccountCount: 0,
-    source: 'manual_day',
-    periodStart: '2026-10-28',
-    periodEnd: '2026-10-28',
-    recordId: null,
-    incomeCents: 0,
-    expenseCents: 0,
-    netCents: 0
+    netAssetsCents: 0
   })
 })
 
-test('聚合当天任务、规划、反思、周复盘和当前维度财务,并隔离其他用户', async () => {
+test('聚合当天任务、规划、反思、周复盘和财务快照,并隔离其他用户', async () => {
   const aliceToken = await registerAndLogin('alice')
   const bobToken = await registerAndLogin('bob')
 
@@ -149,7 +132,7 @@ test('聚合当天任务、规划、反思、周复盘和当前维度财务,并�
     summary: '完成首页数据层'
   })
 
-  const cash = await createAccount(aliceToken, {
+  await createAccount(aliceToken, {
     name: '现金',
     kind: 'CASH',
     balanceCents: 100000
@@ -169,44 +152,6 @@ test('聚合当天任务、规划、反思、周复盘和当前维度财务,并�
       .set(auth(aliceToken))
       .send({ enabled: false })
   )
-
-  // 让一个启用账户进入“超过 30 天未对账”状态
-  await prisma.ledgerAccount.update({
-    where: { id: cash.body.id },
-    data: { balanceUpdatedAt: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000) }
-  })
-
-  const categories = await getCategories(aliceToken)
-  await request(app).post('/api/ledger/records').set(auth(aliceToken)).send({
-    source: 'manual_day',
-    periodStart: '2026-10-28',
-    items: [
-      {
-        type: 'INCOME',
-        categoryId: categories.income.SALARY,
-        accountId: cash.body.id,
-        amountCents: 50000
-      },
-      {
-        type: 'EXPENSE',
-        categoryId: categories.expense.FOOD,
-        accountId: cash.body.id,
-        amountCents: 1200
-      }
-    ]
-  })
-
-  // 周/月账本独立存在,首页默认只读第一个偏好维度,不能被它们影响
-  await request(app).post('/api/ledger/records').set(auth(aliceToken)).send({
-    source: 'manual_week',
-    periodStart: '2026-10-26',
-    items: [{ type: 'EXPENSE', categoryId: categories.expense.FOOD, accountId: cash.body.id, amountCents: 9999 }]
-  })
-  await request(app).post('/api/ledger/records').set(auth(aliceToken)).send({
-    source: 'manual_month',
-    periodStart: '2026-10-01',
-    items: [{ type: 'INCOME', categoryId: categories.income.SALARY, accountId: cash.body.id, amountCents: 999999 }]
-  })
 
   // Bob 的同日数据不能进入 Alice 的总览
   await addTodo(bobToken, { title: 'Bob 的任务', dueDate: '2026-10-28' })
@@ -277,47 +222,6 @@ test('聚合当天任务、规划、反思、周复盘和当前维度财务,并�
   assert.deepStrictEqual(res.body.finance, {
     totalAssetsCents: 100000,
     totalDebtCents: 30000,
-    netAssetsCents: 70000,
-    staleAccountCount: 1,
-    source: 'manual_day',
-    periodStart: '2026-10-28',
-    periodEnd: '2026-10-28',
-    recordId: res.body.finance.recordId,
-    incomeCents: 50000,
-    expenseCents: 1200,
-    netCents: 48800
+    netAssetsCents: 70000
   })
-})
-
-test('财务快照读取启用的账单维度,周维度使用周一到周日', async () => {
-  const token = await registerAndLogin()
-  const account = await createAccount(token, { name: '现金', kind: 'CASH' })
-  const categories = await getCategories(token)
-
-  const prefs = await request(app)
-    .patch('/api/users/me/preferences')
-    .set(auth(token))
-    .send({ ledgerEntrySources: ['manual_week'] })
-  assert.strictEqual(prefs.status, 200)
-  assert.deepStrictEqual(prefs.body.ledgerEntrySources, ['manual_week'])
-
-  await request(app).post('/api/ledger/records').set(auth(token)).send({
-    source: 'manual_day',
-    periodStart: '2026-10-28',
-    items: [{ type: 'EXPENSE', categoryId: categories.expense.FOOD, accountId: account.body.id, amountCents: 100 }]
-  })
-  await request(app).post('/api/ledger/records').set(auth(token)).send({
-    source: 'manual_week',
-    periodStart: '2026-10-26',
-    items: [{ type: 'EXPENSE', categoryId: categories.expense.FOOD, accountId: account.body.id, amountCents: 2500 }]
-  })
-
-  const res = await request(app).get('/api/overview?date=2026-10-28').set(auth(token))
-
-  assert.strictEqual(res.status, 200)
-  assert.strictEqual(res.body.finance.source, 'manual_week')
-  assert.strictEqual(res.body.finance.periodStart, '2026-10-26')
-  assert.strictEqual(res.body.finance.periodEnd, '2026-11-01')
-  assert.strictEqual(res.body.finance.expenseCents, 2500)
-  assert.strictEqual(res.body.finance.incomeCents, 0)
 })
