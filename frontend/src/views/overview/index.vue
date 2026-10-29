@@ -2,13 +2,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { ArrowRight, RefreshRight } from '@element-plus/icons-vue'
 import { getOverview } from '@/api/overview'
 import { updateTodo } from '@/api/todo'
 import AmountVisibilityIcon from '@/components/AmountVisibilityIcon.vue'
 import ColorTag from '@/components/ColorTag.vue'
 import MenuIcon from '@/components/MenuIcon.vue'
+import OverviewEmptyArt from '@/components/OverviewEmptyArt.vue'
 import { useAuthStore } from '@/stores/auth'
 import {
   formatCents
@@ -45,12 +45,6 @@ const greeting = computed(() => {
 const todayHeading = computed(() => {
   locale.value
   return formatDayHeading(today.value)
-})
-
-const planPercentage = computed(() => {
-  const plan = overview.value?.plan
-  if (!plan?.todoTotal) return 0
-  return Math.round((plan.todoCompleted / plan.todoTotal) * 100)
 })
 
 const planTarget = computed(() =>
@@ -91,7 +85,7 @@ function displayAmount(cents: number): string {
 }
 
 function dueLabel(todo: OverviewTodo): string {
-  return todo.dueDate < today.value ? t('overview.overdue') : t('overview.dueToday')
+  return todo.dueDate < today.value ? t('overview.pending') : t('common.today')
 }
 
 async function loadOverview(showLoading = true): Promise<void> {
@@ -111,7 +105,6 @@ async function completeTodo(todo: OverviewTodo): Promise<void> {
   completingTodoId.value = todo.id
   try {
     await updateTodo(todo.id, { completed: true })
-    ElMessage.success(t('overview.taskCompleted'))
     await loadOverview(false)
   } catch {
     // 错误提示已在 axios 拦截器统一处理
@@ -146,131 +139,102 @@ onMounted(() => loadOverview())
     </div>
 
     <div v-else-if="overview" class="overview-grid">
-      <section class="overview-card task-card">
+      <section class="overview-card today-card">
         <header class="card-header">
           <div class="card-heading">
-            <span class="card-icon"><MenuIcon name="checklist" :size="22" /></span>
-            <div>
-              <h2>{{ $t('overview.taskTitle') }}</h2>
-              <p>{{ $t('overview.taskSubtitle') }}</p>
-            </div>
+            <span class="card-icon"><MenuIcon name="overview" :size="22" /></span>
+            <h2>{{ $t('overview.todayTitle') }}</h2>
           </div>
-          <el-button link type="primary" class="card-link" @click="router.push('/todos')">
-            {{ $t('overview.openChecklist') }}
-            <el-icon><ArrowRight /></el-icon>
-          </el-button>
         </header>
 
-        <div class="task-metrics">
-          <div class="task-metric">
-            <strong>{{ overview.tasks.dueToday }}</strong>
-            <span>{{ $t('overview.dueToday') }}</span>
-          </div>
-          <div class="task-metric is-overdue">
-            <strong>{{ overview.tasks.overdue }}</strong>
-            <span>{{ $t('overview.overdue') }}</span>
-          </div>
-        </div>
+        <div class="today-body">
+          <section class="today-section">
+            <header class="section-header">
+              <h3>{{ $t('overview.continueThings') }}</h3>
+              <el-button link type="primary" class="quiet-link" @click="router.push('/todos')">
+                {{ $t('overview.openChecklist') }}
+                <el-icon><ArrowRight /></el-icon>
+              </el-button>
+            </header>
 
-        <div v-if="overview.tasks.focus.length" class="focus-list">
-          <div v-for="todo in overview.tasks.focus" :key="todo.id" class="focus-item">
-            <el-checkbox
-              :model-value="todo.completed"
-              :disabled="completingTodoId !== null"
-              :aria-label="todo.title"
-              @change="completeTodo(todo)"
-            />
-            <button type="button" class="focus-main" @click="router.push(`/todos/${todo.id}`)">
-              <span class="focus-title">{{ todo.title }}</span>
-              <span v-if="todo.tags.length" class="focus-tags">
-                <ColorTag
-                  v-for="tag in todo.tags"
-                  :key="tag.id"
-                  :name="tag.name"
-                  :color="tag.color"
-                  size="small"
+            <div v-if="overview.tasks.focus.length" class="focus-list">
+              <div
+                v-for="todo in overview.tasks.focus.slice(0, 3)"
+                :key="todo.id"
+                class="focus-item"
+              >
+                <el-checkbox
+                  :model-value="todo.completed"
+                  :disabled="completingTodoId !== null"
+                  :aria-label="todo.title"
+                  @change="completeTodo(todo)"
                 />
-              </span>
-            </button>
-            <span class="due-badge" :class="{ 'is-overdue': todo.dueDate < today }">
-              {{ dueLabel(todo) }}
-            </span>
-          </div>
-        </div>
-
-        <el-empty v-else :image-size="58" class="card-empty">
-          <template #description>
-            <div class="empty-title">{{ $t('overview.taskEmpty') }}</div>
-            <div class="empty-text">{{ $t('overview.taskEmptyHint') }}</div>
-          </template>
-        </el-empty>
-      </section>
-
-      <section class="overview-card plan-card">
-        <header class="card-header">
-          <div class="card-heading">
-            <span class="card-icon"><MenuIcon name="schedule" :size="22" /></span>
-            <div>
-              <h2>{{ $t('overview.planTitle') }}</h2>
-              <p>{{ $t('overview.planSubtitle') }}</p>
-            </div>
-          </div>
-          <el-button link type="primary" class="card-link" @click="router.push(planTarget)">
-            {{ overview.plan.id ? $t('overview.viewPlan') : $t('overview.startPlan') }}
-            <el-icon><ArrowRight /></el-icon>
-          </el-button>
-        </header>
-
-        <template v-if="overview.plan.id">
-          <div class="plan-progress">
-            <div class="progress-copy">
-              <span>{{ $t('overview.planProgress') }}</span>
-              <strong>{{ overview.plan.todoCompleted }} / {{ overview.plan.todoTotal }}</strong>
-            </div>
-            <el-progress
-              :percentage="planPercentage"
-              :show-text="false"
-              :stroke-width="8"
-            />
-          </div>
-
-          <div class="time-summary">
-            <div>
-              <span>{{ $t('overview.planned') }}</span>
-              <strong>{{ formatDuration(overview.plan.plannedMinutes) || '0m' }}</strong>
-            </div>
-            <div>
-              <span>{{ $t('overview.actual') }}</span>
-              <strong>{{ formatDuration(overview.plan.actualMinutes) || '0m' }}</strong>
-            </div>
-          </div>
-
-          <div v-if="overview.plan.timeline.length" class="timeline">
-            <div
-              v-for="item in overview.plan.timeline"
-              :key="item.id"
-              class="timeline-item"
-            >
-              <span class="timeline-time">{{ item.startTime }}</span>
-              <span class="timeline-dot" :class="{ 'is-important': item.important }" />
-              <div class="timeline-copy">
-                <span class="timeline-name">{{ item.name }}</span>
-                <span class="timeline-duration">
-                  {{ item.startTime }}–{{ item.endTime }}
-                  <template v-if="item.durationMinutes !== null"> · {{ formatDuration(item.durationMinutes) }}</template>
-                </span>
+                <button type="button" class="focus-main" @click="router.push(`/todos/${todo.id}`)">
+                  <span class="focus-title">{{ todo.title }}</span>
+                  <span v-if="todo.tags.length" class="focus-tags">
+                    <ColorTag
+                      v-for="tag in todo.tags"
+                      :key="tag.id"
+                      :name="tag.name"
+                      :color="tag.color"
+                    />
+                  </span>
+                </button>
+                <span class="due-badge">{{ dueLabel(todo) }}</span>
               </div>
             </div>
-          </div>
-          <div v-else class="quiet-empty">{{ $t('overview.noTimeline') }}</div>
-        </template>
+            <div v-else class="calm-empty">
+              <OverviewEmptyArt kind="tasks" />
+              <div class="empty-title">{{ $t('overview.taskEmpty') }}</div>
+              <div class="empty-text">{{ $t('overview.taskEmptyHint') }}</div>
+            </div>
+          </section>
 
-        <el-empty v-else :image-size="58" class="card-empty plan-empty">
-          <template #description>
-            <div class="empty-title">{{ $t('overview.noPlanTitle') }}</div>
-            <div class="empty-text">{{ $t('overview.noPlanText') }}</div>
-          </template>
-        </el-empty>
+          <section class="today-section plan-section">
+            <header class="section-header">
+              <h3>{{ $t('overview.planTitle') }}</h3>
+              <el-button link type="primary" class="quiet-link" @click="router.push(planTarget)">
+                {{ overview.plan.id ? $t('overview.viewPlan') : $t('overview.startPlan') }}
+                <el-icon><ArrowRight /></el-icon>
+              </el-button>
+            </header>
+
+            <template v-if="overview.plan.id">
+              <div v-if="overview.plan.timeline.length" class="timeline">
+                <div
+                  v-for="item in overview.plan.timeline.slice(0, 3)"
+                  :key="item.id"
+                  class="timeline-item"
+                >
+                  <span class="timeline-time">{{ item.startTime }}</span>
+                  <span class="timeline-dot" :class="{ 'is-important': item.important }" />
+                  <div class="timeline-copy">
+                    <span class="timeline-name">{{ item.name }}</span>
+                    <span class="timeline-duration">
+                      {{ item.startTime }}–{{ item.endTime }}
+                      <template v-if="item.durationMinutes !== null"> · {{ formatDuration(item.durationMinutes) }}</template>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="calm-empty">
+                <div class="empty-text">{{ $t('overview.noTimeline') }}</div>
+              </div>
+
+              <div class="plan-time-note">
+                {{ $t('overview.planned') }} {{ formatDuration(overview.plan.plannedMinutes) || '0m' }}
+                <span>·</span>
+                {{ $t('overview.actual') }} {{ formatDuration(overview.plan.actualMinutes) || '0m' }}
+              </div>
+            </template>
+
+            <div v-else class="calm-empty">
+                <OverviewEmptyArt kind="schedule" />
+              <div class="empty-title">{{ $t('overview.noPlanTitle') }}</div>
+              <div class="empty-text">{{ $t('overview.noPlanText') }}</div>
+            </div>
+          </section>
+        </div>
       </section>
 
       <section class="overview-card weekly-card">
@@ -282,25 +246,27 @@ onMounted(() => loadOverview())
               <p>{{ formatWeekRange(overview.weeklyReview.weekStart, overview.weeklyReview.weekEnd) }}</p>
             </div>
           </div>
-          <span class="status-pill" :class="`is-${(overview.weeklyReview.status || 'none').toLowerCase()}`">
-            {{ weeklyReviewStatus }}
-          </span>
         </header>
 
-        <div class="weekly-metrics">
-          <div>
-            <span>{{ $t('overview.planDays') }}</span>
-            <strong>{{ overview.weeklyReview.metrics.planDays }}<small>/7</small></strong>
-          </div>
-          <div>
-            <span>{{ $t('overview.reflectionDays') }}</span>
-            <strong>{{ overview.weeklyReview.metrics.reflectionDays }}<small>/7</small></strong>
-          </div>
+        <div class="weekly-narrative">
+          <template v-if="overview.weeklyReview.metrics.planDays || overview.weeklyReview.metrics.reflectionDays">
+            <span v-if="overview.weeklyReview.metrics.planDays">
+              {{ $t('overview.weeklyPlans', { count: overview.weeklyReview.metrics.planDays }) }}
+            </span>
+            <span
+              v-if="overview.weeklyReview.metrics.planDays && overview.weeklyReview.metrics.reflectionDays"
+              class="narrative-divider"
+            >{{ locale === 'en_US' ? ' · ' : '、' }}</span>
+            <span v-if="overview.weeklyReview.metrics.reflectionDays">
+              {{ $t('overview.weeklyReflections', { count: overview.weeklyReview.metrics.reflectionDays }) }}
+            </span>
+          </template>
+          <span v-else>{{ $t('overview.weeklyEmptyNarrative') }}</span>
         </div>
 
         <div class="review-panel">
           <div class="review-copy">
-            <span>{{ $t('weeklyReview.title') }}</span>
+            <span>{{ $t('weeklyReview.title') }} · {{ weeklyReviewStatus }}</span>
             <p>{{ weeklySummary }}</p>
           </div>
           <el-button type="primary" plain @click="router.push(weeklyReviewTarget)">
@@ -353,16 +319,19 @@ onMounted(() => loadOverview())
 
 <style scoped>
 .overview-page {
+  display: flex;
   width: 100%;
   max-width: 1380px;
+  min-height: 100%;
+  flex-direction: column;
   margin: 0 auto;
 }
 
 .overview-hero {
   display: flex;
-  min-height: 150px;
+  min-height: 144px;
   align-items: center;
-  padding: 28px 30px;
+  padding: 24px 28px;
   border-radius: 24px;
   background: var(--color-brand-6);
   color: var(--color-on-brand);
@@ -371,7 +340,7 @@ onMounted(() => loadOverview())
 .hero-title {
   margin: 0 0 6px;
   color: var(--color-on-brand);
-  font-size: clamp(26px, 3vw, 38px);
+  font-size: clamp(24px, 2.8vw, 34px);
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.035em;
@@ -395,29 +364,36 @@ onMounted(() => loadOverview())
 .overview-grid {
   --overview-metric-height: 74px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.75fr);
   gap: 18px;
+  flex: 1;
+  align-items: stretch;
   margin-top: 18px;
 }
 
 .overview-card {
   display: flex;
   min-width: 0;
-  min-height: 330px;
+  min-height: 0;
   flex-direction: column;
-  padding: 24px;
+  padding: 22px;
   border: 1px solid var(--color-border);
-  border-radius: 24px;
+  border-radius: 20px;
   background: var(--color-bg-card);
-  box-shadow: var(--shadow-control);
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
 }
 
-.overview-card:hover {
-  border-color: var(--color-brand-2);
-  box-shadow: var(--shadow-card-lg);
+.today-card {
+  grid-row: span 2;
+}
+
+.weekly-card {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.finance-card {
+  grid-column: 2;
+  grid-row: 2;
 }
 
 .card-header {
@@ -473,35 +449,61 @@ onMounted(() => loadOverview())
   margin-left: 2px;
 }
 
-.task-metrics {
+.today-body {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin: 22px 0 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  flex: 1;
+  column-gap: 44px;
+  margin-top: 22px;
 }
 
-.task-metric {
+.today-section {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: var(--color-bg-bottom);
+  min-width: 0;
+  flex-direction: column;
 }
 
-.task-metric strong {
-  color: var(--color-text-1);
-  font-size: 24px;
-  line-height: 1;
+.today-section + .today-section {
+  position: relative;
 }
 
-.task-metric span {
+.today-section + .today-section::before {
+  position: absolute;
+  top: 18px;
+  bottom: 18px;
+  left: -22px;
+  width: 1px;
+  background: var(--color-divider);
+  content: '';
+}
+
+.section-header {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.section-header h3 {
+  margin: 0;
+  color: var(--color-text-2);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.section-header .el-icon {
+  margin-left: 2px;
+}
+
+.section-header .quiet-link {
   color: var(--color-text-3);
   font-size: 12px;
 }
 
-.task-metric.is-overdue strong {
-  color: var(--el-color-danger);
+.section-header .quiet-link:hover {
+  color: var(--color-brand-6);
 }
 
 .focus-list {
@@ -563,20 +565,21 @@ onMounted(() => loadOverview())
   flex: none;
   padding: 3px 8px;
   border-radius: 999px;
-  background: var(--color-brand-1);
-  color: var(--color-brand-6);
+  background: var(--color-bg-bottom);
+  color: var(--color-text-3);
   font-size: 11px;
   line-height: 18px;
 }
 
-.due-badge.is-overdue {
-  background: var(--color-danger-1);
-  color: var(--color-danger-7);
-}
-
-.card-empty {
+.calm-empty {
+  display: flex;
   flex: 1;
-  padding: 4px 0 0;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 180px;
+  padding: 16px;
+  text-align: center;
 }
 
 .empty-title {
@@ -586,54 +589,23 @@ onMounted(() => loadOverview())
 }
 
 .empty-text {
+  max-width: 230px;
   margin-top: 4px;
   color: var(--color-text-3);
   font-size: 12px;
   line-height: 18px;
 }
 
-.plan-progress {
-  margin-top: 24px;
-}
-
-.progress-copy {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 9px;
+.plan-time-note {
+  margin-top: auto;
+  padding-top: 12px;
   color: var(--color-text-3);
-  font-size: 12px;
+  font-size: 11px;
 }
 
-.progress-copy strong {
-  color: var(--color-text-1);
-  font-size: 14px;
-}
-
-.plan-progress :deep(.el-progress-bar__outer) {
-  background: var(--color-bg-bottom);
-}
-
-.time-summary {
-  display: flex;
-  gap: 22px;
-  margin: 14px 0 10px;
-}
-
-.time-summary div {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-}
-
-.time-summary span {
-  color: var(--color-text-3);
-  font-size: 12px;
-}
-
-.time-summary strong {
-  color: var(--color-text-1);
-  font-size: 14px;
+.plan-time-note span {
+  margin: 0 5px;
+  color: var(--color-text-4);
 }
 
 .timeline {
@@ -691,76 +663,16 @@ onMounted(() => loadOverview())
   font-size: 11px;
 }
 
-.quiet-empty {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  min-height: 100px;
-  color: var(--color-text-3);
-  font-size: 13px;
-}
-
-.plan-empty {
-  justify-content: center;
-}
-
-.status-pill {
-  flex: none;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: var(--color-bg-bottom);
-  color: var(--color-text-3);
-  font-size: 11px;
-}
-
-.status-pill.is-draft {
-  background: var(--color-warning-1);
-  color: var(--color-warning-7);
-}
-
-.status-pill.is-completed {
-  background: var(--color-success-1);
-  color: var(--color-success-7);
-}
-
-.weekly-metrics {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+.weekly-narrative {
   margin: 22px 0 14px;
+  color: var(--color-text-2);
+  font-size: 14px;
+  line-height: 22px;
 }
 
-.weekly-metrics > div {
-  display: flex;
-  height: var(--overview-metric-height);
-  box-sizing: border-box;
-  flex-direction: column;
-  justify-content: center;
-  padding: 13px;
-  border-radius: 14px;
-  background: var(--color-bg-bottom);
-}
-
-.weekly-metrics span {
-  display: block;
-  color: var(--color-text-3);
-  font-size: 11px;
-}
-
-.weekly-metrics strong {
-  display: block;
-  margin-top: 5px;
-  color: var(--color-text-1);
-  font-size: 22px;
-  font-weight: 650;
-}
-
-.weekly-metrics small {
-  margin-left: 2px;
-  color: var(--color-text-3);
-  font-size: 11px;
-  font-weight: 500;
+.narrative-divider {
+  margin: 0 5px;
+  color: var(--color-text-4);
 }
 
 .review-panel {
@@ -769,8 +681,8 @@ onMounted(() => loadOverview())
   justify-content: space-between;
   gap: 14px;
   padding: 14px;
-  border: 1px solid var(--color-border);
   border-radius: 16px;
+  background: var(--color-bg-bottom);
 }
 
 .review-copy {
@@ -875,13 +787,17 @@ onMounted(() => loadOverview())
   font-size: 14px;
 }
 
-.asset-row strong.is-debt {
-  color: var(--color-warning-7);
-}
-
 @media (max-width: 1080px) {
   .overview-grid {
     grid-template-columns: 1fr;
+    flex: none;
+  }
+
+  .today-card,
+  .weekly-card,
+  .finance-card {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   .overview-card {
@@ -891,14 +807,14 @@ onMounted(() => loadOverview())
 
 @media (max-width: 768px) {
   .overview-hero {
-    min-height: 124px;
-    padding: 22px 20px;
+    min-height: 116px;
+    padding: 20px;
     border-radius: 20px;
   }
 
   .hero-title {
-    margin-top: 12px;
-    font-size: 27px;
+    margin-top: 0;
+    font-size: 25px;
   }
 
   .overview-grid {
@@ -930,12 +846,18 @@ onMounted(() => loadOverview())
     padding-right: 0;
   }
 
-  .weekly-metrics > div {
-    padding: 11px 10px;
+  .today-body {
+    grid-template-columns: 1fr;
   }
 
-  .weekly-metrics strong {
-    font-size: 19px;
+  .today-section + .today-section {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--color-divider);
+  }
+
+  .today-section + .today-section::before {
+    display: none;
   }
 
   .review-panel {
@@ -949,7 +871,6 @@ onMounted(() => loadOverview())
 }
 
 @media (max-width: 480px) {
-  .task-metrics,
   .asset-row {
     grid-template-columns: 1fr;
   }
