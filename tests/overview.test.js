@@ -289,7 +289,7 @@ test('聚合当天任务、规划、反思、周复盘和当前维度财务,并�
   })
 })
 
-test('财务快照读取偏好中的第一个维度,周维度使用周一到周日', async () => {
+test('财务快照读取启用的账单维度,周维度使用周一到周日', async () => {
   const token = await registerAndLogin()
   const account = await createAccount(token, { name: '现金', kind: 'CASH' })
   const categories = await getCategories(token)
@@ -297,8 +297,9 @@ test('财务快照读取偏好中的第一个维度,周维度使用周一到周�
   const prefs = await request(app)
     .patch('/api/users/me/preferences')
     .set(auth(token))
-    .send({ ledgerEntrySources: ['manual_week', 'manual_day'] })
+    .send({ ledgerEntrySources: ['manual_week'] })
   assert.strictEqual(prefs.status, 200)
+  assert.deepStrictEqual(prefs.body.ledgerEntrySources, ['manual_week'])
 
   await request(app).post('/api/ledger/records').set(auth(token)).send({
     source: 'manual_day',
