@@ -49,13 +49,6 @@ const homeMenu = computed<MenuItem>(() => ({
 const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
   const groups = [
     {
-      title: t('menu.ledgerGroup'),
-      items: [
-        { path: '/ledger/accounts', title: t('menu.accounts'), icon: 'wallet' },
-        { path: '/ledger/entries', title: t('menu.entries'), icon: 'bill' }
-      ]
-    },
-    {
       title: t('menu.tasksGroup'),
       items: [
         { path: '/todos', title: t('menu.todoList'), icon: 'checklist' },
@@ -71,11 +64,17 @@ const menus = computed<Array<{ title: string; items: MenuItem[] }>>(() => {
       ]
     },
     {
+      title: t('menu.ledgerGroup'),
+      items: [
+        { path: '/ledger/accounts', title: t('menu.accounts'), icon: 'wallet' },
+        { path: '/ledger/entries', title: t('menu.entries'), icon: 'bill' }
+      ]
+    },
+    {
       // 标签是任务和记账共用的通用能力,所以不挂在任务管理下
       title: t('menu.commonGroup'),
       items: [
-        { path: '/tags', title: t('menu.tags'), icon: 'tag' },
-        { path: '/settings/preferences', title: t('menu.preferences'), icon: 'settings' }
+        { path: '/tags', title: t('menu.tags'), icon: 'tag' }
       ]
     },
     {
@@ -158,6 +157,11 @@ function handleChangeAvatar(): void {
 function handleChangePassword(): void {
   userPanelVisible.value = false
   changePasswordVisible.value = true
+}
+
+function handleOpenPreferences(): void {
+  userPanelVisible.value = false
+  router.push('/settings/preferences')
 }
 
 // 密码已经改了:关掉表单弹窗,弹「修改成功」提示(5 秒后自动回登录页)
@@ -247,6 +251,10 @@ onUnmounted(() => {
               <div class="panel-item" @click="handleChangePassword">
                 <MenuIcon name="password" :size="16" />
                 <span>{{ $t('navbar.changePassword') }}</span>
+              </div>
+              <div class="panel-item" @click="handleOpenPreferences">
+                <MenuIcon name="settings" :size="16" />
+                <span>{{ $t('menu.preferences') }}</span>
               </div>
               <div class="panel-item is-danger" @click="handleLogout">
                 <MenuIcon name="logout" :size="16" />
