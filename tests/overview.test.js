@@ -1,4 +1,4 @@
-const { test, beforeEach, after } = require('node:test')
+const { test, beforeEach, afterEach, after } = require('node:test')
 const assert = require('node:assert')
 const request = require('supertest')
 const { PrismaClient } = require('@prisma/client')
@@ -25,13 +25,16 @@ async function createAccount(token, { name, kind = 'WECHAT', balanceCents = 0 })
     .send({ name, kindId: kindItem?.id, balanceCents })
 }
 
-beforeEach(async () => {
+async function cleanDatabase() {
   // Todo -> User 是 Restrict,必须显式清掉;其它业务记录会随用户级联删除
   await prisma.ledgerRecord.deleteMany()
   await prisma.ledgerAccount.deleteMany()
   await prisma.todo.deleteMany()
   await prisma.user.deleteMany()
-})
+}
+
+beforeEach(cleanDatabase)
+afterEach(cleanDatabase)
 
 after(async () => {
   await prisma.$disconnect()
