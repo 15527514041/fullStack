@@ -16,6 +16,7 @@ import { getDictionaries } from '@/api/dictionaries'
 import ColorDot from '@/components/ColorDot.vue'
 import ActionIcon from '@/components/ActionIcon.vue'
 import BackButton from '@/components/BackButton.vue'
+import RelaxedEmptyState from '@/components/RelaxedEmptyState.vue'
 import { parseDateOnly, toDateString } from '@/utils/datetime'
 import { centsToYuan, formatCents, yuanToCents } from '@/utils/money'
 import { DICTIONARY_CREATE_VALUE, dictionaryTabRoute } from '@/utils/dictionary'
@@ -944,8 +945,9 @@ onMounted(load)
       <p class="copy-dialog__hint">{{ t('ledger.entries.copyHint', copyTextParams) }}</p>
 
       <el-skeleton v-if="copyLoading" :rows="2" animated />
-      <el-empty
+      <RelaxedEmptyState
         v-else-if="copyOptions.length === 0"
+        compact
         :description="t('ledger.entries.copyEmpty', copyTextParams)"
       />
       <el-select

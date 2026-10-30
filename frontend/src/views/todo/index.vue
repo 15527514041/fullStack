@@ -14,6 +14,7 @@ import OssUploader from '@/components/OssUploader.vue'
 import ColorDot from '@/components/ColorDot.vue'
 import ColorTag from '@/components/ColorTag.vue'
 import MarkdownInput from '@/components/MarkdownInput.vue'
+import RelaxedEmptyState from '@/components/RelaxedEmptyState.vue'
 import type { TagItem, Todo } from '@/types'
 
 const { t } = useI18n()
@@ -381,7 +382,10 @@ onMounted(() => {
 
     <!-- 移动端:卡片列表(字段完整、点击区域更大) -->
     <div v-else-if="isMobile" class="card-list">
-      <el-empty v-if="todos.length === 0" :description="$t('todo.empty')" />
+      <RelaxedEmptyState
+        v-if="todos.length === 0"
+        :description="$t('todo.empty')"
+      />
 
       <div v-for="row in todos" :key="row.id" class="list-card">
         <div class="card-head">
@@ -467,7 +471,7 @@ onMounted(() => {
       </el-table-column>
 
       <template #empty>
-        <el-empty :description="$t('todo.empty')" />
+        <RelaxedEmptyState :description="$t('todo.empty')" />
       </template>
     </el-table>
 
@@ -569,7 +573,7 @@ onMounted(() => {
             v-model="form.attachmentOssIds"
             folder="todos"
             visibility="PRIVATE"
-            :limit="9"
+            :limit="2"
             :max-size-mb="10"
           />
         </el-form-item>

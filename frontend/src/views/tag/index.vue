@@ -12,6 +12,7 @@ import {
   updateDictionary
 } from '@/api/dictionaries'
 import ColorDot from '@/components/ColorDot.vue'
+import RelaxedEmptyState from '@/components/RelaxedEmptyState.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTime } from '@/utils/datetime'
 import type { DictionaryTab } from '@/utils/dictionary'
@@ -325,7 +326,10 @@ watch(
       <el-skeleton v-if="loading && rows.length === 0" :rows="6" animated class="list-skeleton" />
 
       <div v-else-if="isMobile" class="card-list">
-        <el-empty v-if="rows.length === 0" :description="emptyDescription" />
+        <RelaxedEmptyState
+          v-if="rows.length === 0"
+          :description="emptyDescription"
+        />
 
         <div v-for="row in rows" :key="row.id" class="list-card" :class="{ 'is-off': !row.enabled }">
           <div class="card-head">
@@ -387,7 +391,7 @@ watch(
         </el-table-column>
 
         <template #empty>
-          <el-empty :description="emptyDescription" />
+          <RelaxedEmptyState :description="emptyDescription" />
         </template>
       </el-table>
 

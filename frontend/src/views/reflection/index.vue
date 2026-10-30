@@ -5,6 +5,7 @@ import { ArrowRight, Calendar, Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { createReflection, getReflections } from '@/api/reflection'
+import RelaxedEmptyState from '@/components/RelaxedEmptyState.vue'
 import ReflectionFormDialog, { type ReflectionSubmitPayload } from '@/views/reflection/components/ReflectionFormDialog.vue'
 import { useDateRangeTabs, type DateRangeTab } from '@/composables/useDateRangeTabs'
 import { useFeedList } from '@/composables/useFeedList'
@@ -109,7 +110,11 @@ async function handleSubmit(payload: ReflectionSubmitPayload): Promise<void> {
     <div class="feed-section">
       <el-skeleton v-if="loading" :rows="4" animated />
 
-      <el-empty v-else-if="!items.length" class="feed-empty" :description="$t('reflection.empty')" />
+      <RelaxedEmptyState
+        v-else-if="!items.length"
+        class="feed-empty"
+        :description="$t('reflection.empty')"
+      />
 
       <template v-else>
         <div v-for="row in items" :key="row.id" class="feed-card" @click="openEdit(row)">

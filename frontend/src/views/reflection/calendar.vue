@@ -30,14 +30,16 @@ const heatmapDays = computed<YearHeatmapDay[]>(
 const summaryTitle = computed(() => {
   if (!result.value) return String(selectedYear.value)
   return t('reflection.calendarSummaryTitle', {
-    year: selectedYear.value,
-    days: result.value.summary.reflectionDays
+    year: selectedYear.value
   })
 })
 
 const summaryMeta = computed(() => {
   if (!result.value) return ''
-  return t('reflection.calendarSummaryDetail', { count: result.value.summary.reflectionTotal })
+  const total = result.value.summary.reflectionTotal
+  return total
+    ? t('reflection.calendarSummaryDetail', { count: total })
+    : t('reflection.calendarSummaryEmpty')
 })
 
 function tooltipForDate(date: string, day: YearHeatmapDay | null): string {

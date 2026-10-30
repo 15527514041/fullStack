@@ -14,7 +14,7 @@ const tagScope = z.enum(['TODO', 'ACCOUNTING'], {
 })
 const description = z.string().trim().max(2000, '描述最多 2000 个字符').nullable()
 // 附件传的是上传记录 id(uuid)数组;传空数组表示清空附件
-const attachmentOssIds = z.array(z.string().uuid('附件 ID 不合法')).max(9, '最多上传 9 个附件')
+const attachmentOssIds = z.array(z.string().uuid('附件 ID 不合法')).max(2, '最多上传 2 个附件')
 const idParams = z.object({
   id: z.coerce.number().int().positive('ID 必须是正整数')
 })
@@ -31,6 +31,10 @@ const boolQuery = z
 
 // 只收日期(YYYY-MM-DD):日期字段落库为 DATE,带上时分秒反而容易踩时区
 const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD')
+const validDateOnly = dateOnly.refine((value) => {
+  const date = new Date(`${value}T00:00:00.000Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+}, '日期不合法')
 
 // ====== auth ======
 
@@ -247,11 +251,6 @@ const planSchemas = {
 }
 
 // ===== 个人成长:周复盘 =====
-
-const validDateOnly = dateOnly.refine((value) => {
-  const date = new Date(`${value}T00:00:00.000Z`)
-  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
-}, '日期不合法')
 
 // 周复盘固定按周一到周日;weekEnd 由服务端根据 weekStart 推导
 const weekStartDate = validDateOnly.refine((value) => {
@@ -480,6 +479,13 @@ const dictionarySchemas = {
     .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' })
 }
 
+// ====== 首页总览 ======
+
+const overviewSchemas = {
+  // 日期由浏览器按用户本地时区传入,避免服务端时区改变“今天”
+  query: z.object({ date: validDateOnly })
+}
+
 module.exports = {
   authSchemas,
   userSchemas,
@@ -492,5 +498,6 @@ module.exports = {
   recordSchemas,
   dictionarySchemas,
   adminSchemas,
+  overviewSchemas,
   idParams
 }

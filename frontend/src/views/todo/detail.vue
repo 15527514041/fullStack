@@ -119,7 +119,13 @@ onMounted(loadDetail)
         <div class="info-item">
           <span class="label">{{ $t('todo.formAttachment') }}</span>
           <span class="value">
-            <OssAttachmentPreview v-if="attachmentIds.length" :value="attachmentIds" :size="56" :max="3" :radius="8" />
+            <OssAttachmentPreview
+              v-if="attachmentIds.length"
+              :value="attachmentIds"
+              :size="56"
+              :max="attachmentIds.length"
+              :radius="8"
+            />
             <span v-else class="empty-value">-</span>
           </span>
         </div>

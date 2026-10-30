@@ -9,6 +9,7 @@ import { getDictionaries } from '@/api/dictionaries'
 import AmountVisibilityIcon from '@/components/AmountVisibilityIcon.vue'
 import ColorDot from '@/components/ColorDot.vue'
 import InfoTipIcon from '@/components/InfoTipIcon.vue'
+import RelaxedEmptyState from '@/components/RelaxedEmptyState.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTimeShort } from '@/utils/datetime'
 import { DICTIONARY_CREATE_VALUE, dictionaryTabRoute } from '@/utils/dictionary'
@@ -312,7 +313,10 @@ onMounted(async () => {
 
     <!-- 移动端:卡片列表 -->
     <div v-else-if="isMobile" class="card-list">
-      <el-empty v-if="accounts.length === 0" :description="$t('ledger.accounts.empty')" />
+      <RelaxedEmptyState
+        v-if="accounts.length === 0"
+        :description="$t('ledger.accounts.empty')"
+      />
 
       <div v-for="row in accounts" :key="row.id" class="list-card" :class="{ 'is-off': !row.enabled }">
         <div class="card-head">
@@ -407,7 +411,7 @@ onMounted(async () => {
       </el-table-column>
 
       <template #empty>
-        <el-empty :description="$t('ledger.accounts.empty')" />
+        <RelaxedEmptyState :description="$t('ledger.accounts.empty')" />
       </template>
     </el-table>
 

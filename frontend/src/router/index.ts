@@ -34,6 +34,12 @@ const routes: RouteRecordRaw[] = [
     children: [
       {
         path: '',
+        name: 'home',
+        component: () => import('@/views/overview/index.vue'),
+        meta: { titleKey: 'route.home', requiresAuth: true }
+      },
+      {
+        path: 'todos',
         name: 'todos',
         component: () => import('@/views/todo/index.vue'),
         meta: { titleKey: 'route.todos', requiresAuth: true }
@@ -259,11 +265,11 @@ router.beforeEach((to) => {
   }
 
   if (to.meta.requiresAdmin && !authStore.isAdmin) {
-    return { name: 'todos' }
+    return { name: 'home' }
   }
 
   if ((to.name === 'login' || to.name === 'register') && authStore.isLoggedIn) {
-    return { name: 'todos' }
+    return { name: 'home' }
   }
 })
 
