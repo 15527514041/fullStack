@@ -159,7 +159,7 @@ onMounted(() => loadOverview())
 
             <div v-if="overview.tasks.focus.length" class="focus-list">
               <div
-                v-for="todo in overview.tasks.focus.slice(0, 3)"
+                v-for="todo in overview.tasks.focus"
                 :key="todo.id"
                 class="focus-item"
               >
@@ -202,7 +202,7 @@ onMounted(() => loadOverview())
             <template v-if="overview.plan.id">
               <div v-if="overview.plan.timeline.length" class="timeline">
                 <div
-                  v-for="item in overview.plan.timeline.slice(0, 3)"
+                  v-for="item in overview.plan.timeline"
                   :key="item.id"
                   class="timeline-item"
                 >
@@ -231,7 +231,7 @@ onMounted(() => loadOverview())
             <div v-else class="calm-empty">
                 <OverviewEmptyArt kind="schedule" />
               <div class="empty-title">{{ $t('overview.noPlanTitle') }}</div>
-              <div class="empty-text">{{ $t('overview.noPlanText') }}</div>
+                <div class="empty-text is-nowrap">{{ $t('overview.noPlanText') }}</div>
             </div>
           </section>
         </div>
@@ -322,9 +322,11 @@ onMounted(() => loadOverview())
   display: flex;
   width: 100%;
   max-width: 1380px;
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
   flex-direction: column;
   margin: 0 auto;
+  overflow: hidden;
 }
 
 .overview-hero {
@@ -365,6 +367,7 @@ onMounted(() => loadOverview())
   --overview-metric-height: 74px;
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.75fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   gap: 18px;
   flex: 1;
   min-height: 0;
@@ -378,6 +381,7 @@ onMounted(() => loadOverview())
   min-width: 0;
   min-height: 0;
   flex-direction: column;
+  overflow: hidden;
   padding: 22px;
   border: 1px solid var(--color-border);
   border-radius: 20px;
@@ -512,11 +516,26 @@ onMounted(() => loadOverview())
 
 .focus-list {
   display: flex;
+  width: 100%;
   min-height: 0;
   flex: 1;
   flex-direction: column;
   gap: 2px;
+  overflow-x: hidden;
   overflow-y: auto;
+  padding-right: 12px;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--color-border) transparent;
+  scrollbar-width: thin;
+}
+
+.focus-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.focus-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--color-border);
 }
 
 .focus-item {
@@ -539,7 +558,9 @@ onMounted(() => loadOverview())
 
 .focus-main {
   display: flex;
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
   flex: 1;
   align-items: flex-start;
   flex-direction: column;
@@ -558,16 +579,16 @@ onMounted(() => loadOverview())
 }
 
 .focus-title {
-  display: -webkit-box;
+  display: block;
+  width: 100%;
+  max-width: 100%;
   overflow: hidden;
   color: var(--color-text-1);
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
   text-overflow: ellipsis;
-  white-space: normal;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  white-space: nowrap;
   transition: color 0.2s ease;
 }
 
@@ -622,6 +643,11 @@ onMounted(() => loadOverview())
   line-height: 18px;
 }
 
+.empty-text.is-nowrap {
+  max-width: none;
+  white-space: nowrap;
+}
+
 .plan-time-note {
   margin-top: auto;
   padding-top: 12px;
@@ -636,12 +662,27 @@ onMounted(() => loadOverview())
 
 .timeline {
   display: flex;
+  width: 100%;
   min-height: 0;
   flex: 1;
   flex-direction: column;
   gap: 2px;
+  overflow-x: hidden;
   overflow-y: auto;
+  padding-right: 4px;
   margin-top: 4px;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--color-border) transparent;
+  scrollbar-width: thin;
+}
+
+.timeline::-webkit-scrollbar {
+  width: 4px;
+}
+
+.timeline::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--color-border);
 }
 
 .timeline-item {
@@ -817,9 +858,17 @@ onMounted(() => loadOverview())
 }
 
 @media (max-width: 1080px) {
+  .overview-page {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
+
   .overview-grid {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
     flex: none;
+    overflow: visible;
   }
 
   .today-card,
@@ -831,6 +880,7 @@ onMounted(() => loadOverview())
 
   .overview-card {
     min-height: 0;
+    overflow: visible;
   }
 }
 

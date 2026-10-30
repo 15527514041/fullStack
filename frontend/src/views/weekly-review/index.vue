@@ -5,6 +5,7 @@ import { ArrowRight, Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { getWeeklyReviews } from '@/api/weeklyReview'
 import InfoTipIcon from '@/components/InfoTipIcon.vue'
+import RelaxedEmptyState from '@/components/RelaxedEmptyState.vue'
 import { useFeedList } from '@/composables/useFeedList'
 import {
   currentWeekStart,
@@ -45,7 +46,6 @@ function statusText(status: WeeklyReviewListItem['status']): string {
 function todoText(row: WeeklyReviewListItem): string {
   return row.metrics.todoTotal
     ? t('weeklyReview.todoMetric', {
-        done: row.metrics.todoCompleted,
         total: row.metrics.todoTotal
       })
     : t('weeklyReview.noTodo')
@@ -156,7 +156,7 @@ function openDetail(row: WeeklyReviewListItem): void {
           </div>
         </div>
 
-        <el-empty
+        <RelaxedEmptyState
           v-if="!items.length && !showCurrentPlaceholder"
           class="feed-empty"
           :description="$t('weeklyReview.empty')"

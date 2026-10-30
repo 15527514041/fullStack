@@ -225,3 +225,35 @@ test('聚合当天任务、规划、反思、周复盘和财务快照,并隔离�
     netAssetsCents: 70000
   })
 })
+
+test('今日重点和今日安排都返回完整列表', async () => {
+  const token = await registerAndLogin()
+
+  for (let index = 1; index <= 6; index += 1) {
+    await request(app).post('/api/todos').set(auth(token)).send({
+      title: `待办 ${index}`,
+      dueDate: '2026-10-30'
+    })
+  }
+
+  const planned = Array.from({ length: 7 }, (_, index) => ({
+    name: `安排 ${index + 1}`,
+    startTime: `${String(9 + index).padStart(2, '0')}:00`,
+    endTime: `${String(10 + index).padStart(2, '0')}:00`
+  }))
+
+  await request(app).post('/api/plans').set(auth(token)).send({
+    date: '2026-10-30',
+    planned
+  })
+
+  const res = await request(app).get('/api/overview?date=2026-10-30').set(auth(token))
+
+  assert.strictEqual(res.status, 200)
+  assert.strictEqual(res.body.tasks.focus.length, 6)
+  assert.strictEqual(res.body.plan.timeline.length, planned.length)
+  assert.deepStrictEqual(
+    res.body.plan.timeline.map((item) => item.name),
+    planned.map((item) => item.name)
+  )
+})

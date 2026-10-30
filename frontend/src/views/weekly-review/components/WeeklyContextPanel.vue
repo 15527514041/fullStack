@@ -26,10 +26,39 @@ const props = withDefaults(
 const router = useRouter()
 const { t } = useI18n()
 
-const completionText = computed(() => {
-  if (props.metrics.todoCompletionRate === null) return t('weeklyReview.noTodo')
-  return `${Math.round(props.metrics.todoCompletionRate * 100)}%`
-})
+const metricItems = computed(() => [
+  {
+    key: 'plan',
+    text: t('weeklyReview.planMetric', { days: props.metrics.planDays }),
+    help: t('weeklyReview.planDaysHelp')
+  },
+  {
+    key: 'todo',
+    text: props.metrics.todoTotal
+      ? t('weeklyReview.todoMetric', { total: props.metrics.todoTotal })
+      : t('weeklyReview.noTodo'),
+    help: t('weeklyReview.todoCompletionHelp')
+  },
+  {
+    key: 'planned',
+    text: t('weeklyReview.plannedMetric', {
+      duration: formatDuration(props.metrics.plannedMinutes) || '0m'
+    }),
+    help: t('weeklyReview.plannedMinutesHelp')
+  },
+  {
+    key: 'actual',
+    text: t('weeklyReview.actualMetric', {
+      duration: formatDuration(props.metrics.actualMinutes) || '0m'
+    }),
+    help: t('weeklyReview.actualMinutesHelp')
+  },
+  {
+    key: 'reflection',
+    text: t('weeklyReview.reflectionMetric', { days: props.metrics.reflectionDays }),
+    help: t('weeklyReview.reflectionDaysHelp')
+  }
+])
 
 function openPlan(day: WeeklyReviewDay): void {
   if (!day.planId) return
@@ -55,40 +84,9 @@ function openReflection(day: WeeklyReviewDay): void {
     </div>
 
     <div class="weekly-context__metrics">
-      <div class="metric">
-        <span class="metric__value">{{ metrics.planDays }}/7</span>
-        <span class="metric__label">
-          <InfoTipIcon :content="$t('weeklyReview.planDaysHelp')" :size="12" />
-          {{ $t('weeklyReview.planDays') }}
-        </span>
-      </div>
-      <div class="metric">
-        <span class="metric__value">{{ completionText }}</span>
-        <span class="metric__label">
-          <InfoTipIcon :content="$t('weeklyReview.todoCompletionHelp')" :size="12" />
-          {{ $t('weeklyReview.todoCompletion') }}
-        </span>
-      </div>
-      <div class="metric">
-        <span class="metric__value">{{ formatDuration(metrics.plannedMinutes) || '0m' }}</span>
-        <span class="metric__label">
-          <InfoTipIcon :content="$t('weeklyReview.plannedMinutesHelp')" :size="12" />
-          {{ $t('weeklyReview.plannedMinutes') }}
-        </span>
-      </div>
-      <div class="metric">
-        <span class="metric__value">{{ formatDuration(metrics.actualMinutes) || '0m' }}</span>
-        <span class="metric__label">
-          <InfoTipIcon :content="$t('weeklyReview.actualMinutesHelp')" :size="12" />
-          {{ $t('weeklyReview.actualMinutes') }}
-        </span>
-      </div>
-      <div class="metric">
-        <span class="metric__value">{{ metrics.reflectionDays }}/7</span>
-        <span class="metric__label">
-          <InfoTipIcon :content="$t('weeklyReview.reflectionDaysHelp')" :size="12" />
-          {{ $t('weeklyReview.reflectionDays') }}
-        </span>
+      <div v-for="metric in metricItems" :key="metric.key" class="metric">
+        <InfoTipIcon :content="metric.help" :size="12" />
+        <span class="metric__text">{{ metric.text }}</span>
       </div>
     </div>
 
@@ -101,7 +99,13 @@ function openReflection(day: WeeklyReviewDay): void {
 
         <div class="context-day__body">
           <div class="context-day__facts">
-            <span>{{ day.planId ? $t('weeklyReview.dayTodo', { done: day.todoCompleted, total: day.todoTotal }) : $t('weeklyReview.noData') }}</span>
+            <span>
+              {{
+                day.planId && day.todoTotal
+                  ? $t('weeklyReview.todoMetric', { total: day.todoTotal })
+                  : $t('weeklyReview.noData')
+              }}
+            </span>
             <span v-if="day.planId">
               {{ $t('weeklyReview.dayDuration', {
                 planned: formatDuration(day.plannedMinutes) || '0m',
@@ -175,34 +179,22 @@ function openReflection(day: WeeklyReviewDay): void {
 }
 
 .metric {
+  display: flex;
   min-width: 0;
-  text-align: center;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--color-text-2);
+  font-size: 12px;
 }
 
-.metric__value {
-  display: block;
+.metric__text {
   overflow: hidden;
-  color: var(--color-text-1);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 22px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.metric__label {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  margin-top: 2px;
-  color: var(--color-text-3);
-  font-size: 11px;
-  line-height: 18px;
-  white-space: nowrap;
-}
-
-.metric__label :deep(.info-tip) {
+.metric :deep(.info-tip) {
   flex-shrink: 0;
 }
 

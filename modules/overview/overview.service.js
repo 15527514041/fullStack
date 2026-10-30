@@ -1,9 +1,6 @@
 const prisma = require('../../utils/prisma')
 const weeklyReviewService = require('../weekly-review/weekly-review.service')
 
-const FOCUS_LIMIT = 5
-const TIMELINE_LIMIT = 5
-
 function toDateValue(date) {
   return new Date(`${date}T00:00:00.000Z`)
 }
@@ -76,8 +73,7 @@ async function getTasks(userId, date) {
           select: { id: true, name: true, color: true }
         }
       },
-      orderBy: [{ dueDate: 'asc' }, { id: 'asc' }],
-      take: FOCUS_LIMIT
+      orderBy: [{ dueDate: 'asc' }, { id: 'asc' }]
     })
   ])
 
@@ -132,7 +128,7 @@ async function getPlan(userId, date) {
     noteCount: notes.length,
     plannedMinutes: sumDuration(planned),
     actualMinutes: sumDuration(actual),
-    timeline: planned.slice(0, TIMELINE_LIMIT).map((item) => ({
+    timeline: planned.map((item) => ({
       id: item.id,
       name: item.name,
       startTime: item.startTime,

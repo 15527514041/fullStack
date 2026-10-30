@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import { formatDateTime } from '@/utils/datetime'
+import RelaxedEmptyState from '@/components/RelaxedEmptyState.vue'
 import type { AdminUser } from '@/types'
 
 const authStore = useAuthStore()
@@ -152,7 +153,10 @@ onMounted(loadUsers)
 
     <!-- 移动端:卡片列表(角色/状态直接在卡片里操作) -->
     <div v-else-if="isMobile" class="card-list">
-      <el-empty v-if="users.length === 0" :description="$t('userAdmin.empty')" />
+      <RelaxedEmptyState
+        v-if="users.length === 0"
+        :description="$t('userAdmin.empty')"
+      />
 
       <div v-for="row in users" :key="row.id" class="list-card">
         <div class="card-head">
@@ -272,7 +276,7 @@ onMounted(loadUsers)
       </el-table-column>
 
       <template #empty>
-        <el-empty :description="$t('userAdmin.empty')" />
+        <RelaxedEmptyState :description="$t('userAdmin.empty')" />
       </template>
     </el-table>
 

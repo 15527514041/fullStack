@@ -431,6 +431,45 @@ body {
   padding: 50px 0 40px;
 }
 
+/* 列表页表格占满剩余高度,空状态在表体区域垂直居中 */
+.list-page > .el-table {
+  flex: 1;
+  min-height: 0;
+}
+
+.list-page > .el-table .el-table__inner-wrapper {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+
+.list-page > .el-table .el-table__body-wrapper {
+  flex: 1;
+  min-height: 0;
+}
+
+.list-page > .el-table .el-table__body-wrapper > .el-scrollbar,
+.list-page > .el-table .el-scrollbar__wrap {
+  height: 100%;
+}
+
+.list-page > .el-table .el-scrollbar__view {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+
+.list-page > .el-table .el-table__empty-block {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+}
+
+.list-page > .el-table .relaxed-empty-state {
+  width: 100%;
+  min-height: 100%;
+}
+
 /* 列表加载骨架屏(参考 client 交易记录) */
 .list-skeleton {
   flex: 1;
@@ -1167,7 +1206,20 @@ body {
 }
 
 .feed-empty {
-  padding: 60px 20px 40px;
+  min-height: 0;
+  padding: 0;
+}
+
+/* 空列表时让插画占满筛选栏以下的可用区域并居中 */
+.feed-section:has(> .relaxed-empty-state) {
+  display: flex;
+  flex-direction: column;
+}
+
+.feed-section > .relaxed-empty-state {
+  width: 100%;
+  min-height: 0;
+  flex: 1;
 }
 
 @media (max-width: 768px) {

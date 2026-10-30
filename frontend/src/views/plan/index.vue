@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { ArrowRight, Calendar, Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { getPlans } from '@/api/plan'
+import RelaxedEmptyState from '@/components/RelaxedEmptyState.vue'
 import { useDateRangeTabs, type DateRangeTab } from '@/composables/useDateRangeTabs'
 import { useFeedList } from '@/composables/useFeedList'
 import { formatDayHeading, toDateString } from '@/utils/datetime'
@@ -85,7 +86,11 @@ function openDetail(row: DailyPlanListItem): void {
     <div class="feed-section">
       <el-skeleton v-if="loading" :rows="4" animated />
 
-      <el-empty v-else-if="!items.length" class="feed-empty" :description="$t('plan.empty')" />
+      <RelaxedEmptyState
+        v-else-if="!items.length"
+        class="feed-empty"
+        :description="$t('plan.empty')"
+      />
 
       <template v-else>
         <div v-for="row in items" :key="row.id" class="feed-card" @click="openDetail(row)">

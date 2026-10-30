@@ -6,6 +6,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { deleteLedgerRecord } from '@/api/ledger'
 import InfoTipIcon from '@/components/InfoTipIcon.vue'
+import RelaxedEmptyState from '@/components/RelaxedEmptyState.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { formatDateTimeShort } from '@/utils/datetime'
 import { LEDGER_DIMENSION_TIP } from '@/utils/ledgerPreferences'
@@ -152,7 +153,10 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
 
       <template v-else>
         <div v-if="isMobile" class="ledger-mobile-list">
-          <el-empty v-if="!list.length" :description="t(meta.emptyKey)" />
+          <RelaxedEmptyState
+            v-if="!list.length"
+            :description="t(meta.emptyKey)"
+          />
           <LedgerRecordMobileCard
             v-for="row in list"
             :key="row.id"
@@ -219,7 +223,7 @@ async function handleDelete(row: LedgerRecordSummary): Promise<void> {
             </template>
           </el-table-column>
           <template #empty>
-            <el-empty :description="t(meta.emptyKey)" />
+            <RelaxedEmptyState :description="t(meta.emptyKey)" />
           </template>
         </el-table>
       </template>

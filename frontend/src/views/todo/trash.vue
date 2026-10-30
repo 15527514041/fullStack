@@ -7,6 +7,7 @@ import { useIsMobile } from '@/composables/useIsMobile'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import { formatDateTime } from '@/utils/datetime'
 import ColorTag from '@/components/ColorTag.vue'
+import RelaxedEmptyState from '@/components/RelaxedEmptyState.vue'
 import type { Todo } from '@/types'
 
 const { t } = useI18n()
@@ -69,7 +70,10 @@ onMounted(loadTrash)
 
     <!-- 移动端:卡片列表 -->
     <div v-else-if="isMobile" class="card-list">
-      <el-empty v-if="todos.length === 0" :description="$t('trash.empty')" />
+      <RelaxedEmptyState
+        v-if="todos.length === 0"
+        :description="$t('trash.empty')"
+      />
 
       <div v-for="row in todos" :key="row.id" class="list-card">
         <div class="card-head">
@@ -122,7 +126,7 @@ onMounted(loadTrash)
       </el-table-column>
 
       <template #empty>
-        <el-empty :description="$t('trash.empty')" />
+        <RelaxedEmptyState :description="$t('trash.empty')" />
       </template>
     </el-table>
 
