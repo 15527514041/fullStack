@@ -269,8 +269,9 @@ onMounted(() => loadOverview())
             <span>{{ $t('weeklyReview.title') }} · {{ weeklyReviewStatus }}</span>
             <p>{{ weeklySummary }}</p>
           </div>
-          <el-button type="primary" plain @click="router.push(weeklyReviewTarget)">
+          <el-button link class="review-link" @click="router.push(weeklyReviewTarget)">
             {{ weeklyReviewAction }}
+            <el-icon><ArrowRight /></el-icon>
           </el-button>
         </div>
 
@@ -774,6 +775,23 @@ onMounted(() => loadOverview())
   white-space: nowrap;
 }
 
+.review-link {
+  min-height: 32px;
+  flex: none;
+  padding: 4px 0;
+  color: var(--color-text-3);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.review-link:hover {
+  color: var(--color-brand-6);
+}
+
+.review-link .el-icon {
+  margin-left: 2px;
+}
+
 .amount-toggle {
   display: inline-flex;
   width: 32px;
@@ -824,7 +842,7 @@ onMounted(() => loadOverview())
 .finance-hero strong {
   display: block;
   margin-top: 4px;
-  font-size: clamp(22px, 2.4vw, 29px);
+  font-size: clamp(20px, 2.1vw, 26px);
   line-height: 1.15;
   letter-spacing: -0.02em;
   word-break: break-all;
@@ -963,8 +981,9 @@ onMounted(() => loadOverview())
     flex-direction: column;
   }
 
-  .review-panel .el-button {
-    width: 100%;
+  .review-panel .review-link {
+    width: auto;
+    align-self: flex-start;
   }
 }
 
