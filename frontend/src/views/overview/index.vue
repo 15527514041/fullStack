@@ -882,6 +882,25 @@ onMounted(() => loadOverview())
     min-height: 0;
     overflow: visible;
   }
+
+  /*
+   * 平板和手机上“今日”卡片会随页面纵向展开，不应再保留桌面端的
+   * 内部列表滚动。否则手指落在列表上时会被嵌套滚动层截获，只有
+   * 卡片/视口边缘的触摸才能带动整页滚动。
+   */
+  .today-body,
+  .today-section {
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .focus-list,
+  .timeline {
+    min-height: auto;
+    flex: none;
+    overflow: visible;
+    overscroll-behavior: auto;
+  }
 }
 
 @media (max-width: 768px) {
