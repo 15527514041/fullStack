@@ -13,6 +13,13 @@ export type ThemeMode = 'light' | 'dark'
 const STORAGE_KEY = 'vueuse-color-scheme'
 const COLOR_STORAGE_KEY = 'confluo-color-theme'
 const DARK_MEDIA_QUERY = '(prefers-color-scheme: dark)'
+const DARK_ONLY_VARIABLES = [
+  '--color-divider',
+  '--el-fill-color',
+  '--el-fill-color-lighter',
+  '--el-fill-color-dark',
+  '--el-fill-color-darker'
+]
 
 const themeModeState = ref<ThemeMode>('light')
 const colorThemeState = ref<ColorThemeKey>(DEFAULT_COLOR_THEME)
@@ -207,6 +214,12 @@ function applyColorTheme(colorTheme: ColorThemeKey, mode: ThemeMode): void {
     root.style.setProperty('--el-fill-color-dark', getLightColor(config.neutral['bg-card-1'], 0.08))
     root.style.setProperty('--el-fill-color-darker', getLightColor(config.neutral['bg-card-1'], 0.14))
     root.style.setProperty('--color-divider', config.neutral.border)
+  } else {
+    // 深色变量写在根元素行内，优先级高于浅色 CSS；切回浅色时必须移除，
+    // 否则例如 --color-divider 会一直保留上一轮深色的边框色。
+    for (const cssVariable of DARK_ONLY_VARIABLES) {
+      root.style.removeProperty(cssVariable)
+    }
   }
 
   root.style.setProperty(

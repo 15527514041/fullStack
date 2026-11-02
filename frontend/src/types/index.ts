@@ -465,7 +465,7 @@ export interface UserListResult {
 export interface OverviewTodo {
   id: number
   title: string
-  dueDate: string
+  dueDate: string | null
   completed: boolean
   tags: Array<Pick<Tag, 'id' | 'name' | 'color'>>
 }

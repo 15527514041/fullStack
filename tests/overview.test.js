@@ -175,7 +175,7 @@ test('聚合当天任务、规划、反思、周复盘和财务快照,并隔离�
   )
   assert.deepStrictEqual(
     res.body.tasks.focus.map((item) => item.title),
-    [overdue.body.title, today.body.title]
+    [overdue.body.title, today.body.title, '未来任务']
   )
 
   assert.deepStrictEqual(res.body.plan, {

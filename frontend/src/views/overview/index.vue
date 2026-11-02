@@ -15,6 +15,7 @@ import {
 } from '@/utils/money'
 import {
   formatDayHeading,
+  formatDate,
   formatDuration,
   formatWeekRange,
   toDateString
@@ -85,7 +86,9 @@ function displayAmount(cents: number): string {
 }
 
 function dueLabel(todo: OverviewTodo): string {
-  return todo.dueDate < today.value ? t('overview.pending') : t('common.today')
+  if (todo.dueDate && todo.dueDate < today.value) return t('overview.pending')
+  if (!todo.dueDate || todo.dueDate === today.value) return t('common.today')
+  return formatDate(todo.dueDate)
 }
 
 async function loadOverview(showLoading = true): Promise<void> {
@@ -180,7 +183,7 @@ onMounted(() => loadOverview())
                     />
                   </span>
                 </button>
-                <span class="due-badge">{{ dueLabel(todo) }}</span>
+                <span v-if="todo.dueDate" class="due-badge">{{ dueLabel(todo) }}</span>
               </div>
             </div>
             <div v-else class="calm-empty">
