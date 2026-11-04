@@ -15,6 +15,7 @@ import {
 } from '@/utils/money'
 import {
   formatDayHeading,
+  formatDate,
   formatDuration,
   formatWeekRange,
   toDateString
@@ -85,7 +86,9 @@ function displayAmount(cents: number): string {
 }
 
 function dueLabel(todo: OverviewTodo): string {
-  return todo.dueDate < today.value ? t('overview.pending') : t('common.today')
+  if (todo.dueDate && todo.dueDate < today.value) return t('overview.pending')
+  if (!todo.dueDate || todo.dueDate === today.value) return t('common.today')
+  return formatDate(todo.dueDate)
 }
 
 async function loadOverview(showLoading = true): Promise<void> {
@@ -180,7 +183,7 @@ onMounted(() => loadOverview())
                     />
                   </span>
                 </button>
-                <span class="due-badge">{{ dueLabel(todo) }}</span>
+                <span v-if="todo.dueDate" class="due-badge">{{ dueLabel(todo) }}</span>
               </div>
             </div>
             <div v-else class="calm-empty">
@@ -269,8 +272,9 @@ onMounted(() => loadOverview())
             <span>{{ $t('weeklyReview.title') }} · {{ weeklyReviewStatus }}</span>
             <p>{{ weeklySummary }}</p>
           </div>
-          <el-button type="primary" plain @click="router.push(weeklyReviewTarget)">
+          <el-button link class="review-link" @click="router.push(weeklyReviewTarget)">
             {{ weeklyReviewAction }}
+            <el-icon><ArrowRight /></el-icon>
           </el-button>
         </div>
 
@@ -774,6 +778,23 @@ onMounted(() => loadOverview())
   white-space: nowrap;
 }
 
+.review-link {
+  min-height: 32px;
+  flex: none;
+  padding: 4px 0;
+  color: var(--color-text-3);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.review-link:hover {
+  color: var(--color-brand-6);
+}
+
+.review-link .el-icon {
+  margin-left: 2px;
+}
+
 .amount-toggle {
   display: inline-flex;
   width: 32px;
@@ -824,7 +845,7 @@ onMounted(() => loadOverview())
 .finance-hero strong {
   display: block;
   margin-top: 4px;
-  font-size: clamp(22px, 2.4vw, 29px);
+  font-size: clamp(20px, 2.1vw, 26px);
   line-height: 1.15;
   letter-spacing: -0.02em;
   word-break: break-all;
@@ -881,6 +902,25 @@ onMounted(() => loadOverview())
   .overview-card {
     min-height: 0;
     overflow: visible;
+  }
+
+  /*
+   * 平板和手机上“今日”卡片会随页面纵向展开，不应再保留桌面端的
+   * 内部列表滚动。否则手指落在列表上时会被嵌套滚动层截获，只有
+   * 卡片/视口边缘的触摸才能带动整页滚动。
+   */
+  .today-body,
+  .today-section {
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .focus-list,
+  .timeline {
+    min-height: auto;
+    flex: none;
+    overflow: visible;
+    overscroll-behavior: auto;
   }
 }
 
@@ -944,8 +984,9 @@ onMounted(() => loadOverview())
     flex-direction: column;
   }
 
-  .review-panel .el-button {
-    width: 100%;
+  .review-panel .review-link {
+    width: auto;
+    align-self: flex-start;
   }
 }
 

@@ -61,8 +61,7 @@ async function getTasks(userId, date) {
       where: {
         userId,
         deletedAt: null,
-        completed: false,
-        dueDate: { lte: today }
+        completed: false
       },
       select: {
         id: true,
@@ -82,7 +81,7 @@ async function getTasks(userId, date) {
     overdue,
     focus: focus.map((todo) => ({
       ...todo,
-      dueDate: toDateString(todo.dueDate)
+      dueDate: todo.dueDate ? toDateString(todo.dueDate) : null
     }))
   }
 }
