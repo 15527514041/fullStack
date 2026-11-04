@@ -1,5 +1,7 @@
 # Confluo 汇流｜让时间、反思和钱，回到同一条生活线上
 
+<!-- 发布设置：正文不插入可点击外链；请在公众号文末「阅读原文」填写 https://www.confluo.cn/ -->
+
 > 我们不缺记录生活的工具，缺的是一个能让这些记录彼此看见的地方。
 
 很多人的生活，被拆在几个不同的应用里：
@@ -21,8 +23,8 @@
 
 现在，你可以通过官网体验：
 
-> **官网：confluo.cn**
-> 适配桌面与手机浏览器。
+> **官网：www.confluo.cn**<br>
+> 点击文末「阅读原文」访问。适配桌面与手机浏览器。
 
 ## 打开首页，先看见“今天”
 
@@ -54,6 +56,10 @@ Confluo 的首页没有铺满所有功能，而是先回答三个与当下有关
 
 **先看今天，再看这一周，最后知道自己站在哪里。**
 
+![Confluo 首页](https://confluo-upload.oss-cn-shenzhen.aliyuncs.com/public/marketing/articles/confluo-launch-2026-11/01-home.png)
+
+*今日任务、当日安排、本周成长与财务快照，都在首页安静地汇到一起。*
+
 ## 计划不是写给自己看的愿望清单
 
 计划清单承载那些不会在一天内结束的事情。
@@ -83,7 +89,7 @@ Confluo 的首页没有铺满所有功能，而是先回答三个与当下有关
 
 这些问题，只看“完成”或“未完成”是看不见的。
 
-![每日规划详情](./screenshots/03-daily-plan-detail.png)
+![每日规划详情](https://confluo-upload.oss-cn-shenzhen.aliyuncs.com/public/marketing/articles/confluo-launch-2026-11/03-daily-plan-detail.png)
 
 *待办、计划与实际并列呈现，让原本模糊的时间差变得可见。*
 
@@ -117,7 +123,7 @@ Confluo 的首页没有铺满所有功能，而是先回答三个与当下有关
 
 这些数据不是 KPI，也不会变成催促你的红色提醒。
 
-![周复盘列表](./screenshots/06-weekly-reviews.png)
+![周复盘列表](https://confluo-upload.oss-cn-shenzhen.aliyuncs.com/public/marketing/articles/confluo-launch-2026-11/06-weekly-reviews.png)
 
 *周复盘把散落在七天的记录收拢到同一个视野里。*
 
@@ -141,7 +147,7 @@ Confluo 的记账部分由“资产账户”和“账单记录”组成。
 
 如果某个账户超过 30 天没有更新余额，页面会轻轻提醒你核对，而不是持续制造压迫感。
 
-![资产账户](./screenshots/05-assets.png)
+![资产账户](https://confluo-upload.oss-cn-shenzhen.aliyuncs.com/public/marketing/articles/confluo-launch-2026-11/05-assets.png)
 
 *资产余额是主动核对后的快照，边界清楚，也更接近真实使用。*
 
@@ -163,7 +169,7 @@ Confluo 的记账部分由“资产账户”和“账单记录”组成。
 
 Confluo 提供绿色、蓝色和金色三套品牌配色，每套都能与深色、浅色模式组合。颜色需要主动保存后才会应用，避免误触让整个界面突然改变。
 
-![主题与偏好设置](./screenshots/07-preferences.png)
+![主题与偏好设置](https://confluo-upload.oss-cn-shenzhen.aliyuncs.com/public/marketing/articles/confluo-launch-2026-11/07-preferences.png)
 
 *配色与账单展示维度都被收在偏好设置里，既保留选择，也不打扰日常使用。*
 
@@ -199,11 +205,11 @@ Confluo 不设置用来自我评判的 KPI，也不用连续打卡证明自律�
 
 **需要的时候打开，记下正在发生的事，然后回到生活本身。**
 
-## 来 confluo.cn，留下第一条记录
+## 来 www.confluo.cn，留下第一条记录
 
 Confluo 官网已经上线，并完成 ICP 备案。
 
-访问 **confluo.cn**，注册账户后，可以从今天的一条计划开始，也可以只写下此刻值得记住的一句话。
+在浏览器访问 **www.confluo.cn**，或点击文末「阅读原文」。注册账户后，可以从今天的一条计划开始，也可以只写下此刻值得记住的一句话。
 
 产品还会继续打磨。下一步，我们会把更多真实使用中的细节做深，而不是急着把功能堆得更多。
 
