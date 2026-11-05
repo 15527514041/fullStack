@@ -89,6 +89,24 @@ async function listReflections(userId, query) {
   return { list: list.map(toReflectionDTO), total, page, pageSize }
 }
 
+async function listReflectionsForExport(userId, query) {
+  const { from, to } = query
+  const where = { userId }
+  if (from || to) {
+    where.date = {
+      ...(from ? { gte: toDateValue(from) } : {}),
+      ...(to ? { lte: toDateValue(to) } : {})
+    }
+  }
+
+  const list = await prisma.dailyReflection.findMany({
+    where,
+    include: reflectionInclude,
+    orderBy: { date: 'desc' }
+  })
+  return list.map(toReflectionDTO)
+}
+
 async function getReflectionCalendar(userId, year) {
   const reflections = await prisma.dailyReflection.findMany({
     where: {
@@ -204,6 +222,7 @@ async function deleteReflection(id, userId) {
 
 module.exports = {
   listReflections,
+  listReflectionsForExport,
   getReflectionCalendar,
   getReflectionById,
   createReflection,

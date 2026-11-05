@@ -25,6 +25,7 @@ const plansRouter = require('./modules/plan/plan.routes')
 const weeklyReviewsRouter = require('./modules/weekly-review/weekly-review.routes')
 const ledgerRouter = require('./modules/ledger/ledger.routes')
 const overviewRouter = require('./modules/overview/overview.routes')
+const exportRouter = require('./modules/export/export.routes')
 const { notFound, errorHandler } = require('./middlewares/errorHandler')
 const requestLogger = require('./middlewares/requestLogger')
 const prisma = require('./utils/prisma')
@@ -43,7 +44,11 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http:/
   .map((item) => item.trim())
   .filter(Boolean)
 
-app.use(cors({ origin: allowedOrigins }))
+app.use(cors({
+  origin: allowedOrigins,
+  // 浏览器需要读取这两个响应头来拿下载文件名和实际导出行数
+  exposedHeaders: ['Content-Disposition', 'X-Export-Count']
+}))
 app.use(requestLogger)
 
 // 测试环境关掉限流:用例会反复注册/登录(光 plans.test.js 一个文件就要 22 次),
@@ -86,6 +91,7 @@ app.use('/api/plans', plansRouter)
 app.use('/api/weekly-reviews', weeklyReviewsRouter)
 app.use('/api/ledger', ledgerRouter)
 app.use('/api/overview', overviewRouter)
+app.use('/api/exports', exportRouter)
 
 app.use(notFound)
 app.use(errorHandler)

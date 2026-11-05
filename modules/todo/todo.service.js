@@ -70,11 +70,9 @@ function normalizeDescription(value) {
   return trimmed || null
 }
 
-// deleted=true 时查回收站(已删除的),默认只查未删除的
-async function listTodos(userId, query) {
+// 列表与导出共用同一套筛选规则,避免两边慢慢演化出不同结果
+function buildTodoWhere(userId, query) {
   const {
-    page = 1,
-    pageSize = 10,
     keyword,
     completed,
     tagId,
@@ -113,6 +111,14 @@ async function listTodos(userId, query) {
     where.tags = { some: { id: tagId, scope: TAG_SCOPE.TODO } }
   }
 
+  return where
+}
+
+// deleted=true 时查回收站(已删除的),默认只查未删除的
+async function listTodos(userId, query) {
+  const { page = 1, pageSize = 10 } = query
+  const where = buildTodoWhere(userId, query)
+
   const [list, total] = await Promise.all([
     prisma.todo.findMany({
       where,
@@ -125,6 +131,15 @@ async function listTodos(userId, query) {
   ])
 
   return { list: list.map(toTodoDTO), total, page, pageSize }
+}
+
+async function listTodosForExport(userId, query) {
+  const list = await prisma.todo.findMany({
+    where: buildTodoWhere(userId, query),
+    include: todoInclude,
+    orderBy: { id: 'desc' }
+  })
+  return list.map(toTodoDTO)
 }
 
 async function getTodoById(id, userId) {
@@ -222,6 +237,7 @@ async function restoreTodo(id, userId) {
 
 module.exports = {
   listTodos,
+  listTodosForExport,
   getTodoById,
   createTodo,
   updateTodo,

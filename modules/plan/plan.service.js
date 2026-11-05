@@ -165,6 +165,24 @@ async function listPlans(userId, query) {
   }
 }
 
+async function listPlansForExport(userId, query) {
+  const { from, to } = query
+  const where = { userId }
+  if (from || to) {
+    where.date = {
+      ...(from ? { gte: toDateValue(from) } : {}),
+      ...(to ? { lte: toDateValue(to) } : {})
+    }
+  }
+
+  const list = await prisma.dailyPlan.findMany({
+    where,
+    include: planInclude,
+    orderBy: { date: 'desc' }
+  })
+  return list.map(toPlanDetailDTO)
+}
+
 async function getPlanCalendar(userId, year) {
   const plans = await prisma.dailyPlan.findMany({
     where: {
@@ -285,6 +303,7 @@ async function deletePlan(id, userId) {
 
 module.exports = {
   listPlans,
+  listPlansForExport,
   getPlanCalendar,
   getPlanById,
   createPlan,

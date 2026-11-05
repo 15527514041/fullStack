@@ -36,6 +36,27 @@ const validDateOnly = dateOnly.refine((value) => {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
 }, '日期不合法')
 
+// 导出文件的表头 / 文件名跟随界面语言;时区用于把创建时间格式化成本地时间
+const exportLocale = z.enum(['zh_CN', 'en_US']).default('zh_CN')
+const exportTimeZone = z
+  .string()
+  .trim()
+  .max(64)
+  .optional()
+  .refine((value) => {
+    if (!value) return true
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone: value })
+      return true
+    } catch {
+      return false
+    }
+  }, '时区不合法')
+const exportMeta = {
+  locale: exportLocale,
+  timeZone: exportTimeZone
+}
+
 // ====== auth ======
 
 const authSchemas = {
@@ -125,6 +146,31 @@ const todoSchemas = {
     .refine((data) => !data.dueDateMissing || (!data.dueFrom && !data.dueTo), {
       message: '未设置截止日期不能与其他截止日期条件同时使用',
       path: ['dueDateMissing']
+    }),
+  // 导出不分页:使用与列表一致的筛选条件,一次性读取当前用户的全部匹配记录
+  exportQuery: z.object({
+    ...exportMeta,
+    keyword: z.string().trim().optional(),
+    completed: boolQuery.optional(),
+    dueFrom: dateOnly.optional(),
+    dueTo: dateOnly.optional(),
+    dueDateMissing: boolQuery.optional(),
+    tagId: z.coerce.number().int().positive().optional(),
+    deleted: boolQuery.optional(),
+    from: z.string().datetime({ offset: true }).optional(),
+    to: z.string().datetime({ offset: true }).optional()
+  })
+    .refine((data) => !data.from || !data.to || data.from <= data.to, {
+      message: '开始时间不能晚于结束时间',
+      path: ['to']
+    })
+    .refine((data) => !data.dueFrom || !data.dueTo || data.dueFrom <= data.dueTo, {
+      message: '截止日期开始值不能晚于结束值',
+      path: ['dueTo']
+    })
+    .refine((data) => !data.dueDateMissing || (!data.dueFrom && !data.dueTo), {
+      message: '未设置截止日期不能与其他截止日期条件同时使用',
+      path: ['dueDateMissing']
     })
 }
 
@@ -174,6 +220,16 @@ const dateRange = z
     message: '开始日期不能晚于结束日期',
     path: ['to']
   })
+const exportDateRange = z
+  .object({
+    ...exportMeta,
+    from: dateOnly.optional(),
+    to: dateOnly.optional()
+  })
+  .refine((data) => !data.from || !data.to || data.from <= data.to, {
+    message: '开始日期不能晚于结束日期',
+    path: ['to']
+  })
 
 // 年度热力图只接受一个明确的年份;页面可切换的范围由前端动态限制为近三年
 const calendarQuery = z.object({
@@ -196,6 +252,7 @@ const reflectionSchemas = {
     })
     .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' }),
   query: dateRange,
+  exportQuery: exportDateRange,
   calendarQuery
 }
 
@@ -247,6 +304,7 @@ const planSchemas = {
     })
     .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' }),
   query: dateRange,
+  exportQuery: exportDateRange,
   calendarQuery
 }
 
