@@ -6,7 +6,7 @@ import { computed } from 'vue'
  * - 线性图标用 currentColor,跟随文字颜色
  * - file 图标在 client 里就是「圆角方块 + 横线」的彩色图,这里保持原样
  */
-export type FileIconName = 'cloud-upload' | 'file' | 'download' | 'eye' | 'delete' | 'lock'
+export type FileIconName = 'cloud-upload' | 'file' | 'download' | 'calendar' | 'eye' | 'delete' | 'lock'
 
 const props = withDefaults(defineProps<{ name: FileIconName; size?: number }>(), { size: 20 })
 
@@ -28,6 +28,13 @@ const STROKE_ICONS: Record<Exclude<FileIconName, 'file'>, StrokeIcon> = {
     viewBox: '0 0 20 20',
     strokeWidth: 1.60923,
     paths: ['M17.5 12.5V15.8333C17.5 16.2754 17.5 17.5 17.5 17.5C17.5 17.5 16.2754 17.5 15.8333 17.5H4.16667C3.72464 17.5 3.45663 17.5 3.45663 17.5H2.5V12.5M14.1667 8.33333L10 12.5L5.83333 8.33333M10 12.5V2.5']
+  },
+  calendar: {
+    viewBox: '0 0 20 20',
+    strokeWidth: 1.66667,
+    paths: [
+      'M6.66667 2.5V5M13.3333 2.5V5M2.5 8.33333H17.5M4.16667 3.33333H15.8333C16.7538 3.33333 17.5 4.07953 17.5 5V15.8333C17.5 16.7538 16.7538 17.5 15.8333 17.5H4.16667C3.24619 17.5 2.5 16.7538 2.5 15.8333V5C2.5 4.07953 3.24619 3.33333 4.16667 3.33333Z'
+    ]
   },
   eye: {
     viewBox: '0 0 20 20',

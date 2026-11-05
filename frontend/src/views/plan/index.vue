@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowRight, Calendar, Plus } from '@element-plus/icons-vue'
+import { ArrowRight, MoreFilled, Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import { downloadExport } from '@/api/export'
 import { getPlans } from '@/api/plan'
+import FileIcon from '@/components/FileIcon.vue'
 import RelaxedEmptyState from '@/components/RelaxedEmptyState.vue'
 import { useDateRangeTabs, type DateRangeTab } from '@/composables/useDateRangeTabs'
 import { useFeedList } from '@/composables/useFeedList'
+import { useListExport } from '@/composables/useListExport'
 import { formatDayHeading, toDateString } from '@/utils/datetime'
 import type { DailyPlanListItem } from '@/types'
 
@@ -27,6 +30,7 @@ const tabs = computed<Array<{ value: DateRangeTab; label: string }>>(() => [
 
 const sentinelRef = ref<HTMLElement | null>(null)
 const { items, loading, loadingMore, hasMore } = useFeedList<DailyPlanListItem>(getPlans, range, sentinelRef)
+const { exporting, exportList } = useListExport()
 
 // 卡片上的计数胶囊(随写只有一条,不再展示)
 function pills(row: DailyPlanListItem): Array<{ key: string; text: string }> {
@@ -58,6 +62,17 @@ function openCalendar(): void {
 function openDetail(row: DailyPlanListItem): void {
   router.push({ name: 'plan-detail', params: { id: row.id } })
 }
+
+// 只提交当前日期筛选;完整记录读取和 CSV 生成都在后端完成
+function handleExport(): void {
+  const currentRange = { ...range.value }
+  exportList(() => downloadExport('plans', currentRange))
+}
+
+function handleHeaderAction(command: string): void {
+  if (command === 'calendar') openCalendar()
+  else if (command === 'export') handleExport()
+}
 </script>
 
 <template>
@@ -68,12 +83,29 @@ function openDetail(row: DailyPlanListItem): void {
         <div class="subtitle">{{ $t('plan.subtitle') }}</div>
       </div>
       <div class="header-actions">
-        <el-button class="calendar-button" @click="openCalendar">
-          <el-icon><Calendar /></el-icon>{{ $t('plan.yearView') }}
-        </el-button>
         <el-button type="primary" class="add-button" @click="openCreate">
           <el-icon><Plus /></el-icon>{{ $t('plan.addButton') }}
         </el-button>
+        <el-dropdown
+          class="header-more"
+          trigger="click"
+          placement="bottom-end"
+          @command="handleHeaderAction"
+        >
+          <el-button class="more-button" :loading="exporting" :aria-label="$t('common.more')">
+            <el-icon><MoreFilled /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="calendar">
+                <FileIcon name="calendar" :size="16" class="more-menu__icon" />{{ $t('plan.yearView') }}
+              </el-dropdown-item>
+              <el-dropdown-item command="export">
+                <FileIcon name="download" :size="16" class="more-menu__icon" />{{ $t('common.export') }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </div>
 
@@ -124,13 +156,25 @@ function openDetail(row: DailyPlanListItem): void {
   gap: 12px;
 }
 
-.calendar-button {
-  height: 40px;
-  border-radius: 12px;
-  font-weight: 500;
+.header-more {
+  flex-shrink: 0;
 }
 
-.calendar-button .el-icon {
+.more-button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.more-button :deep(.el-icon) {
+  margin: 0;
+}
+
+.more-menu__icon {
   margin-right: 6px;
 }
 
@@ -145,7 +189,6 @@ function openDetail(row: DailyPlanListItem): void {
     width: 100%;
   }
 
-  .header-actions .calendar-button,
   .feed-head .header-actions .add-button {
     flex: 1;
     width: auto;

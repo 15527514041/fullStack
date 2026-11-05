@@ -2,14 +2,17 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { MoreFilled, Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import { downloadExport } from '@/api/export'
 import { createTodo, deleteTodo, getTodos, updateTodo } from '@/api/todo'
 import { getTags } from '@/api/tags'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
+import { useListExport } from '@/composables/useListExport'
 import { formatDate, formatDateTime, toDateString } from '@/utils/datetime'
 import { DICTIONARY_CREATE_VALUE, dictionaryTabRoute } from '@/utils/dictionary'
+import FileIcon from '@/components/FileIcon.vue'
 import OssUploader from '@/components/OssUploader.vue'
 import ColorDot from '@/components/ColorDot.vue'
 import ColorTag from '@/components/ColorTag.vue'
@@ -28,6 +31,7 @@ const loading = ref(false)
 const loadingMore = ref(false)
 const sentinelRef = ref<HTMLElement | null>(null)
 const hasMore = computed(() => todos.value.length < total.value)
+const { exporting, exportList } = useListExport()
 type DueFilter = '' | 'today' | 'next7' | 'overdue' | 'none'
 
 const query = reactive({
@@ -245,6 +249,22 @@ function handleReset(): void {
   loadTodos()
 }
 
+// 只提交点击时的筛选条件;完整数据查询和 CSV 生成都在后端完成
+function handleExport(): void {
+  const filters = {
+    keyword: query.keyword.trim() || undefined,
+    tagId: query.tagId,
+    ...dateRangeParams(),
+    ...dueFilterParams()
+  }
+
+  exportList(() => downloadExport('todos', filters))
+}
+
+function handleHeaderAction(command: string): void {
+  if (command === 'export') handleExport()
+}
+
 function handleTagFormChange(values: Array<string | number>): void {
   if (!values.includes(DICTIONARY_CREATE_VALUE)) return
   form.tagIds = values.filter((value): value is number => typeof value === 'number')
@@ -319,10 +339,29 @@ onMounted(() => {
         <div class="page-title">{{ $t('todo.title') }}</div>
         <div class="page-subtitle">{{ $t('todo.subtitle') }}</div>
       </div>
-      <el-button type="primary" @click="openAddDialog">
-        <el-icon><Plus /></el-icon>
-        {{ $t('todo.addButton') }}
-      </el-button>
+      <div class="page-actions">
+        <el-button type="primary" class="add-button" @click="openAddDialog">
+          <el-icon><Plus /></el-icon>
+          {{ $t('todo.addButton') }}
+        </el-button>
+        <el-dropdown
+          class="page-more"
+          trigger="click"
+          placement="bottom-end"
+          @command="handleHeaderAction"
+        >
+          <el-button class="more-button" :loading="exporting" :aria-label="$t('common.more')">
+            <el-icon><MoreFilled /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="export">
+                <FileIcon name="download" :size="16" class="more-menu__icon" />{{ $t('common.export') }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
     </div>
 
     <div class="filter-bar">
@@ -592,6 +631,34 @@ onMounted(() => {
   width: 210px;
 }
 
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-more {
+  flex-shrink: 0;
+}
+
+.more-button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.more-button :deep(.el-icon) {
+  margin: 0;
+}
+
+.more-menu__icon {
+  margin-right: 6px;
+}
+
 .tag-select {
   width: 210px;
 }
@@ -656,6 +723,15 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .page-actions {
+    width: 100%;
+  }
+
+  .page-actions .add-button {
+    flex: 1;
+    width: auto;
+  }
+
   .search-input,
   .tag-select,
   .date-select,
