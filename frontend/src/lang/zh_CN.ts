@@ -35,6 +35,7 @@ export default {
     weekdayMon: '周一',
     weekdayWed: '周三',
     weekdayFri: '周五',
+    weekdaySun: '周日',
     selectYear: '选择年份',
     less: '少',
     more: '多',

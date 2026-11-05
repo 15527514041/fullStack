@@ -125,7 +125,7 @@ const weekdayLabels = computed(() => [
   '',
   t('yearHeatmap.weekdayFri'),
   '',
-  ''
+  t('yearHeatmap.weekdaySun')
 ])
 
 function cellLabel(cell: CalendarCell): string {
@@ -137,16 +137,12 @@ function cellLabel(cell: CalendarCell): string {
   <div class="year-heatmap">
     <div class="calendar-toolbar">
       <div class="calendar-summary" aria-live="polite">
-        <template v-if="!loading && !error">
-          <div class="calendar-summary__title">
-            <h2>{{ summaryTitle }}</h2>
-            <span v-if="summaryMeta" class="calendar-summary__meta">{{ summaryMeta }}</span>
-          </div>
-        </template>
-        <template v-else>
-          <h2>{{ year }}</h2>
-          <p>{{ error ? $t('yearHeatmap.loadFailed') : $t('common.loading') }}</p>
-        </template>
+        <div class="calendar-summary__title">
+          <h2>{{ !loading && !error ? summaryTitle : year }}</h2>
+          <span v-if="error || summaryMeta" class="calendar-summary__meta">
+            {{ error ? $t('yearHeatmap.loadFailed') : summaryMeta }}
+          </span>
+        </div>
       </div>
 
       <div class="year-switch" role="group" :aria-label="$t('yearHeatmap.selectYear')">
@@ -165,7 +161,46 @@ function cellLabel(cell: CalendarCell): string {
     </div>
 
     <section class="heatmap-card" :aria-busy="loading">
-      <el-skeleton v-if="loading" :rows="8" animated class="heatmap-skeleton" />
+      <div v-if="loading" class="heatmap-skeleton" aria-hidden="true">
+        <div class="heatmap-body">
+          <div class="weekday-axis skeleton-weekday-axis">
+            <span class="month-row-spacer" />
+            <span v-for="index in 7" :key="index" class="skeleton-weekday" />
+          </div>
+
+          <div class="heatmap-scroll">
+            <div
+              class="skeleton-canvas"
+              :style="{ width: `${53 * CELL_SIZE + 52 * CELL_GAP}px` }"
+            >
+              <div class="month-row">
+                <div class="skeleton-month-row">
+                  <span v-for="month in 12" :key="month" class="skeleton-month-label" />
+                </div>
+              </div>
+
+              <div
+                class="week-grid"
+                :style="{ gridTemplateColumns: `repeat(53, ${CELL_SIZE}px)` }"
+              >
+                <div v-for="weekIndex in 53" :key="weekIndex" class="week-column">
+                  <span
+                    v-for="dayIndex in 7"
+                    :key="dayIndex"
+                    class="heat-cell skeleton-cell"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="heatmap-footer">
+          <div class="legend skeleton-legend">
+            <span />
+          </div>
+        </div>
+      </div>
 
       <el-empty v-else-if="error" :description="$t('yearHeatmap.loadFailed')">
         <el-button type="primary" @click="emit('retry')">{{ $t('yearHeatmap.retry') }}</el-button>
@@ -261,6 +296,7 @@ function cellLabel(cell: CalendarCell): string {
   display: flex;
   align-items: baseline;
   gap: 12px;
+  min-height: 33px;
 }
 
 .calendar-summary__meta {
@@ -271,14 +307,6 @@ function cellLabel(cell: CalendarCell): string {
   white-space: nowrap;
 }
 
-.calendar-summary p {
-  min-height: 20px;
-  margin: 6px 0 0;
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--color-text-3);
-}
-
 .year-switch {
   display: inline-flex;
   flex-shrink: 0;
@@ -286,8 +314,9 @@ function cellLabel(cell: CalendarCell): string {
   gap: 4px;
   padding: 4px;
   border: 1px solid var(--color-border);
-  border-radius: 14px;
-  background: var(--color-bg-bottom);
+  border-radius: 999px;
+  background: var(--color-bg-card);
+  box-shadow: var(--shadow-control);
 }
 
 .year-switch__button {
@@ -295,7 +324,7 @@ function cellLabel(cell: CalendarCell): string {
   height: 36px;
   padding: 0 16px;
   border: none;
-  border-radius: 10px;
+  border-radius: 999px;
   background: transparent;
   color: var(--color-text-2);
   font-family: inherit;
@@ -309,13 +338,19 @@ function cellLabel(cell: CalendarCell): string {
 }
 
 .year-switch__button:hover {
-  color: var(--el-color-primary);
+  color: var(--color-text-1);
+  background: var(--color-bg-bottom);
 }
 
 .year-switch__button.is-active {
   color: var(--color-on-brand);
   background: var(--el-color-primary);
   box-shadow: var(--shadow-brand);
+}
+
+.year-switch__button.is-active:hover {
+  color: var(--color-on-brand);
+  background: var(--el-color-primary);
 }
 
 .year-switch__button:focus-visible,
@@ -333,8 +368,57 @@ function cellLabel(cell: CalendarCell): string {
 }
 
 .heatmap-skeleton {
-  min-height: 260px;
-  padding: 8px 4px;
+  animation: skeleton-pulse 1.35s ease-in-out infinite alternate;
+}
+
+.skeleton-weekday {
+  width: 18px;
+  height: 8px;
+  align-self: center;
+  border-radius: 999px;
+  background: var(--el-fill-color);
+}
+
+.skeleton-canvas {
+  min-width: 100%;
+}
+
+.skeleton-month-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.skeleton-month-label {
+  width: 24px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--el-fill-color);
+}
+
+.skeleton-cell {
+  background: var(--el-fill-color);
+}
+
+.skeleton-legend {
+  width: 210px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--el-fill-color);
+}
+
+.skeleton-legend > span {
+  display: none;
+}
+
+@keyframes skeleton-pulse {
+  from {
+    opacity: 0.58;
+  }
+  to {
+    opacity: 0.92;
+  }
 }
 
 .heatmap-body {
@@ -468,6 +552,7 @@ button.heat-cell:hover {
   gap: 6px;
   color: var(--color-text-3);
   font-size: 12px;
+  line-height: 14px;
 }
 
 .legend__text--less {
@@ -495,6 +580,7 @@ button.heat-cell:hover {
   .calendar-summary__title {
     flex-wrap: wrap;
     gap: 4px 10px;
+    min-height: 54px;
   }
 
   .year-switch {

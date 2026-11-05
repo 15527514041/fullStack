@@ -9,11 +9,13 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
     <!-- 只展示 logo 的导航栏(右上角个人中心不显示) -->
     <header class="navbar">
       <div class="navbar-left">
-        <div class="logo-mark"><LogoMark /></div>
-        <span class="logo-text">
-          <span class="logo-text-en">Confluo</span>
-          <span class="logo-text-zh">汇流</span>
-        </span>
+        <router-link :to="{ name: 'home' }" class="brand-link" aria-label="Confluo 汇流">
+          <div class="logo-mark"><LogoMark /></div>
+          <span class="logo-text">
+            <span class="logo-text-en">Confluo</span>
+            <span class="logo-text-zh">汇流</span>
+          </span>
+        </router-link>
       </div>
 
       <div class="navbar-right">
@@ -53,6 +55,21 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
   align-items: center;
   gap: 12px;
   padding-left: 28px;
+}
+
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 8px;
+  outline: none;
+}
+
+.brand-link:focus-visible {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: 4px;
 }
 
 /* 右侧语言切换 */
@@ -105,6 +122,10 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
 
   .navbar-left {
     padding-left: 12px;
+    gap: 8px;
+  }
+
+  .brand-link {
     gap: 8px;
   }
 

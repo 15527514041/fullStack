@@ -35,6 +35,7 @@ export default {
     weekdayMon: 'Mon',
     weekdayWed: 'Wed',
     weekdayFri: 'Fri',
+    weekdaySun: 'Sun',
     selectYear: 'Select year',
     less: 'Less',
     more: 'More',
