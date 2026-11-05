@@ -203,11 +203,13 @@ onUnmounted(() => {
         <div v-if="isMobile && !noSidebar" class="mobile-toggle" @click="toggleMobileMenu">
           <MenuIcon name="menu" :size="22" />
         </div>
-        <div class="logo-mark"><LogoMark /></div>
-        <span v-if="isMobile || !collapsed" class="logo-text">
-          <span class="logo-text-en">Confluo</span>
-          <span class="logo-text-zh">汇流</span>
-        </span>
+        <router-link :to="{ name: 'home' }" class="brand-link" :aria-label="t('menu.home')">
+          <div class="logo-mark"><LogoMark /></div>
+          <span v-if="isMobile || !collapsed" class="logo-text">
+            <span class="logo-text-en">Confluo</span>
+            <span class="logo-text-zh">汇流</span>
+          </span>
+        </router-link>
       </div>
 
       <div class="navbar-right">
@@ -365,6 +367,22 @@ onUnmounted(() => {
   padding-left: 28px;
   transition: width 0.3s;
   overflow: hidden;
+}
+
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 8px;
+  outline: none;
+}
+
+.brand-link:focus-visible {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: 4px;
 }
 
 .logo-mark {
@@ -751,6 +769,10 @@ onUnmounted(() => {
 
   .navbar-left {
     padding-left: 10px;
+    gap: 8px;
+  }
+
+  .brand-link {
     gap: 8px;
   }
 

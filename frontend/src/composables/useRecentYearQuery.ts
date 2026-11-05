@@ -3,7 +3,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 /**
  * 年度视图的年份状态:
- * - 只开放当前年份及前两年
+ * - 只开放当前年份及后两年
  * - 年份写入 query,刷新和浏览器返回都能恢复
  * - 非法或不支持的年份回退到当前年
  */
@@ -11,7 +11,7 @@ export function useRecentYearQuery(onYearChange: (year: number) => void) {
   const route = useRoute()
   const router = useRouter()
   const currentYear = new Date().getFullYear()
-  const availableYears = [currentYear - 2, currentYear - 1, currentYear]
+  const availableYears = [currentYear, currentYear + 1, currentYear + 2]
   const selectedYear = ref(currentYear)
 
   function selectYear(year: number): void {

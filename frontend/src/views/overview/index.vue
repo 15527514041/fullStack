@@ -54,7 +54,7 @@ const planTarget = computed(() =>
 
 const weeklyReviewTarget = computed(() => {
   const review = overview.value?.weeklyReview
-  if (!review?.existingReviewId) return '/weekly-reviews/new'
+  if (!review?.existingReviewId) return '/weekly-reviews'
   return review.status === 'COMPLETED'
     ? `/weekly-reviews/${review.existingReviewId}`
     : `/weekly-reviews/${review.existingReviewId}/edit`
@@ -325,7 +325,7 @@ onMounted(() => loadOverview())
 .overview-page {
   display: flex;
   width: 100%;
-  max-width: 1380px;
+  max-width: none;
   height: 100%;
   min-height: 0;
   flex-direction: column;
