@@ -96,7 +96,7 @@ function numberedLines(items, line) {
 }
 
 function planTodoLines(items) {
-  return numberedLines(items, (item) => `${item.completed ? '[x]' : '[ ]'} ${item.name}`)
+  return numberedLines(items, (item) => `${item.completed ? '[✓]' : '[ ]'} ${item.name}`)
 }
 
 function planScheduleLines(items, copy) {

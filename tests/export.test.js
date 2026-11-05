@@ -93,7 +93,7 @@ test('后端导出服务直接整理完整规划并返回文件名、行数', as
     assert.equal(result.empty, false)
     assert.equal(result.count, 1)
     assert.match(result.fileName, /^每日规划-\d{8}-\d{6}\.csv$/)
-    assert.match(result.body, /\[x\] 完成导出/)
+    assert.match(result.body, /\[✓\] 完成导出/)
     assert.match(result.body, /\[重要\] 09:00-10:30 实现接口 \(90 分钟\)/)
   } finally {
     EXPORTERS.plans.list = original

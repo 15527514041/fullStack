@@ -1,6 +1,7 @@
 const AppError = require('../../errors/AppError')
 
 const prisma = require('../../utils/prisma')
+const { normalizeOriginalName } = require('../../utils/filename')
 // 标签是通用能力,归属与域的校验统一放在标签模块里
 const { assertOwnedTagIds, TAG_SCOPE } = require('../tag/tag.service')
 
@@ -39,7 +40,7 @@ function toTodoDTO(todo) {
       ossId: item.ossId,
       sortOrder: item.sortOrder,
       key: item.upload?.key,
-      originalName: item.upload?.originalName ?? null,
+      originalName: normalizeOriginalName(item.upload?.originalName) ?? null,
       mime: item.upload?.mime,
       size: item.upload?.size,
       visibility: item.upload?.visibility

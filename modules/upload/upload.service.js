@@ -3,6 +3,7 @@ const fileType = require('file-type')
 const prisma = require('../../utils/prisma')
 const oss = require('../../utils/oss')
 const AppError = require('../../errors/AppError')
+const { normalizeOriginalName } = require('../../utils/filename')
 
 // 允许的类型:图片 + 常见文档
 // 说明:.doc/.xls/.ppt 是老版 OLE2 格式,file-type 识别不出具体类型,会回退用客户端声明的 mime
@@ -33,14 +34,15 @@ async function detectMime(buffer) {
 
 // 统一出口:前端只认 ossId / url / expiresAt
 function toDTO(record, options = {}) {
+  const originalName = normalizeOriginalName(record.originalName)
   return {
     ossId: record.id,
     key: record.key,
-    originalName: record.originalName,
+    originalName,
     visibility: record.visibility,
     url: oss.buildUrl(record.key, record.visibility, {
       download: options.download,
-      filename: record.originalName || undefined
+      filename: originalName || undefined
     }),
     expiresAt: oss.expiresAt(record.visibility),
     size: record.size,
@@ -65,7 +67,8 @@ async function upload({ buffer, originalname, mime, folder, visibility = 'PUBLIC
     throw new AppError('文件内容不是支持的格式', 400)
   }
 
-  const key = oss.buildObjectKey({ originalname, visibility, folder })
+  const normalizedName = normalizeOriginalName(originalname)
+  const key = oss.buildObjectKey({ originalname: normalizedName, visibility, folder })
 
   try {
     await oss.putObject({ key, buffer, mime: realMime, publicRead: visibility === 'PUBLIC' })
@@ -80,7 +83,7 @@ async function upload({ buffer, originalname, mime, folder, visibility = 'PUBLIC
   const record = await prisma.upload.create({
     data: {
       key,
-      originalName: originalname || null,
+      originalName: normalizedName || null,
       visibility,
       mime: realMime,
       size: buffer.length,
