@@ -181,7 +181,7 @@ export default {
   },
   trash: {
     title: '回收站',
-    tip: '回收站里的计划仍然保存在数据库中，点击「恢复」即可回到列表。',
+    tip: '回收站里的计划仍然保存在数据库中，点击「恢复」即可回到列表',
     colTitle: '标题',
     colTags: '标签',
     colDeletedAt: '删除时间',
@@ -307,7 +307,7 @@ export default {
   },
   reflection: {
     title: '每日反思',
-    subtitle: '留意生活中最触动自己的点，不管是令人欣喜的感悟，还是令人难受的困惑，只要它能在心头燃起火花，就把它摘取下来。',
+    subtitle: '留意生活中最触动自己的点，不管是令人欣喜的感悟，还是令人难受的困惑，只要它能在心头燃起火花，就把它摘取下来',
     addButton: '写反思',
     yearView: '年度视图',
     calendarTitle: '年度视图',

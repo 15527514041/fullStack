@@ -8,7 +8,7 @@
 
 最近一直在做 **Confluo 汇流**，就是想把计划、行动、反思、复盘和账目，放回同一条能回看的生活线上。
 
-官网已上线并完成 ICP 备案：**https://www.confluo.cn/**
+官网已上线：**https://www.confluo.cn/**
 
 ![Confluo 首页](https://confluo-upload.oss-cn-shenzhen.aliyuncs.com/public/marketing/articles/confluo-launch-2026-11/01-home.png)
 

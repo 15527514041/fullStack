@@ -325,7 +325,7 @@ onMounted(() => loadOverview())
 .overview-page {
   display: flex;
   width: 100%;
-  max-width: 1380px;
+  max-width: none;
   height: 100%;
   min-height: 0;
   flex-direction: column;
