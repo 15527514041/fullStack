@@ -290,6 +290,14 @@ body {
   padding-top: 24px;
 }
 
+/* 资产快照弹窗:标题分隔线与正文拉开距离,正文是唯一滚动区域 */
+.snapshot-save-dialog .el-dialog__body,
+.snapshot-history-dialog .el-dialog__body {
+  padding-top: 24px;
+  padding-right: 18px;
+  scrollbar-gutter: stable;
+}
+
 /* ================= 列表页统一规范(参考 client「交易记录」页) ================= */
 
 /* 页面外壳:白底 + 18px 大圆角 + 30/32 内边距 */
