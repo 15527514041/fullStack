@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { ArrowLeft } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import {
@@ -40,6 +39,7 @@ const MASKED_AMOUNT = '******'
 const snapshots = ref<LedgerAssetSnapshotSummary[]>([])
 const comparison = ref<LedgerAssetSnapshotComparison | null>(null)
 const detail = ref<LedgerAssetSnapshotDetail | null>(null)
+const detailVisible = ref(false)
 const fromSnapshot = ref<LedgerAssetSnapshotDetail | null>(null)
 const toSnapshot = ref<LedgerAssetSnapshotDetail | null>(null)
 const selectedFromId = ref<number | null>(null)
@@ -240,6 +240,7 @@ async function openDetail(snapshotId: number): Promise<void> {
   detailLoadingId.value = snapshotId
   try {
     detail.value = await getAssetSnapshot(snapshotId)
+    detailVisible.value = true
   } finally {
     detailLoadingId.value = null
   }
@@ -278,7 +279,13 @@ async function handleDelete(snapshot: LedgerAssetSnapshotSummary): Promise<void>
 watch(
   () => props.visible,
   (visible) => {
-    if (!visible) return
+    if (!visible) {
+      detailVisible.value = false
+      detail.value = null
+      return
+    }
+    detailVisible.value = false
+    detail.value = null
     amountsVisible.value = props.initialAmountVisible
     void loadSnapshots()
   }
@@ -288,90 +295,12 @@ watch(
 <template>
   <el-dialog
     v-model="dialogVisible"
-    :title="detail ? $t('ledger.accounts.snapshotDetailTitle') : $t('ledger.accounts.snapshotHistoryTitle')"
+    :title="$t('ledger.accounts.snapshotHistoryTitle')"
     width="min(980px, 94vw)"
     :show-close="false"
     class="snapshot-history-dialog"
   >
     <el-skeleton v-if="loading" :rows="7" animated />
-
-    <div v-else-if="detail" class="snapshot-detail">
-      <button type="button" class="snapshot-back" @click="detail = null">
-        <el-icon><ArrowLeft /></el-icon>
-        {{ $t('ledger.accounts.snapshotBackToList') }}
-      </button>
-
-      <div class="snapshot-detail-head">
-        <div>
-          <div class="snapshot-detail-date">{{ formatDate(detail.snapshotDate) }}</div>
-          <div class="snapshot-detail-note">{{ detail.note || '—' }}</div>
-        </div>
-        <el-tooltip :content="amountToggleLabel" placement="top">
-          <button
-            type="button"
-            class="amount-visibility-toggle"
-            :aria-label="amountToggleLabel"
-            :aria-pressed="!amountsVisible"
-            @click="amountsVisible = !amountsVisible"
-          >
-            <AmountVisibilityIcon :visible="amountsVisible" :size="18" />
-          </button>
-        </el-tooltip>
-      </div>
-
-      <div class="snapshot-stat-grid">
-        <div class="snapshot-stat">
-          <span>{{ $t('ledger.accounts.totalAssets') }}</span>
-          <strong>{{ formatAmount(detail.totalAssetsCents) }}</strong>
-        </div>
-        <div class="snapshot-stat">
-          <span>{{ $t('ledger.accounts.totalDebt') }}</span>
-          <strong class="is-debt">{{ formatAmount(detail.totalDebtCents) }}</strong>
-        </div>
-        <div class="snapshot-stat">
-          <span>{{ $t('ledger.accounts.netAssets') }}</span>
-          <strong>{{ formatAmount(detail.netAssetsCents) }}</strong>
-        </div>
-      </div>
-
-      <div class="snapshot-detail-meta">
-        {{
-          $t('ledger.accounts.snapshotAccountSummary', {
-            total: detail.accountCount,
-            enabled: detail.enabledAccountCount
-          })
-        }}
-        ·
-        {{ $t('ledger.accounts.snapshotCapturedAt', { time: formatDateTimeShort(detail.createdAt) }) }}
-      </div>
-      <div class="snapshot-frozen-hint">{{ $t('ledger.accounts.snapshotFrozenHint') }}</div>
-
-      <div class="snapshot-account-list is-detail">
-        <div
-          v-for="account in detail.items"
-          :key="`${detail.id}-${account.accountId}`"
-          class="snapshot-account-row"
-          :class="{ 'is-disabled': !account.enabled }"
-        >
-          <div class="snapshot-account-main">
-            <div class="snapshot-account-title">
-              <ColorDot :color="account.kindColor" />
-              <span>{{ account.accountName }}</span>
-              <el-tag v-if="!account.enabled" size="small" type="info">
-                {{ $t('ledger.accounts.snapshotDisabledItem') }}
-              </el-tag>
-            </div>
-            <div class="snapshot-account-meta">{{ frozenAccountMeta(account) }}</div>
-          </div>
-          <strong
-            class="snapshot-account-balance"
-            :class="{ 'is-negative': account.balanceCents < 0 }"
-          >
-            {{ formatAmount(account.balanceCents) }}
-          </strong>
-        </div>
-      </div>
-    </div>
 
     <div v-else-if="snapshots.length === 0" class="snapshot-empty">
       {{ $t('ledger.accounts.snapshotEmpty') }}
@@ -636,6 +565,92 @@ watch(
 
     <template #footer>
       <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+    </template>
+  </el-dialog>
+
+  <el-dialog
+    v-model="detailVisible"
+    :title="$t('ledger.accounts.snapshotDetailTitle')"
+    width="min(760px, 92vw)"
+    :show-close="false"
+    class="snapshot-detail-dialog"
+    @closed="detail = null"
+  >
+    <div v-if="detail" class="snapshot-detail">
+      <div class="snapshot-detail-head">
+        <div>
+          <div class="snapshot-detail-date">{{ formatDate(detail.snapshotDate) }}</div>
+          <div class="snapshot-detail-note">{{ detail.note || '—' }}</div>
+        </div>
+        <el-tooltip :content="amountToggleLabel" placement="top">
+          <button
+            type="button"
+            class="amount-visibility-toggle"
+            :aria-label="amountToggleLabel"
+            :aria-pressed="!amountsVisible"
+            @click="amountsVisible = !amountsVisible"
+          >
+            <AmountVisibilityIcon :visible="amountsVisible" :size="18" />
+          </button>
+        </el-tooltip>
+      </div>
+
+      <div class="snapshot-stat-grid">
+        <div class="snapshot-stat">
+          <span>{{ $t('ledger.accounts.totalAssets') }}</span>
+          <strong>{{ formatAmount(detail.totalAssetsCents) }}</strong>
+        </div>
+        <div class="snapshot-stat">
+          <span>{{ $t('ledger.accounts.totalDebt') }}</span>
+          <strong class="is-debt">{{ formatAmount(detail.totalDebtCents) }}</strong>
+        </div>
+        <div class="snapshot-stat">
+          <span>{{ $t('ledger.accounts.netAssets') }}</span>
+          <strong>{{ formatAmount(detail.netAssetsCents) }}</strong>
+        </div>
+      </div>
+
+      <div class="snapshot-detail-meta">
+        {{
+          $t('ledger.accounts.snapshotAccountSummary', {
+            total: detail.accountCount,
+            enabled: detail.enabledAccountCount
+          })
+        }}
+        ·
+        {{ $t('ledger.accounts.snapshotCapturedAt', { time: formatDateTimeShort(detail.createdAt) }) }}
+      </div>
+      <div class="snapshot-frozen-hint">{{ $t('ledger.accounts.snapshotFrozenHint') }}</div>
+
+      <div class="snapshot-account-list is-detail">
+        <div
+          v-for="account in detail.items"
+          :key="`${detail.id}-${account.accountId}`"
+          class="snapshot-account-row"
+          :class="{ 'is-disabled': !account.enabled }"
+        >
+          <div class="snapshot-account-main">
+            <div class="snapshot-account-title">
+              <ColorDot :color="account.kindColor" />
+              <span>{{ account.accountName }}</span>
+              <el-tag v-if="!account.enabled" size="small" type="info">
+                {{ $t('ledger.accounts.snapshotDisabledItem') }}
+              </el-tag>
+            </div>
+            <div class="snapshot-account-meta">{{ frozenAccountMeta(account) }}</div>
+          </div>
+          <strong
+            class="snapshot-account-balance"
+            :class="{ 'is-negative': account.balanceCents < 0 }"
+          >
+            {{ formatAmount(account.balanceCents) }}
+          </strong>
+        </div>
+      </div>
+    </div>
+
+    <template #footer>
+      <el-button @click="detailVisible = false">{{ $t('common.close') }}</el-button>
     </template>
   </el-dialog>
 </template>
