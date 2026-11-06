@@ -61,7 +61,10 @@ async function getTasks(userId, date) {
       where: {
         userId,
         deletedAt: null,
-        completed: false
+        completed: false,
+        // 今日重点只包含已经到期但未完成的事项:逾期 + 今天到期。
+        // 无截止日期和未来任务仍保留在计划清单中,不进入首页焦点。
+        dueDate: { lte: today }
       },
       select: {
         id: true,

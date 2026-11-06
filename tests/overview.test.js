@@ -103,6 +103,7 @@ test('聚合当天任务、规划、反思、周复盘和财务快照,并隔离�
   const overdue = await addTodo(aliceToken, { title: '补交材料', dueDate: '2026-10-27' })
   const today = await addTodo(aliceToken, { title: '完成首页接口', dueDate: '2026-10-28' })
   await addTodo(aliceToken, { title: '未来任务', dueDate: '2026-10-29' })
+  await addTodo(aliceToken, { title: '没有截止日期' })
   const completed = await addTodo(aliceToken, { title: '今天已完成', dueDate: '2026-10-28' })
   await request(app)
     .patch(`/api/todos/${completed.body.id}`)
@@ -175,7 +176,7 @@ test('聚合当天任务、规划、反思、周复盘和财务快照,并隔离�
   )
   assert.deepStrictEqual(
     res.body.tasks.focus.map((item) => item.title),
-    [overdue.body.title, today.body.title, '未来任务']
+    [overdue.body.title, today.body.title]
   )
 
   assert.deepStrictEqual(res.body.plan, {
