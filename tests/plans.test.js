@@ -117,6 +117,24 @@ test('同日重复创建返回 409', async () => {
   assert.strictEqual(again.body.message, '该日期已有每日规划')
 })
 
+test('每日规划拒绝不存在的日历日期', async () => {
+  const token = await registerAndLogin()
+  const auth = (req) => req.set('Authorization', `Bearer ${token}`)
+
+  const invalidCreate = await auth(request(app).post('/api/plans')).send({ date: '2026-02-31' })
+  assert.strictEqual(invalidCreate.status, 400)
+  assert.deepStrictEqual(invalidCreate.body.errors, [{ field: 'date', message: '日期不合法' }])
+
+  const created = await auth(request(app).post('/api/plans')).send(payload)
+  const invalidUpdate = await auth(request(app).patch(`/api/plans/${created.body.id}`)).send({
+    date: '2026-02-31'
+  })
+  assert.strictEqual(invalidUpdate.status, 400)
+
+  const invalidFilter = await auth(request(app).get('/api/plans?from=2026-02-31'))
+  assert.strictEqual(invalidFilter.status, 400)
+})
+
 test('时间校验:起止都必填、格式必须是 HH:mm、起止不能相同(跨零点合法)', async () => {
   const token = await registerAndLogin()
   const post = (planned) =>

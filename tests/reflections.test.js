@@ -71,9 +71,27 @@ test('入参校验:空列表 / 描述经过为空 / 超过 20 条 / 日期格式
   assert.strictEqual((await post({ date: '2026-10-09', items: [] })).status, 400)
   assert.strictEqual((await post({ date: '2026-10-09', items: [{ experience: '   ' }] })).status, 400)
   assert.strictEqual((await post({ date: '2026/10/09', items: [{ experience: 'x' }] })).status, 400)
+  assert.strictEqual((await post({ date: '2026-02-31', items: [{ experience: 'x' }] })).status, 400)
 
   const tooMany = Array.from({ length: 21 }, (_, index) => ({ experience: `第 ${index + 1} 条` }))
   assert.strictEqual((await post({ date: '2026-10-09', items: tooMany })).status, 400)
+})
+
+test('更新和筛选反思时也拒绝不存在的日历日期', async () => {
+  const token = await registerAndLogin()
+  const auth = (req) => req.set('Authorization', `Bearer ${token}`)
+
+  const created = await auth(request(app).post('/api/reflections')).send({
+    date: '2026-10-09',
+    items: [{ experience: '原始内容' }]
+  })
+  const invalidUpdate = await auth(request(app).patch(`/api/reflections/${created.body.id}`)).send({
+    date: '2026-02-31'
+  })
+  assert.strictEqual(invalidUpdate.status, 400)
+
+  const invalidFilter = await auth(request(app).get('/api/reflections?from=2026-02-31'))
+  assert.strictEqual(invalidFilter.status, 400)
 })
 
 test('更新反思:items 整体替换并重排序号,改日期撞已有返回 409', async () => {
