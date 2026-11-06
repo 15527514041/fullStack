@@ -417,6 +417,29 @@ const accountSchemas = {
   })
 }
 
+// ====== 记账:资产快照 ======
+
+const assetSnapshotSchemas = {
+  create: z
+    .object({
+      snapshotDate: validDateOnly,
+      note: z.string().trim().max(100, '备注最多 100 个字符').nullable().optional(),
+      // 同日已有快照时,前端确认后再传 true 覆盖
+      overwrite: z.boolean().default(false)
+    })
+    .strict(),
+  compare: z
+    .object({
+      fromId: z.coerce.number().int().positive('快照 ID 不合法'),
+      toId: z.coerce.number().int().positive('快照 ID 不合法')
+    })
+    .strict()
+    .refine((data) => data.fromId !== data.toId, {
+      message: '请选择两个不同的快照',
+      path: ['toId']
+    })
+}
+
 // ====== 记账:周期账单 ======
 
 const ledgerSource = z.enum(['manual_day', 'manual_week', 'manual_month'], {
@@ -553,6 +576,7 @@ module.exports = {
   planSchemas,
   weeklyReviewSchemas,
   accountSchemas,
+  assetSnapshotSchemas,
   recordSchemas,
   dictionarySchemas,
   adminSchemas,
