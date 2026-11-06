@@ -195,6 +195,36 @@ test('批次列表按日期倒序,详情只返回批次数据', async () => {
   assert.strictEqual(list.body[0].items, undefined)
 })
 
+test('单条删除快照:校验归属,成功后连同冻结明细一起删除', async () => {
+  const token = await registerAndLogin()
+  await createAccount(token, { name: '现金', kind: 'CASH', balanceCents: 10000 })
+  const first = await saveSnapshot(token, { snapshotDate: '2026-10-06' })
+  const second = await saveSnapshot(token, { snapshotDate: '2026-11-06' })
+  assert.strictEqual(await prisma.ledgerAssetSnapshotItem.count({ where: { snapshotId: first.body.id } }), 1)
+
+  const bobToken = await registerAndLogin('bob')
+  const forbidden = await request(app)
+    .delete(`/api/ledger/asset-snapshots/${second.body.id}`)
+    .set(auth(bobToken))
+  assert.strictEqual(forbidden.status, 404)
+
+  const removed = await request(app)
+    .delete(`/api/ledger/asset-snapshots/${first.body.id}`)
+    .set(auth(token))
+  assert.strictEqual(removed.status, 204)
+  assert.strictEqual(await prisma.ledgerAssetSnapshotItem.count({ where: { snapshotId: first.body.id } }), 0)
+
+  const list = await request(app)
+    .get('/api/ledger/asset-snapshots')
+    .set(auth(token))
+  assert.deepStrictEqual(list.body.map((item) => item.id), [second.body.id])
+
+  const deletedDetail = await request(app)
+    .get(`/api/ledger/asset-snapshots/${first.body.id}`)
+    .set(auth(token))
+  assert.strictEqual(deletedDetail.status, 404)
+})
+
 test('两个快照对比只返回批次汇总与差值', async () => {
   const token = await registerAndLogin()
   const cash = await createAccount(token, {

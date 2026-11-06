@@ -23,6 +23,11 @@ async function getSnapshot(req, res) {
   res.json(snapshot)
 }
 
+async function deleteSnapshot(req, res) {
+  await assetSnapshotService.deleteSnapshot(req.user.id, req.validated.params.id)
+  res.status(204).end()
+}
+
 async function compareSnapshots(req, res) {
   const { fromId, toId } = req.validated.query
   const comparison = await assetSnapshotService.compareSnapshots(req.user.id, fromId, toId)
@@ -34,5 +39,6 @@ module.exports = {
   createSnapshot,
   listSnapshots,
   getSnapshot,
+  deleteSnapshot,
   compareSnapshots
 }

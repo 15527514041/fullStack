@@ -229,6 +229,19 @@ async function getSnapshot(userId, snapshotId) {
   return toDetail(snapshot)
 }
 
+async function deleteSnapshot(userId, snapshotId) {
+  const snapshot = await prisma.ledgerAssetSnapshot.findFirst({
+    where: { id: snapshotId, userId },
+    select: { id: true }
+  })
+  if (!snapshot) {
+    throw new AppError('资产快照不存在', 404)
+  }
+
+  await prisma.ledgerAssetSnapshot.delete({ where: { id: snapshot.id } })
+  return { id: snapshot.id }
+}
+
 async function compareSnapshots(userId, fromId, toId) {
   const snapshots = await prisma.ledgerAssetSnapshot.findMany({
     where: { userId, id: { in: [fromId, toId] } },
@@ -262,5 +275,6 @@ module.exports = {
   createSnapshot,
   listSnapshots,
   getSnapshot,
+  deleteSnapshot,
   compareSnapshots
 }

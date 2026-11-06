@@ -23,5 +23,10 @@ router.get(
   validate(idParams, 'params'),
   assetSnapshotController.getSnapshot
 )
+router.delete(
+  '/:id',
+  validate(idParams, 'params'),
+  assetSnapshotController.deleteSnapshot
+)
 
 module.exports = router
