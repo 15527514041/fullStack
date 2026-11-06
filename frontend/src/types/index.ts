@@ -357,6 +357,55 @@ export interface LedgerAccount {
   updatedAt: string
 }
 
+// ===== 记账:资产快照 =====
+export interface LedgerAssetSnapshotStats {
+  totalAssetsCents: number
+  totalDebtCents: number
+  netAssetsCents: number
+  accountCount: number
+  enabledAccountCount: number
+}
+
+/** 一次保存形成的批次摘要,不携带账户明细 */
+export interface LedgerAssetSnapshotSummary extends LedgerAssetSnapshotStats {
+  id: number
+  /** YYYY-MM-DD */
+  snapshotDate: string
+  note: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** 快照内冻结的账户数据,不随当前账户后续修改 */
+export interface LedgerAssetSnapshotItem {
+  accountId: number
+  accountName: string
+  kindId: number
+  kindName: string
+  kindCode: string | null
+  kindColor: string
+  note: string | null
+  balanceCents: number
+  enabled: boolean
+  sortOrder: number
+  balanceUpdatedAt: string
+}
+
+export interface LedgerAssetSnapshotDetail extends LedgerAssetSnapshotSummary {
+  items: LedgerAssetSnapshotItem[]
+}
+
+export interface LedgerAssetSnapshotPreview {
+  stats: LedgerAssetSnapshotStats
+  accounts: LedgerAccount[]
+}
+
+export interface LedgerAssetSnapshotComparison {
+  from: LedgerAssetSnapshotSummary
+  to: LedgerAssetSnapshotSummary
+  delta: LedgerAssetSnapshotStats
+}
+
 // ===== 记账:周期账单 =====
 /** 日 / 周 / 月三种账本来源 */
 export type LedgerRecordSource = 'manual_day' | 'manual_week' | 'manual_month'

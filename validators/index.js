@@ -107,7 +107,7 @@ const userSchemas = {
 const todoSchemas = {
   create: z.object({
     title,
-    dueDate: dateOnly.nullable().optional(),
+    dueDate: validDateOnly.nullable().optional(),
     description: description.optional(),
     attachmentOssIds: attachmentOssIds.optional(),
     tagIds: z.array(z.number().int().positive()).optional()
@@ -115,7 +115,7 @@ const todoSchemas = {
   update: z
     .object({
       title: title.optional(),
-      dueDate: dateOnly.nullable().optional(),
+      dueDate: validDateOnly.nullable().optional(),
       description: description.optional(),
       attachmentOssIds: attachmentOssIds.optional(),
       completed: z.boolean().optional(),
@@ -126,8 +126,8 @@ const todoSchemas = {
     ...pageParams,
     keyword: z.string().trim().optional(),
     completed: boolQuery.optional(),
-    dueFrom: dateOnly.optional(),
-    dueTo: dateOnly.optional(),
+    dueFrom: validDateOnly.optional(),
+    dueTo: validDateOnly.optional(),
     dueDateMissing: boolQuery.optional(),
     tagId: z.coerce.number().int().positive().optional(),
     deleted: boolQuery.optional(),
@@ -152,8 +152,8 @@ const todoSchemas = {
     ...exportMeta,
     keyword: z.string().trim().optional(),
     completed: boolQuery.optional(),
-    dueFrom: dateOnly.optional(),
-    dueTo: dateOnly.optional(),
+    dueFrom: validDateOnly.optional(),
+    dueTo: validDateOnly.optional(),
     dueDateMissing: boolQuery.optional(),
     tagId: z.coerce.number().int().positive().optional(),
     deleted: boolQuery.optional(),
@@ -213,8 +213,8 @@ const timeOfDay = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, '时间格式应
 const dateRange = z
   .object({
     ...pageParams,
-    from: dateOnly.optional(),
-    to: dateOnly.optional()
+    from: validDateOnly.optional(),
+    to: validDateOnly.optional()
   })
   .refine((data) => !data.from || !data.to || data.from <= data.to, {
     message: '开始日期不能晚于结束日期',
@@ -223,8 +223,8 @@ const dateRange = z
 const exportDateRange = z
   .object({
     ...exportMeta,
-    from: dateOnly.optional(),
-    to: dateOnly.optional()
+    from: validDateOnly.optional(),
+    to: validDateOnly.optional()
   })
   .refine((data) => !data.from || !data.to || data.from <= data.to, {
     message: '开始日期不能晚于结束日期',
@@ -244,10 +244,10 @@ const reflectionItem = z.object({
 const reflectionItems = z.array(reflectionItem).min(1, '至少写一条反思').max(20, '每天最多 20 条反思')
 
 const reflectionSchemas = {
-  create: z.object({ date: dateOnly, items: reflectionItems }),
+  create: z.object({ date: validDateOnly, items: reflectionItems }),
   update: z
     .object({
-      date: dateOnly.optional(),
+      date: validDateOnly.optional(),
       items: reflectionItems.optional()
     })
     .refine((data) => Object.keys(data).length > 0, { message: '没有需要更新的字段' }),
@@ -288,7 +288,7 @@ const planNoteList = z
 
 const planSchemas = {
   create: z.object({
-    date: dateOnly,
+    date: validDateOnly,
     todos: planTodoList.default([]),
     planned: planScheduleList.default([]),
     actual: planScheduleList.default([]),
@@ -296,7 +296,7 @@ const planSchemas = {
   }),
   update: z
     .object({
-      date: dateOnly.optional(),
+      date: validDateOnly.optional(),
       todos: planTodoList.optional(),
       planned: planScheduleList.optional(),
       actual: planScheduleList.optional(),
@@ -415,6 +415,29 @@ const accountSchemas = {
     // 不传返回全部;true/false 只看启用/停用的
     enabled: boolQuery.optional()
   })
+}
+
+// ====== 记账:资产快照 ======
+
+const assetSnapshotSchemas = {
+  create: z
+    .object({
+      snapshotDate: validDateOnly,
+      note: z.string().trim().max(100, '备注最多 100 个字符').nullable().optional(),
+      // 同日已有快照时,前端确认后再传 true 覆盖
+      overwrite: z.boolean().default(false)
+    })
+    .strict(),
+  compare: z
+    .object({
+      fromId: z.coerce.number().int().positive('快照 ID 不合法'),
+      toId: z.coerce.number().int().positive('快照 ID 不合法')
+    })
+    .strict()
+    .refine((data) => data.fromId !== data.toId, {
+      message: '请选择两个不同的快照',
+      path: ['toId']
+    })
 }
 
 // ====== 记账:周期账单 ======
@@ -553,6 +576,7 @@ module.exports = {
   planSchemas,
   weeklyReviewSchemas,
   accountSchemas,
+  assetSnapshotSchemas,
   recordSchemas,
   dictionarySchemas,
   adminSchemas,

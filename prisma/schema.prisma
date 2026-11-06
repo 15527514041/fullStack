@@ -72,29 +72,30 @@ enum LedgerItemType {
 }
 
 model User {
-  id                 Int                  @id @default(autoincrement())
-  username           String               @unique
-  password           String
+  id                   Int                   @id @default(autoincrement())
+  username             String                @unique
+  password             String
   // 只存上传记录的 ossId,不存 URL:换域名/CDN/签名策略都不用改库
-  avatarOssId        String?
-  role               Role                 @default(USER)
-  status             UserStatus           @default(ACTIVE)
-  todos              Todo[]
-  tags               Tag[]
-  dictionaryItems    DictionaryItem[]
-  uploads            Upload[]
-  reflections        DailyReflection[]
-  plans              DailyPlan[]
-  weeklyReviews      WeeklyReview[]
-  ledgerAccounts     LedgerAccount[]
-  ledgerRecords      LedgerRecord[]
+  avatarOssId          String?
+  role                 Role                  @default(USER)
+  status               UserStatus            @default(ACTIVE)
+  todos                Todo[]
+  tags                 Tag[]
+  dictionaryItems      DictionaryItem[]
+  uploads              Upload[]
+  reflections          DailyReflection[]
+  plans                DailyPlan[]
+  weeklyReviews        WeeklyReview[]
+  ledgerAccounts       LedgerAccount[]
+  ledgerAssetSnapshots LedgerAssetSnapshot[]
+  ledgerRecords        LedgerRecord[]
   // 用户希望显示的账单维度;至少一项,由接口校验
-  ledgerEntrySources LedgerRecordSource[] @default([manual_day, manual_week, manual_month])
-  createdAt          DateTime             @default(now())
+  ledgerEntrySources   LedgerRecordSource[]  @default([manual_day, manual_week, manual_month])
+  createdAt            DateTime              @default(now())
   // 最近一次登录成功的时间(登录时更新),后台用户列表展示用
-  lastLoginAt        DateTime?
+  lastLoginAt          DateTime?
   // 密码最后修改时间:签发时间早于它的 token 全部失效(改完密码即踢下线);null = 从没改过
-  passwordChangedAt  DateTime?
+  passwordChangedAt    DateTime?
 }
 
 // 账户类型 / 收支分类:预设项带 code(迁移和默认值识别用),用户新建的自定义项 code 为空
@@ -315,6 +316,49 @@ model LedgerAccount {
   // 同一用户内账户不重名;唯一索引前缀也顺带覆盖「按用户取账户」的查询
   @@unique([userId, name])
   @@index([userId, enabled])
+}
+
+// ===== 记账:资产快照 =====
+// 一次保存冻结一批账户数据和汇总指标;之后账户改名、改余额或删除都不影响历史。
+model LedgerAssetSnapshot {
+  id                  Int                       @id @default(autoincrement())
+  userId              Int
+  // 用户为这批资产数据声明的快照日期
+  snapshotDate        DateTime                  @db.Date
+  note                String?
+  // 汇总口径与资产账户页一致:只统计启用账户,正余额计资产,负余额计负债
+  totalAssetsCents    BigInt
+  totalDebtCents      BigInt
+  netAssetsCents      BigInt
+  accountCount        Int
+  enabledAccountCount Int
+  user                User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items               LedgerAssetSnapshotItem[]
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+
+  // 每个用户每天只有一个批次;完整日期重复保存时由用户确认后覆盖
+  @@unique([userId, snapshotDate])
+}
+
+// 账户信息全部复制保存,不依赖 LedgerAccount 外键,因此账户删除后快照仍然完整。
+model LedgerAssetSnapshotItem {
+  id               Int                 @id @default(autoincrement())
+  snapshotId       Int
+  accountId        Int
+  accountName      String
+  kindId           Int
+  kindName         String
+  kindCode         String?
+  kindColor        String
+  note             String?
+  balanceCents     Int
+  enabled          Boolean
+  sortOrder        Int                 @default(0)
+  balanceUpdatedAt DateTime
+  snapshot         LedgerAssetSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  @@index([snapshotId, sortOrder])
 }
 
 // ===== 记账:周期账单 =====

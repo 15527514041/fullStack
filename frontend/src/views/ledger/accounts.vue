@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { MoreFilled, Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { createAccount, deleteAccount, getAccounts, updateAccount, updateAccountBalance } from '@/api/ledger'
 import { getDictionaries } from '@/api/dictionaries'
 import AmountVisibilityIcon from '@/components/AmountVisibilityIcon.vue'
 import ColorDot from '@/components/ColorDot.vue'
+import FileIcon from '@/components/FileIcon.vue'
 import InfoTipIcon from '@/components/InfoTipIcon.vue'
 import RelaxedEmptyState from '@/components/RelaxedEmptyState.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
@@ -15,6 +16,8 @@ import { formatDateTimeShort } from '@/utils/datetime'
 import { DICTIONARY_CREATE_VALUE, dictionaryTabRoute } from '@/utils/dictionary'
 import { centsToYuan, formatCents, yuanToCents } from '@/utils/money'
 import type { DictionaryItem, LedgerAccount } from '@/types'
+import AssetSnapshotHistoryDialog from './components/AssetSnapshotHistoryDialog.vue'
+import AssetSnapshotSaveDialog from './components/AssetSnapshotSaveDialog.vue'
 
 const { t } = useI18n()
 const { isMobile } = useIsMobile()
@@ -27,6 +30,12 @@ const loading = ref(false)
 // 金额隐私开关只保存在当前页面状态,刷新后默认遮挡
 const amountsVisible = ref(false)
 const MASKED_AMOUNT = '******'
+const snapshotSaveVisible = ref(false)
+const snapshotHistoryVisible = ref(false)
+
+function handleHeaderAction(command: string): void {
+  if (command === 'snapshot-history') snapshotHistoryVisible.value = true
+}
 
 function formatAmount(cents: number): string {
   return amountsVisible.value ? formatCents(cents) : MASKED_AMOUNT
@@ -268,10 +277,34 @@ onMounted(async () => {
         </div>
         <div class="page-subtitle">{{ $t('ledger.accounts.balanceHint') }}</div>
       </div>
-      <el-button type="primary" @click="openAddDialog">
-        <el-icon><Plus /></el-icon>
-        {{ $t('ledger.accounts.addButton') }}
-      </el-button>
+      <div class="header-actions">
+        <el-button type="primary" class="add-account-button" @click="openAddDialog">
+          <el-icon><Plus /></el-icon>
+          {{ $t('ledger.accounts.addButton') }}
+        </el-button>
+        <el-button class="snapshot-save-button" @click="snapshotSaveVisible = true">
+          <FileIcon name="snapshot" :size="16" class="header-button-icon" />
+          {{ $t('ledger.accounts.snapshotSaveButton') }}
+        </el-button>
+        <el-dropdown
+          class="header-more"
+          trigger="click"
+          placement="bottom-end"
+          @command="handleHeaderAction"
+        >
+          <el-button class="more-button" :aria-label="$t('common.more')">
+            <el-icon><MoreFilled /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="snapshot-history">
+                <FileIcon name="history" :size="16" class="more-menu__icon" />
+                {{ $t('ledger.accounts.snapshotHistoryButton') }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
     </div>
 
     <!-- 超过 30 天没对账的提醒 -->
@@ -508,10 +541,52 @@ onMounted(async () => {
         </el-button>
       </template>
     </el-dialog>
+
+    <AssetSnapshotSaveDialog
+      v-model:visible="snapshotSaveVisible"
+      :initial-amount-visible="amountsVisible"
+    />
+    <AssetSnapshotHistoryDialog
+      v-model:visible="snapshotHistoryVisible"
+      :initial-amount-visible="amountsVisible"
+    />
   </div>
 </template>
 
 <style scoped>
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-actions .el-button {
+  margin-left: 0;
+}
+
+.header-more {
+  flex-shrink: 0;
+}
+
+.more-button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 12px;
+}
+
+.more-button :deep(.el-icon) {
+  margin: 0;
+}
+
+.more-menu__icon {
+  margin-right: 6px;
+}
+
+.header-button-icon {
+  margin-right: 6px;
+}
+
 .title-line {
   display: flex;
   align-items: center;
@@ -646,6 +721,34 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .header-actions {
+    display: flex;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .header-actions .el-button {
+    width: auto;
+  }
+
+  .add-account-button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .header-more {
+    flex: 0 0 40px;
+    width: 40px;
+    min-width: 40px;
+  }
+
+  .header-actions .more-button {
+    flex: 0 0 40px;
+    width: 40px;
+    min-width: 40px;
+    padding: 0;
+  }
+
   .asset-card {
     grid-template-columns: 1fr;
     gap: 10px;

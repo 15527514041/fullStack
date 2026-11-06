@@ -29,6 +29,20 @@ export function updateUserStatus(id: number, status: UserStatus): Promise<Update
   })
 }
 
+export interface ResetUserPasswordResult {
+  message: string
+  username: string
+  initialPassword: string
+}
+
+// 管理员重置用户密码:初始密码由服务端统一生成,调用前必须二次确认
+export function resetUserPassword(id: number): Promise<ResetUserPasswordResult> {
+  return request<ResetUserPasswordResult>({
+    url: `/admin/users/${id}/password`,
+    method: 'patch'
+  })
+}
+
 export interface DeleteUserResult {
   message: string
   username: string

@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import { deleteUser, getUsers, updateUserRole, updateUserStatus } from '@/api/admin'
+import { deleteUser, getUsers, resetUserPassword, updateUserRole, updateUserStatus } from '@/api/admin'
 import { useAuthStore } from '@/stores/auth'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
@@ -18,6 +18,7 @@ const users = ref<AdminUser[]>([])
 const total = ref(0)
 const loading = ref(false)
 const loadingMore = ref(false)
+const resettingUserId = ref<number | null>(null)
 const sentinelRef = ref<HTMLElement | null>(null)
 const hasMore = computed(() => users.value.length < total.value)
 
@@ -89,6 +90,41 @@ async function handleStatusChange(user: AdminUser): Promise<void> {
     )
   } catch {
     await loadUsers()
+  }
+}
+
+// 重置会把密码恢复为公开的初始值,并立即作废用户现有登录状态,必须先二次确认
+async function handleResetPassword(user: AdminUser): Promise<void> {
+  if (resettingUserId.value !== null) return
+
+  try {
+    await ElMessageBox.confirm(
+      t('userAdmin.resetPasswordConfirm', { name: user.username, password: '123456' }),
+      t('userAdmin.resetPasswordTitle'),
+      {
+        type: 'warning',
+        showClose: false,
+        confirmButtonText: t('userAdmin.resetPasswordConfirmButton'),
+        cancelButtonText: t('common.cancel')
+      }
+    )
+  } catch {
+    return
+  }
+
+  resettingUserId.value = user.id
+  try {
+    const result = await resetUserPassword(user.id)
+    ElMessage.success(
+      t('userAdmin.passwordReset', {
+        name: result.username,
+        password: result.initialPassword
+      })
+    )
+  } catch {
+    // 错误提示已在 axios 拦截器统一处理
+  } finally {
+    resettingUserId.value = null
   }
 }
 
@@ -202,6 +238,15 @@ onMounted(loadUsers)
 
         <!-- 自己那行不给删(后端也会挡),和上面角色/状态一致的规则 -->
         <div class="card-actions">
+          <el-button
+            link
+            type="primary"
+            :loading="resettingUserId === row.id"
+            :disabled="row.id === authStore.user?.id || resettingUserId !== null"
+            @click="handleResetPassword(row)"
+          >
+            {{ $t('userAdmin.resetPassword') }}
+          </el-button>
           <el-button link type="danger" :disabled="row.id === authStore.user?.id" @click="handleDelete(row)">
             {{ $t('common.delete') }}
           </el-button>
@@ -267,8 +312,17 @@ onMounted(loadUsers)
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('common.actions')" width="80" align="center" fixed="right">
+      <el-table-column :label="$t('common.actions')" width="150" align="center" fixed="right">
         <template #default="{ row }">
+          <el-button
+            link
+            type="primary"
+            :loading="resettingUserId === row.id"
+            :disabled="row.id === authStore.user?.id || resettingUserId !== null"
+            @click="handleResetPassword(row)"
+          >
+            {{ $t('userAdmin.resetPassword') }}
+          </el-button>
           <el-button link type="danger" :disabled="row.id === authStore.user?.id" @click="handleDelete(row)">
             {{ $t('common.delete') }}
           </el-button>

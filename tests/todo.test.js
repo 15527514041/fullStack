@@ -95,6 +95,30 @@ test('计划截止日期可创建、更新、清空,并支持日期范围和未�
     .set(auth)
     .send({ title: '非法日期', dueDate: '2026/10/20' })
   assert.strictEqual(invalid.status, 400)
+
+  // JavaScript 会把 2026-02-31 自动滚动到 3 月,接口必须拦截而不是静默改日期
+  const rolledOver = await request(app)
+    .post('/api/todos')
+    .set(auth)
+    .send({ title: '不存在的日期', dueDate: '2026-02-31' })
+  assert.strictEqual(rolledOver.status, 400)
+  assert.deepStrictEqual(rolledOver.body.errors, [{ field: 'dueDate', message: '日期不合法' }])
+
+  const invalidUpdate = await request(app)
+    .patch(`/api/todos/${undated.body.id}`)
+    .set(auth)
+    .send({ dueDate: '2026-02-31' })
+  assert.strictEqual(invalidUpdate.status, 400)
+
+  const invalidFilter = await request(app)
+    .get('/api/todos?dueFrom=2026-02-31')
+    .set(auth)
+  assert.strictEqual(invalidFilter.status, 400)
+
+  const invalidExport = await request(app)
+    .get('/api/exports/todos?dueTo=2026-02-31')
+    .set(auth)
+  assert.strictEqual(invalidExport.status, 400)
 })
 
 test('计划描述允许 2000 个字符,超过上限返回 400', async () => {

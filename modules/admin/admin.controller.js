@@ -17,6 +17,11 @@ async function updateUserStatus(req, res) {
   res.json(user)
 }
 
+async function resetUserPassword(req, res) {
+  const result = await adminService.resetUserPassword(req.user.id, req.validated.params.id)
+  res.json({ message: '密码已重置', ...result })
+}
+
 // 删除用户:账号和它的数据一起没了,前端必须二次确认
 async function deleteUser(req, res) {
   const result = await adminService.deleteUser(req.user.id, req.validated.params.id)
@@ -27,5 +32,6 @@ module.exports = {
   getUsers,
   updateUserRole,
   updateUserStatus,
+  resetUserPassword,
   deleteUser
 }

@@ -1,6 +1,9 @@
 const AppError = require('../../errors/AppError')
+const bcrypt = require('bcryptjs')
 
 const prisma = require('../../utils/prisma')
+
+const DEFAULT_RESET_PASSWORD = '123456'
 
 async function listUsers(query) {
   const { page = 1, pageSize = 10, keyword } = query
@@ -65,6 +68,35 @@ async function updateUserStatus(userId, status) {
   })
 }
 
+// 管理员重置用户密码:统一恢复为初始密码,并在鉴权时作废该用户此前签发的 token
+async function resetUserPassword(operatorId, targetId) {
+  if (operatorId === targetId) {
+    throw new AppError('不能重置自己的密码,请使用修改密码功能', 400)
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: targetId },
+    select: { username: true }
+  })
+  if (!user) {
+    throw new AppError('用户不存在', 404)
+  }
+
+  const hashedPassword = await bcrypt.hash(DEFAULT_RESET_PASSWORD, 10)
+  await prisma.user.update({
+    where: { id: targetId },
+    data: {
+      password: hashedPassword,
+      passwordChangedAt: new Date()
+    }
+  })
+
+  return {
+    username: user.username,
+    initialPassword: DEFAULT_RESET_PASSWORD
+  }
+}
+
 // 管理员删除用户:账号连同它的数据一起清掉,不可恢复
 //
 // 删除顺序有讲究:TODO / 标签对 User 是 RESTRICT(数据库不允许直接删有数据的用户),
@@ -111,5 +143,6 @@ module.exports = {
   listUsers,
   updateUserRole,
   updateUserStatus,
+  resetUserPassword,
   deleteUser
 }
