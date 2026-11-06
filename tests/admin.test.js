@@ -6,9 +6,9 @@ const { PrismaClient } = require('@prisma/client')
 const app = require('../app')
 const prisma = new PrismaClient()
 
-async function createUser(username) {
-  await request(app).post('/api/auth/register').send({ username, password: '123456' })
-  const res = await request(app).post('/api/auth/login').send({ username, password: '123456' })
+async function createUser(username, password = '123456') {
+  await request(app).post('/api/auth/register').send({ username, password })
+  const res = await request(app).post('/api/auth/login').send({ username, password })
   return res.body.token
 }
 
@@ -104,6 +104,70 @@ test('管理员禁用用户后,该用户无法登录且旧 token 失效', async 
 
   const withOldToken = await request(app).get('/api/todos').set('Authorization', `Bearer ${aliceToken}`)
   assert.strictEqual(withOldToken.status, 403)
+})
+
+test('管理员重置用户密码:恢复为初始密码,并作废旧 token', async () => {
+  const aliceToken = await createUser('alice', 'oldPassword123')
+  const adminToken = await createUser('boss')
+  await makeAdmin('boss')
+
+  const alice = await prisma.user.findUnique({ where: { username: 'alice' } })
+  const reset = await request(app)
+    .patch(`/api/admin/users/${alice.id}/password`)
+    .set('Authorization', `Bearer ${adminToken}`)
+
+  assert.strictEqual(reset.status, 200)
+  assert.strictEqual(reset.body.message, '密码已重置')
+  assert.strictEqual(reset.body.username, 'alice')
+  assert.strictEqual(reset.body.initialPassword, '123456')
+
+  const oldLogin = await request(app)
+    .post('/api/auth/login')
+    .send({ username: 'alice', password: 'oldPassword123' })
+  assert.strictEqual(oldLogin.status, 401)
+
+  const initialLogin = await request(app)
+    .post('/api/auth/login')
+    .send({ username: 'alice', password: '123456' })
+  assert.strictEqual(initialLogin.status, 200)
+
+  const withOldToken = await request(app)
+    .get('/api/todos')
+    .set('Authorization', `Bearer ${aliceToken}`)
+  assert.strictEqual(withOldToken.status, 401)
+})
+
+test('管理员不能重置自己的密码', async () => {
+  const adminToken = await createUser('boss')
+  await makeAdmin('boss')
+  const boss = await prisma.user.findUnique({ where: { username: 'boss' } })
+
+  const res = await request(app)
+    .patch(`/api/admin/users/${boss.id}/password`)
+    .set('Authorization', `Bearer ${adminToken}`)
+
+  assert.strictEqual(res.status, 400)
+  assert.strictEqual(res.body.message, '不能重置自己的密码,请使用修改密码功能')
+})
+
+test('重置密码:不存在的 id 返回 404,普通用户 403,未登录 401', async () => {
+  const aliceToken = await createUser('alice')
+  const adminToken = await createUser('boss')
+  await makeAdmin('boss')
+  const alice = await prisma.user.findUnique({ where: { username: 'alice' } })
+
+  const notFound = await request(app)
+    .patch('/api/admin/users/999999/password')
+    .set('Authorization', `Bearer ${adminToken}`)
+  assert.strictEqual(notFound.status, 404)
+
+  const forbidden = await request(app)
+    .patch(`/api/admin/users/${alice.id}/password`)
+    .set('Authorization', `Bearer ${aliceToken}`)
+  assert.strictEqual(forbidden.status, 403)
+
+  const anonymous = await request(app).patch(`/api/admin/users/${alice.id}/password`)
+  assert.strictEqual(anonymous.status, 401)
 })
 
 test('管理员删除用户:账号连它的数据一起清掉', async () => {

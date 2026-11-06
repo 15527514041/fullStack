@@ -28,6 +28,18 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/forgot-password',
+    component: () => import('@/layouts/AuthLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'forgot-password',
+        component: () => import('@/views/auth/forgot-password.vue'),
+        meta: { titleKey: 'route.forgotPassword' }
+      }
+    ]
+  },
+  {
     path: '/',
     component: () => import('@/layouts/MainLayout.vue'),
     meta: { requiresAuth: true },
@@ -268,7 +280,7 @@ router.beforeEach((to) => {
     return { name: 'home' }
   }
 
-  if ((to.name === 'login' || to.name === 'register') && authStore.isLoggedIn) {
+  if ((to.name === 'login' || to.name === 'register' || to.name === 'forgot-password') && authStore.isLoggedIn) {
     return { name: 'home' }
   }
 })

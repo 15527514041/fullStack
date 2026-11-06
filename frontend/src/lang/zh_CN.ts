@@ -107,9 +107,21 @@ export default {
     usernamePlaceholder: '请输入用户名',
     passwordPlaceholder: '请输入密码',
     submit: '登录',
+    forgotPassword: '忘记密码?',
     noAccount: '没有账号?',
     goRegister: '去注册',
     success: '登录成功'
+  },
+  forgotPassword: {
+    title: '找回密码',
+    noticeTitle: '暂不支持自助找回密码',
+    notice: '当前账号尚未绑定邮箱，也未开通短信服务，因此暂时无法通过验证码重置密码。',
+    contactTitle: '请联系管理员',
+    contactTip: '请发送邮件联系管理员，并附上你的用户名。管理员核验身份后，会为你重置密码。',
+    emailLabel: '管理员邮箱',
+    contactAction: '邮件联系管理员',
+    hasAccount: '想起密码了?',
+    goLogin: '返回登录'
   },
   register: {
     title: '创建账号',
@@ -757,7 +769,7 @@ export default {
   userAdmin: {
     title: '用户管理',
     searchPlaceholder: '搜索用户名',
-    tip: '提示:不能修改或删除自己的账号,避免把自己锁死。',
+    tip: '提示:不能修改、重置密码或删除自己的账号,避免把自己锁死。',
     colId: 'ID',
     colUsername: '用户名',
     colRole: '角色',
@@ -771,6 +783,11 @@ export default {
     roleUpdated: '已将「{name}」设为{role}',
     banned: '已禁用「{name}」',
     activated: '已启用「{name}」',
+    resetPassword: '重置密码',
+    resetPasswordTitle: '重置密码',
+    resetPasswordConfirm: '确定重置用户「{name}」的密码吗？重置后的初始密码为 {password}，该用户已登录的会话将全部失效。',
+    resetPasswordConfirmButton: '确认重置',
+    passwordReset: '已重置「{name}」的密码，初始密码为 {password}',
     deleteConfirm: '确定删除用户「{name}」吗？TA 的计划清单、标签、反思、规划会一起删除，且无法恢复。',
     deleted: '已删除用户「{name}」,并清理了 {count} 条关联数据'
   },
@@ -796,6 +813,7 @@ export default {
   route: {
     login: '登录',
     register: '注册',
+    forgotPassword: '找回密码',
     home: '首页',
     todos: '计划清单',
     trash: '回收站',

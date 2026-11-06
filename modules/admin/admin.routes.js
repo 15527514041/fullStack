@@ -22,6 +22,11 @@ router.patch(
   validate(adminSchemas.updateStatus),
   adminController.updateUserStatus
 )
+router.patch(
+  '/users/:id/password',
+  validate(idParams, 'params'),
+  adminController.resetUserPassword
+)
 router.delete('/users/:id', validate(idParams, 'params'), adminController.deleteUser)
 
 module.exports = router

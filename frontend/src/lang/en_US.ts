@@ -107,9 +107,21 @@ export default {
     usernamePlaceholder: 'Enter your username',
     passwordPlaceholder: 'Enter your password',
     submit: 'Sign in',
+    forgotPassword: 'Forgot password?',
     noAccount: 'No account yet?',
     goRegister: 'Sign up',
     success: 'Signed in successfully'
+  },
+  forgotPassword: {
+    title: 'Recover password',
+    noticeTitle: 'Self-service recovery is unavailable',
+    notice: 'Your account is not linked to an email address and SMS service is not enabled, so a verification code cannot be used to reset your password.',
+    contactTitle: 'Contact an administrator',
+    contactTip: 'Email an administrator and include your username. They will verify your identity and reset your password.',
+    emailLabel: 'Administrator email',
+    contactAction: 'Email an administrator',
+    hasAccount: 'Remember your password?',
+    goLogin: 'Back to sign in'
   },
   register: {
     title: 'Create account',
@@ -760,7 +772,7 @@ export default {
   userAdmin: {
     title: 'Users',
     searchPlaceholder: 'Search username',
-    tip: 'Note: you cannot change or delete your own account, to avoid locking yourself out.',
+    tip: 'Note: you cannot change, reset the password of, or delete your own account, to avoid locking yourself out.',
     colId: 'ID',
     colUsername: 'Username',
     colRole: 'Role',
@@ -774,6 +786,11 @@ export default {
     roleUpdated: '{name} is now {role}',
     banned: '{name} has been disabled',
     activated: '{name} has been enabled',
+    resetPassword: 'Reset password',
+    resetPasswordTitle: 'Reset password',
+    resetPasswordConfirm: 'Reset the password for "{name}"? The initial password will be {password}, and all of this user’s active sessions will be invalidated.',
+    resetPasswordConfirmButton: 'Reset password',
+    passwordReset: 'The password for "{name}" has been reset. The initial password is {password}.',
     deleteConfirm:
       'Delete user "{name}"? Their checklist items, tags, reflections and plans will be deleted as well, and this cannot be undone.',
     deleted: 'Deleted "{name}" and {count} related records'
@@ -800,6 +817,7 @@ export default {
   route: {
     login: 'Sign in',
     register: 'Sign up',
+    forgotPassword: 'Recover password',
     home: 'Home',
     todos: 'Checklist',
     trash: 'Trash',

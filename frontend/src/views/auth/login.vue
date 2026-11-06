@@ -83,6 +83,12 @@ async function handleSubmit(): Promise<void> {
           />
         </el-form-item>
 
+        <div class="forgot-link">
+          <el-link type="primary" :underline="false" @click="router.push('/forgot-password')">
+            {{ $t('login.forgotPassword') }}
+          </el-link>
+        </div>
+
         <el-button type="primary" class="auth-btn" :loading="loading" @click="handleSubmit">
           {{ $t('login.submit') }}
         </el-button>
@@ -135,6 +141,16 @@ async function handleSubmit(): Promise<void> {
   gap: 4px;
   font-size: 14px;
   color: var(--color-text-2);
+}
+
+.forgot-link {
+  display: flex;
+  justify-content: flex-end;
+  margin: -18px 0 24px;
+}
+
+.forgot-link :deep(.el-link) {
+  font-size: 14px;
 }
 
 /* 外框 50px 走全局,内框 48px(和 client 登录页一致) */
